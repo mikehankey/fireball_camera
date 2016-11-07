@@ -6,4 +6,7 @@ cam_lat=39.588738
 cam_lon=-76.584314
 cam_alt=300
 cam_operator=Mike Hankey
-
+cam_heading=200
+cam_alt=30
+cam_fov_x=80
+cam_fov_y=60
