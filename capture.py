@@ -14,28 +14,20 @@ import syslog
 import sys
 MORPH_KERNEL = np.ones((10, 10), np.uint8)
 record = 1
-sys.setswitchinterval(1000000) 
+
+#sys.setswitchinterval(1000000) 
+
 def cam_loop(pipe_parent):
-    #cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture("rtsp://192.168.1.92/av0_1&user=admin&password=admin")
+
+    config = read_config()
+    print (config['cam_ip'])
+
+    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
 
     cv2.setUseOptimized(True)
-#720x480
+
     time.sleep(2)
-    #cap.set(3, 720)
-    #cap.set(4, 480)
 
-    #cap.set(3, 320)
-    #cap.set(4, 240)
-
-    #cap.set(3, 540)
-    #cap.set(4, 360)
-
-    #cap.set(3, 360)
-    #cap.set(4, 240)
-
-
-    #cap.set(4, 240)
     cap.set(3, 640)
     cap.set(4, 480)
  
@@ -45,19 +37,20 @@ def cam_loop(pipe_parent):
             pipe_parent.send(frame)
  
 def show_loop(pipe_child):
-    cam_lat = "39.589 N"
-    cam_lon = "76.584 W"
-    cam_operator = "Mike Hankey"
-    cam_id= "AMS101"
+    config = read_config()
+    print (config['cam_ip'])
+
+    cam_lat = config['cam_lat']
+    cam_lon = config['cam_lon']
+    cam_operator = config['cam_operator']
+    cam_id= config['cam_id']
 
     image_acc = None
-    #last_frame = None
     nice_image_acc = None
     tstamp_prev = None
     count = 0
     #time_start = datetime.datetime.now()
     time_start = time.time()
-    #Q = None
     frame = pipe_child.recv()
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
@@ -71,10 +64,6 @@ def show_loop(pipe_child):
     calibrate_start = 0
     sense_up = 0
  
-    #ff = open('/var/www/html/log/capture-log2.txt', 'w', 1)
-    #ff.write("starting capture...\n")
-    #last_frame = pipe_child.recv()
-
     while True:
         frame = pipe_child.recv()
         frame_time = time.time()
@@ -82,9 +71,6 @@ def show_loop(pipe_child):
         frames.appendleft(frame)
         frame_times.appendleft(frame_time)
         
-
-
-
         #frame_info =  str(motion_on) + "|" + str(motion_off) + "|" + str(len(cnts)) + "|"
         #frame_data.appendleft(frame_info)
 
@@ -129,7 +115,7 @@ def show_loop(pipe_child):
                format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
                cal_file = "/var/www/html/out/cal" + format_time + ".jpg"
                cv2.imwrite(cal_file, cframe)
-            #if sense_up == 105:
+            if sense_up == 105:
                #os.system("/var/www/html/write-serial.py sense_down")
                r = requests.get("http://192.168.1.90/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
             if sense_up > 200: 
@@ -206,7 +192,6 @@ def show_loop(pipe_child):
                        i = i + 1
                    writer.release()
                    df.close()
-                   #os.system("/var/www/html/write-serial.py sense_up")
                    r = requests.get("http://192.168.1.90/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
                    calibrate_now = 1
                    sense_up = sense_up + 1
@@ -218,6 +203,19 @@ def show_loop(pipe_child):
 
         #last_frame = frame
         count = count + 1
+
+def read_config():
+    config = {}
+    file = open("config.txt", "r")
+    for line in file:
+      line = line.strip('\n')
+      data = line.rsplit("=",2)
+      config[data[0]] = data[1]
+      #print key, value
+    return(config)
+
+
+
 
  
 def write_buffer(frames):
