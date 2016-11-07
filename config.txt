@@ -2,7 +2,8 @@ cam_ip=192.168.1.92
 cam_id=7
 ams_api_key=1234
 output_dir=/var/www/html/out
-cam_lat=39.589
-cam_lon=-76.584
+cam_lat=39.588738
+cam_lon=-76.584314
 cam_alt=300
 cam_operator=Mike Hankey
+
