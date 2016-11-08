@@ -103,7 +103,8 @@ def show_loop(pipe_child):
             time_start = frame_time
 
         if count % 3 == 0: 
-
+            if sense_up > 1: 
+               print ("Sense Up: ", sense_up)
             if sense_up >= 100 and sense_up < 103:
                print ("Take calibration...")
                dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
@@ -115,9 +116,12 @@ def show_loop(pipe_child):
                format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
                cal_file = "/var/www/html/out/cal" + format_time + ".jpg"
                cv2.imwrite(cal_file, cframe)
-            if sense_up == 105:
+               motion_on = 0 
+               motion_off = 0 
+            if sense_up == 106:
                #os.system("/var/www/html/write-serial.py sense_down")
-               r = requests.get("http://192.168.1.90/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+               print ("Sense down.")
+               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
             if sense_up > 200: 
                calibrate_now = 0
                motion_on = 0
@@ -156,6 +160,8 @@ def show_loop(pipe_child):
             if calibrate_now == 1:
                sense_up = sense_up + 1
 
+            if motion_off == 5 and motion_on >= 3:
+               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
             if motion_off > 20 and motion_on >= 3 and calibrate_now == 0: 
                #ff.write("RECORD BUFFER NOW!\n")
@@ -192,7 +198,7 @@ def show_loop(pipe_child):
                        i = i + 1
                    writer.release()
                    df.close()
-                   r = requests.get("http://192.168.1.90/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
+                   r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
                    calibrate_now = 1
                    sense_up = sense_up + 1
 
