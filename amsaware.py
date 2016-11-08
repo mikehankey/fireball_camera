@@ -4,10 +4,16 @@
 # capture. If video files exist around the time of the event
 # the files will be uploaded to the AMS for further analysis. 
 
+from os import listdir
+from os.path import isfile, join 
 import json, requests
 import numpy as np
 from datetime import datetime, date, time
 from dateutil import parser
+
+def read_files(dir):
+    captures = [f for f in listdir(dir) if isfile(join(dir, f))]
+    return(captures)
 
 def read_config():
     config = {}
@@ -18,6 +24,19 @@ def read_config():
       config[data[0]] = data[1]
     return(config)
 
+def read_fov():
+    lats = []
+    lons = []
+    file = open("fov.txt")
+    for line in file:
+       (lon,lat,alt) = line.split(",")
+       lats.append(float(lat))
+       lons.append(float(lon))
+    max_lat = max(lats)
+    max_lon = max(lons)
+    min_lat = min(lats)
+    min_lon = min(lons)
+    return(max_lat, max_lon, min_lat, min_lon)
 
 def get_ams_reports(ams_year, ams_event_id,type, ratings):
    ams_api_key = "QwCsPJKr87y15Sy"
@@ -103,8 +122,34 @@ def get_ams_event(year, event_id, ratings):
    print ("Fireball End Lat/Lon/Alt:\t" + str(fb_end_lat) + "/" + str(fb_end_lon) + "/" + str(fb_end_alt))
    print ("Impact Lat/Lon/Alt:      \t" + str(impact_lat) + "/" + str(impact_lon) + "/0")
    print ("Event Epicenter Lat/Lon:\t" + str(epicenter_lat) + "/" + str(epicenter_lon))
+   print ("Camera FOV Max Lat/Lon:\t\t" + str(max_lat) + "/" + str(max_lon))
+   print ("Camera FOV Min Lat/Lon:\t\t" + str(min_lat) + "/" + str(min_lon))
 
-def get_close_events(start_date, end_date, lat, lon):
+   if fb_start_lat >= min_lat and fb_start_lat <= max_lat:
+       start_lat_match = 1
+   else:
+       start_lat_match = 0
+   if fb_start_lon >= min_lon and fb_start_lon <= max_lon:
+       start_lon_match = 1
+   else:
+       start_lon_match = 0
+
+   if fb_end_lat >= min_lat and fb_end_lat <= max_lat:
+       end_lat_match = 1
+   else:
+       end_lat_match = 0
+   if fb_end_lon >= min_lon and fb_end_lon <= max_lon:
+       end_lon_match = 1
+   else:
+       end_lon_match = 0
+
+
+
+   print "Start Point in FOV:\t\t", start_lat_match, start_lon_match
+   print "End Point in FOV:\t\t", end_lat_match, end_lon_match
+
+
+def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat, min_lon):
 
    events = set() 
    ams_api_key = "QwCsPJKr87y15Sy"
@@ -130,5 +175,7 @@ def get_close_events(start_date, end_date, lat, lon):
        get_ams_event(year, event_id, 1)
 
 
-
-get_close_events('2016-11-07', '2016-11-08', 39, -76)
+(max_lat, max_lon, min_lat, min_lon) = read_fov()
+captures = read_files("/var/www/html/out")
+config = read_config()
+get_close_events('2016-11-07', '2016-11-08', config['cam_lat'], config['cam_lon'], max_lat, max_lon, min_lat, min_lon)

@@ -81,6 +81,10 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
     print("</Polygon>\n")
     print("</Placemark>\n")
 
+    out = open("fov.txt", "w")
+    out.write(cords)
+    out.close
+
 #    print ("ULC:", ulc_lat, ulc_lon)
 #    print ("URC:", urc_lat, urc_lon)
 #    print ("LLC:", llc_lat, llc_lon)
