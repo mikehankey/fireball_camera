@@ -178,8 +178,8 @@ def show_loop(pipe_child):
                if record == 1: 
 
                    df = open(outfile_text, 'w', 1)
-                   time_diff = frame_times[0] - frame_times[199]
-                   fps = 200 / time_diff
+                   time_diff = frame_times[0] - frame_times[299]
+                   fps = 300 / time_diff
                    print ("FPS: ", fps) 
                    writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
                    while frames:
