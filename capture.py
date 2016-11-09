@@ -52,9 +52,9 @@ def show_loop(pipe_child):
     #time_start = datetime.datetime.now()
     time_start = time.time()
     frame = pipe_child.recv()
-    frames = deque(maxlen=200)
-    frame_times = deque(maxlen=200)
-    frame_data = deque(maxlen=200)
+    frames = deque(maxlen=300)
+    frame_times = deque(maxlen=300)
+    frame_data = deque(maxlen=300)
 
     motion_on = 0
     motion_off = 0
@@ -62,7 +62,7 @@ def show_loop(pipe_child):
     lc = 1
     calibrate_now = 0
     calibrate_start = 0
-    sense_up = 0
+    #sense_up = 0
  
     while True:
         frame = pipe_child.recv()
@@ -103,30 +103,30 @@ def show_loop(pipe_child):
             time_start = frame_time
 
         if count % 3 == 0: 
-            if sense_up > 1: 
-               print ("Sense Up: ", sense_up)
-            if sense_up >= 100 and sense_up < 103:
-               print ("Take calibration...")
-               dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
-               dec_sec_f = dec_sec[:2]
-               cframe = frame
-               format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y-%m-%d %H:%M:%S.")
-               cv2.putText(cframe, "AMSMeteors.org / " + cam_operator + " " + format_time + dec_sec_f + " UTC " + cam_id + " " + cam_lat + " " + cam_lon,
-               (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
-               format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
-               cal_file = "/var/www/html/out/cal" + format_time + ".jpg"
-               cv2.imwrite(cal_file, cframe)
-               motion_on = 0 
-               motion_off = 0 
-            if sense_up == 106:
+            #if sense_up > 1: 
+            #   print ("Sense Up: ", sense_up)
+            #if sense_up >= 100 and sense_up < 103:
+            #   print ("Take calibration...")
+            #   dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
+            #   dec_sec_f = dec_sec[:2]
+            #   cframe = frame
+            #   format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y-%m-%d %H:%M:%S.")
+            #   cv2.putText(cframe, "AMSMeteors.org / " + cam_operator + " " + format_time + dec_sec_f + " UTC " + cam_id + " " + cam_lat + " " + cam_lon,
+            #   (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
+            #   format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
+            #   cal_file = "/var/www/html/out/cal" + format_time + ".jpg"
+            #   cv2.imwrite(cal_file, cframe)
+            #   motion_on = 0 
+            #   motion_off = 0 
+            #if sense_up == 106:
                #os.system("/var/www/html/write-serial.py sense_down")
-               print ("Sense down.")
-               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
-            if sense_up > 200: 
-               calibrate_now = 0
-               motion_on = 0
-               motion_on = 0
-               sense_up = 0
+            #    print ("Sense down.")
+            #   r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+            #if sense_up > 200: 
+            #   calibrate_now = 0
+            #   motion_on = 0
+            #   motion_on = 0
+            #   sense_up = 0
 
 
 
@@ -147,7 +147,7 @@ def show_loop(pipe_child):
 
             if len(cnts) == 0:
                motion_off = motion_off + 1
-            elif len(cnts) > 2 and lc > 10:
+            elif len(cnts) > 2 and lc > 3:
                print ("dropped frame", len(cnts))
                motion_off = motion_off + 1
                dropped = frames.pop()
@@ -157,11 +157,11 @@ def show_loop(pipe_child):
                motion_off = 0 
             if motion_off > 5 and motion_on < 3:
                motion_on = 0
-            if calibrate_now == 1:
-               sense_up = sense_up + 1
+            #if calibrate_now == 1:
+            #   sense_up = sense_up + 1
 
-            if motion_off == 5 and motion_on >= 3:
-               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
+            #if motion_off == 3 and motion_on >= 3:
+               #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
             if motion_off > 20 and motion_on >= 3 and calibrate_now == 0: 
                #ff.write("RECORD BUFFER NOW!\n")
@@ -198,9 +198,9 @@ def show_loop(pipe_child):
                        i = i + 1
                    writer.release()
                    df.close()
-                   r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
-                   calibrate_now = 1
-                   sense_up = sense_up + 1
+                   #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+                   #calibrate_now = 1
+                   #sense_up = sense_up + 1
 
             if motion_on > 0:
                 #ff.write("motion_on " + str(motion_on) + "\n")
