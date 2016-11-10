@@ -52,9 +52,9 @@ def show_loop(pipe_child):
     #time_start = datetime.datetime.now()
     time_start = time.time()
     frame = pipe_child.recv()
-    frames = deque(maxlen=300)
-    frame_times = deque(maxlen=300)
-    frame_data = deque(maxlen=300)
+    frames = deque(maxlen=200)
+    frame_times = deque(maxlen=200)
+    frame_data = deque(maxlen=200)
 
     motion_on = 0
     motion_off = 0
@@ -178,8 +178,9 @@ def show_loop(pipe_child):
                if record == 1: 
 
                    df = open(outfile_text, 'w', 1)
-                   time_diff = frame_times[0] - frame_times[299]
-                   fps = 300 / time_diff
+                   dql = len(frame_times) - 1
+                   time_diff = frame_times[1] - frame_times[dql]
+                   fps = 200 / time_diff
                    print ("FPS: ", fps) 
                    writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
                    while frames:
