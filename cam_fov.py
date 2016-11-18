@@ -74,7 +74,7 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
     print("<outerBoundaryIs>\n")
     print("<LinearRing>\n")
     print("<coordinates>\n")
-    print cords
+    print (cords)
     print("</coordinates>\n")
     print("</LinearRing>\n")
     print("</outerBoundaryIs>\n")
