@@ -4,6 +4,9 @@
 # capture. If video files exist around the time of the event
 # the files will be uploaded to the AMS for further analysis. 
 
+import sys
+import os
+import time as gtime
 from os import listdir
 from os.path import isfile, join 
 import json, requests
@@ -92,7 +95,15 @@ def get_ams_event(year, event_id, ratings):
    data = {'api_key' : ams_api_key, 'year' : year, 'event_id' : event_id, 'format' : 'json', 'ratings': ratings, 'override': 0}
    r = requests.get(url, params=data)
    my_data = r.json()
-
+   if "result" not in my_data.keys():
+      print ("No trajectory for this event.")
+      return(0)
+   #try:
+   #   event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
+   #except:
+   #   print ("No trajectory for this event.")
+   #   return(0)
+   
    event_key = "Event #" + str(event_id) + "-" + str(year)
    event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
    fb_start_lat =  my_data['result'][event_key]['start_lat']
@@ -109,7 +120,6 @@ def get_ams_event(year, event_id, ratings):
 
    # REFINE THE DATE
    type = 'datetime'
-   dates = []
    dates = get_ams_reports(year, event_id, type, ratings)
    if len(dates) > 0:
       better_event_datetime =  avg_dates(event_datetime_utc, dates)
@@ -143,39 +153,64 @@ def get_ams_event(year, event_id, ratings):
    else:
        end_lon_match = 0
 
-
-
-   print "Start Point in FOV:\t\t", start_lat_match, start_lon_match
-   print "End Point in FOV:\t\t", end_lat_match, end_lon_match
-
+   print ("Start Point in FOV:\t\t", start_lat_match, start_lon_match)
+   print ("End Point in FOV:\t\t", end_lat_match, end_lon_match)
+   return(better_event_datetime)
 
 def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat, min_lon):
 
    events = set() 
+   event_dates = {} 
    ams_api_key = "QwCsPJKr87y15Sy"
    url = "http://www.amsmeteors.org/members/api/open_api/get_close_reports"
    data = {'api_key' : ams_api_key, 'start_date' : start_date, 'end_date' : end_date, 'lat': lat, 'lng': lon, 'format' : 'json'}
+   print (data)
    r = requests.get(url, params=data)
    my_data = r.json()
    #print my_data
+
+   if "result" not in my_data.keys():
+      print ("No close events.")
+      exit()
+
    for row in my_data['result']:
        #print (str(row), str(my_data['result'][row]['latitude']), str(my_data['result'][row]['longitude']), str(my_data['result'][row]['report_date_utc']))
        if "#" in str(row):
            (a, b, c) = str(row).split(" ")
+           (utc_date) = my_data['result'][row]['report_date_utc']
            (event_id, year) = b.split("-", 2)
            event_id = event_id.replace("#", "")
            event_id = int(event_id)
            events.add(event_id)
+           event_dates[event_id] = utc_date 
        else: 
            print ("skip pending report")   
 
+   captures = read_files("/var/www/html/out")
    print ("Unique events within your area.")
    for event_id in events:
        print ("Event ID:\t\t\t" + str(event_id))
-       get_ams_event(year, event_id, 1)
+       avg_date = get_ams_event(year, event_id, 1)
+       if avg_date == 0:
+          avg_date = parser.parse(event_dates[event_id])
+       # compare dates on files here
+       print ("Looking for files near this date:", avg_date)
+       for capture in captures:
+           if "avi" in capture:
+              #print (capture, avg_date)
+              (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat("/var/www/html/out/" + capture)
+              
 
+              file_date = datetime.strptime(gtime.ctime(ctime), "%a %b %d %H:%M:%S %Y")
+              time_diff = avg_date - file_date
+
+              #time_diff = dt - good_avg_date
+              minutes, seconds = divmod(time_diff.total_seconds(), 60)
+              if minutes > -180 and minutes < 180:
+                 print (minutes, capture, avg_date, gtime.ctime(ctime))
+
+check_date = sys.argv[1]
 
 (max_lat, max_lon, min_lat, min_lon) = read_fov()
-captures = read_files("/var/www/html/out")
 config = read_config()
-get_close_events('2016-11-07', '2016-11-08', config['cam_lat'], config['cam_lon'], max_lat, max_lon, min_lat, min_lon)
+get_close_events(check_date + " 00:00:00", check_date + ' 23:59:59', config['cam_lat'], config['cam_lon'], max_lat, max_lon, min_lat, min_lon)
