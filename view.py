@@ -1,3 +1,4 @@
+#
 from collections import deque
 from PIL import Image, ImageChops
 from queue import Queue
@@ -14,6 +15,7 @@ def view(file):
     jpg = file
     jpg = jpg.replace(".avi", ".jpg");
     jpg = jpg.replace("out", "jpgs");
+    text = jpg.replace("jpgs", "txt");
 
     cap = cv2.VideoCapture(file)
     final_cv_image = None
@@ -27,7 +29,8 @@ def view(file):
     cv2.namedWindow('pepe')
     count = 0
     frames = deque(maxlen=256)
-
+   
+    fp = open(text, "w")
  
     while True:
         frame_file = jpg.replace(".jpg", "-" + str(count) + ".jpg");
@@ -56,11 +59,12 @@ def view(file):
         thresh= cv2.dilate(threshold, None , iterations=2)
         (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+        out = "Frame: " + str(count)
         if len(cnts) > 0:
             area = cv2.contourArea(cnts[0])
-            print ("Area:", area)
+            out = out + "Area:" + str(area)
             perim = cv2.arcLength(cnts[0], True)
-            print ("Perim:", perim)
+            out = out + "Perim:" + str(perim)
 
             x,y,w,h = cv2.boundingRect(cnts[0])
             cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
@@ -68,12 +72,12 @@ def view(file):
             poly = cv2.approxPolyDP(cnts[0], 0.02*perim, True)
 
             #print ("Poly: ", poly)
-            print ("Convex?: ", cv2.isContourConvex(cnts[0]))
+            out = out + "Convex?: " + str(cv2.isContourConvex(cnts[0]))
 
 
 
 
-
+        fp.write(out)
         #nice_avg = cv2.convertScaleAbs(nice_image_acc)
 
         #print (cnts)
