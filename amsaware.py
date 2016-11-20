@@ -126,14 +126,14 @@ def get_ams_event(year, event_id, ratings):
 
    # PRINT EVENT DETAILS
    print ("Average Event Datetime: \t" + event_datetime_utc)
-   if len(dates) > 0:
-      print ("Better Average Datetime:\t" + better_event_datetime.strftime("%Y-%m-%d %H:%M:%S"))
-   print ("Fireball Start Lat/Lon/Alt:\t" + str(fb_start_lat) + "/" + str(fb_start_lon) + "/" + str(fb_start_alt))
-   print ("Fireball End Lat/Lon/Alt:\t" + str(fb_end_lat) + "/" + str(fb_end_lon) + "/" + str(fb_end_alt))
-   print ("Impact Lat/Lon/Alt:      \t" + str(impact_lat) + "/" + str(impact_lon) + "/0")
-   print ("Event Epicenter Lat/Lon:\t" + str(epicenter_lat) + "/" + str(epicenter_lon))
-   print ("Camera FOV Max Lat/Lon:\t\t" + str(max_lat) + "/" + str(max_lon))
-   print ("Camera FOV Min Lat/Lon:\t\t" + str(min_lat) + "/" + str(min_lon))
+   #if len(dates) > 0:
+      #print ("Better Average Datetime:\t" + better_event_datetime.strftime("%Y-%m-%d %H:%M:%S"))
+   #print ("Fireball Start Lat/Lon/Alt:\t" + str(fb_start_lat) + "/" + str(fb_start_lon) + "/" + str(fb_start_alt))
+   #print ("Fireball End Lat/Lon/Alt:\t" + str(fb_end_lat) + "/" + str(fb_end_lon) + "/" + str(fb_end_alt))
+   #print ("Impact Lat/Lon/Alt:      \t" + str(impact_lat) + "/" + str(impact_lon) + "/0")
+   #print ("Event Epicenter Lat/Lon:\t" + str(epicenter_lat) + "/" + str(epicenter_lon))
+   #print ("Camera FOV Max Lat/Lon:\t\t" + str(max_lat) + "/" + str(max_lon))
+   #print ("Camera FOV Min Lat/Lon:\t\t" + str(min_lat) + "/" + str(min_lon))
 
    if fb_start_lat >= min_lat and fb_start_lat <= max_lat:
        start_lat_match = 1
