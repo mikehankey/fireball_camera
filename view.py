@@ -8,11 +8,63 @@ import cv2
 import numpy as np
 import iproc 
 import time
+import ephem
 import sys
 import os
 MORPH_KERNEL       = np.ones((10, 10), np.uint8)
 
+def day_or_night(file):
+
+   year = file[0:4]
+   month = file[4:2]
+   day = file[6:2]
+   hour = file[8:2]
+   min = file[10:2]
+   print(year,month,day,hour,min)
+   config = read_config()
+   obs = ephem.Observer()
+   obs.pressure = 0
+   obs.horizon = '-0:34'
+   obs.lat = config['cam_lat']
+   obs.lon = config['cam_lon']
+   cur_date = time.strftime("%Y/%m/%d %H:%M")
+   obs.date = cur_date
+
+   sun = ephem.Sun()
+   sun.compute(obs)
+   if sun.alt > -10:
+      status = "day"
+   else:
+      status = "night"
+
+   #print (obs.lat, obs.lon, obs.date)
+   print ("Sun Alt: %s, Sun AZ: %s" % (sun.alt, sun.az))
+
+
+def read_config():
+    config = {}
+    file = open("config.txt", "r")
+    for line in file:
+      line = line.strip('\n')
+      data = line.rsplit("=",2)
+      config[data[0]] = data[1]
+      #print key, value
+
+    config['az_left'] = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
+    config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
+    if (config['az_right'] > 360):
+       config['az_right'] = config['az_right'] - 360
+    if (config['az_left'] > 360):
+       config['az_left'] = config['az_left'] - 360
+    if (config['az_left'] < 0):
+       config['az_left'] = config['az_left'] + 360
+    config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
+    config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
+    return(config)
+
 def analyze(file):
+    a = 0
+    b = 0
     elapsed_frames = 0
     cons_motion = 0
     straight_line = 100
@@ -33,7 +85,7 @@ def analyze(file):
           if countours != "":
              motion = motion + 1
              motion_off = 0
-          if motion == 1 and countours == "":
+          if motion < 5  and countours == "":
              motion = 0
           if motion == 5 and event_start_frame == 0:
              event_start_frame = int(frame) 
@@ -57,14 +109,14 @@ def analyze(file):
     key_frame3 = int(event_end_frame - 3)
     ofr = collections.OrderedDict(sorted(frame_data.items()))
 
-    out = "KEY FRAMES: " + str(key_frame1) + "," + str(key_frame2) + "," + str(key_frame3)
+    out = "Key Frames: " + str(key_frame1) + "," + str(key_frame2) + "," + str(key_frame3) + "\n"
     sfp.write(out)
     elapsed_frames = key_frame3 - key_frame1
     if elapsed_frames > 0:
        avg_center_pixel = sum_color / elapsed_frames
     else:
        avg_center_pixel = 0
-    out = "SUM COLOR/Frames: " + str(sum_color) + "/" + str(elapsed_frames)
+    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(elapsed_frames) + "\n"
     sfp.write(out)
     if cons_motion > 10 and event_end_frame > 0 and 'x' in frame_data[key_frame3] and 'x' in frame_data[key_frame2] and 'x' in frame_data[key_frame1]:
        if ( frame_data[key_frame1]['x'] != '' and frame_data[key_frame2]['x'] != '' and frame_data[key_frame3]['x'] != '' ):
@@ -76,8 +128,10 @@ def analyze(file):
           x3 = int(frame_data[key_frame3]['x'])
           y3 = int(frame_data[key_frame3]['y'])
 
-          a = (y2 - y1) / (x2 - x1)
-          b = (y3 - y1) / (x3 - x1)
+          if x2 - x1 != 0:
+             a = (y2 - y1) / (x2 - x1)
+          if x3 - x1 != 0:
+             b = (y3 - y1) / (x3 - x1)
           straight_line = a - b
           if (straight_line < 1):
              straight = "Y" 
@@ -235,8 +289,10 @@ def view(file):
         cv2.waitKey(1)
 
 file = sys.argv[1]
+day_or_night(file)
+exit()
 
-#view("/var/www/html/out/" + file)
+view("/var/www/html/out/" + file)
 print ("Analyze it...")
 analyze("/var/www/html/out/" + file)
 
