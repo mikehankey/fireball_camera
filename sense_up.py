@@ -27,9 +27,11 @@ def get_calibration_frames():
    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
 
    cv2.setUseOptimized(True)
-   time_start = time.time()
-   time.sleep(2)
    lock = open("/home/pi/fireball_camera/calibrate.txt", "w")
+   time_start = time.time()
+   print ("Sleep")
+   time.sleep(3)
+   print ("Wake")
 
    cap.set(3, 640)
    cap.set(4, 480)
@@ -53,13 +55,16 @@ def get_calibration_frames():
          format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
          outfile = "{}/{}.avi".format("/var/www/html/out/cal", format_time)
          writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
+         flc = 0
          while frames:
-            img = frames.pop()
-            frame_time = frame_times.pop()
-            format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
-            dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
-            format_time = format_time + dec_sec
-            writer.write(img)
+            if (flc > 30):
+               img = frames.pop()
+               frame_time = frame_times.pop()
+               format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
+               dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
+               format_time = format_time + dec_sec
+               writer.write(img)
+            flc = flc + 1
          writer.release()
       count = count + 1
 
@@ -125,7 +130,7 @@ cmd = sys.argv[1]
 
 if cmd == 'sense_up':
    outfile = get_calibration_frames()
-   stack_calibration_video(outfile)
+   #stack_calibration_video(outfile)
    os.system("rm /home/pi/fireball_camera/calibrate.txt")
 if cmd == 'stack':
    outfile = sys.argv[2]
