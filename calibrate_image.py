@@ -1,22 +1,22 @@
 import cv2
 import numpy as np
 
-jpg_file = "20161123011608.jpg"
-star_file = "20161123011608-stars.jpg"
+jpg_file = "calibresult.png"
+star_file = "stars-out.jpg"
 image = cv2.imread(jpg_file)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 #gray = cv2.GaussianBlur(gray, (1,1), 1)
 #gray = cv2.medianBlur(gray, 1)
 #cv2.imshow("Image", gray)
 #cv2.waitKey(0)
-limit_low = 80 
-limit_up =  255
+limit_low = 60 
+limit_up =  245
 last_x = 0
 last_y = 0
 stars_found = 0
 stars = []
 data = None
-for y in range(gray.shape[0] - 60):
+for y in range(gray.shape[0] - 100):
    for x in range(gray.shape[1]):
       pixel = gray.item(y,x)
       if pixel > limit_low and pixel < limit_up: 
@@ -37,10 +37,10 @@ for y in range(gray.shape[0] - 60):
          diff = avg_pix_s - avg_pix
 
          x_y_diff = abs((last_x + last_y) - (x + y))
-         if crop_frame.shape[0] > 0 and crop_frame.shape[1] > 0 and diff > 20 and (x_y_diff > 8):
+         if crop_frame.shape[0] > 0 and crop_frame.shape[1] > 0 and diff > 5 and (x_y_diff > 4):
             #print ("X,Y,AVG,SAVG,DIFF:", x,y,pixel,avg_pix, avg_pix_s)
 
-            edges = cv2.Canny(crop_frame,80,200)
+            #edges = cv2.Canny(crop_frame,80,200)
 
 #            print (crop_frame.argmax(axis=0))
             o,p = np.unravel_index(crop_frame.argmax(), crop_frame.shape)
@@ -91,9 +91,8 @@ dtype = [('x', int), ('y', int), ('avg_pix', float), ('avg_pix_s', float), ('pix
 star_arry = np.array(stars, dtype=dtype)
 np.sort(star_arry, order='pix_dif')
  
-#print ("Stars Found: ", stars_found)
+print ("Stars Found: ", stars_found)
 for star_x, star_y, pix_val, pix_val_sm,pix_dif in np.sort(star_arry,order='pix_dif')[::-1]:
-   if (pix_dif > 10):
       print (star_x, star_y)
       cv2.circle(gray, (star_x, star_y), 10, (255,0,0), 1, 1)
 

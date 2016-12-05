@@ -10,6 +10,8 @@ import time
 import sys
 MORPH_KERNEL       = np.ones((10, 10), np.uint8)
 count = 0
+event = sys.argv[1]
+event.replace(".
 file = "/var/www/html/out/" + sys.argv[1]
 tstamp_prev = None
 image_acc = None
@@ -17,7 +19,7 @@ m_image_acc = None
 cap = cv2.VideoCapture(file)
 cv2.namedWindow('pepe')
 
-
+open("jpgs/" + event + ".txt")
 while True:
     _ , frame = cap.read()
     if (_ is True):

@@ -11,7 +11,7 @@ record = 0
  
 def cam_loop(pipe_parent):
    # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture("rtsp://192.168.1.88/av0_1&user=admin&password=admin")
+    cap = cv2.VideoCapture("rtsp://192.168.1.91/av1_1&user=admin&password=admin")
 
     #cap.set(3, 720.0)
     #cap.set(4, 480.0)

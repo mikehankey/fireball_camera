@@ -15,27 +15,94 @@ import sys
 MORPH_KERNEL = np.ones((10, 10), np.uint8)
 record = 1
 
-#sys.setswitchinterval(1000000) 
-
 def cam_loop(pipe_parent):
-
+    lc = 0
+    motion_on = 0
+    motion_off = 0
     config = read_config()
     print (config['cam_ip'])
 
     cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av1_1&user=admin&password=admin")
 
     cv2.setUseOptimized(True)
+    image_acc = None
 
-    time.sleep(2)
-
-    cap.set(3, 640)
-    cap.set(4, 480)
- 
+    time.sleep(5)
+    frames = deque(maxlen=200)
+    frame_times = deque(maxlen=200)
+    time_start = datetime.datetime.now()
+    count = 0
     while True:
         _ , frame = cap.read()
         if _ is True:
-            frame = cv2.resize(frame, (0,0), fx=0.4, fy=0.4)
-            pipe_parent.send(frame)
+            frame_time = datetime.datetime.now()
+            frames.appendleft(frame)
+            frame_times.appendleft(frame_time)
+            #pipe_parent.send(frame)
+
+        if count % 100 == 0:
+            time_diff = frame_time - time_start
+            fps = count / time_diff.total_seconds()
+            print("FPS: " + str(fps))
+            count = 1
+            lc = lc + 1
+            print ("LC:" + str(lc))
+            time_start = frame_time
+
+        if count % 2 == 0:
+            alpha = .25
+            frame = cv2.resize(frame, (0,0), fx=0.3, fy=0.3)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = cv2.GaussianBlur(frame, (21, 21), 0)
+            if image_acc is None:
+                image_acc = np.empty(np.shape(frame))
+            image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
+            hello = cv2.accumulateWeighted(frame, image_acc, alpha)
+            _,threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
+            thresh= cv2.dilate(threshold, None , iterations=2)
+            (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  
+            if len(cnts) == 0:
+               motion_off = motion_off + 1
+               print(len(cnts), motion_on, motion_off)
+            else :
+               print(len(cnts), motion_on, motion_off)
+               motion_on = motion_on + 1
+               motion_off = 0
+            if motion_off > 5 and motion_on < 3:
+               motion_on = 0
+            if lc < 3:
+               motion_on = 0
+            if motion_off > 10 and motion_on >=3:
+               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
+
+            if motion_off > 40 and motion_on >= 3: 
+               r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+               print("RECORD BUFFER NOW!\n")
+               motion_on = 0
+               format_time = frame_time.strftime("%Y%m%d%H%M%S")
+               outfile = "{}/{}.avi".format("/var/www/html/out", format_time)
+               outfile_text = "{}/{}.txt".format("/var/www/html/out", format_time) 
+
+               df = open(outfile_text, 'w', 1)
+               dql = len(frame_times) - 1
+               time_diff = frame_times[1] - frame_times[dql]
+               fps = 200 / time_diff.total_seconds()
+               print ("FPS: ", fps)
+               writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
+               while frames:
+                   img = frames.pop()
+                   ft = frame_times.pop()
+                   format_time = ft.strftime("%Y-%m-%d %H:%M:%S.")
+                   dec_sec = ft.strftime("%f")
+                   format_time = format_time + dec_sec
+                   df.write(format_time +"\n")
+                   writer.write(img)
+                   #i = i + 1
+               writer.release()
+               df.close()
+        count = count + 1
+
  
 def show_loop(pipe_child):
     config = read_config()
@@ -171,7 +238,6 @@ def show_loop(pipe_child):
                i = 1000 
 
                format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
-
                outfile = "{}/{}.avi".format("/var/www/html/out", format_time)
                outfile_text = "{}/{}.txt".format("/var/www/html/out",
                format_time)
@@ -245,8 +311,8 @@ if __name__ == '__main__':
     cam_process = multiprocessing.Process(target=cam_loop,args=(pipe_parent, ))
     cam_process.start()
  
-    show_process = multiprocessing.Process(target=show_loop,args=(pipe_child, ))
-    show_process.start()
+    #show_process = multiprocessing.Process(target=show_loop,args=(pipe_child, ))
+    #show_process.start()
 
     cam_process.join()
     show_loop.join()
