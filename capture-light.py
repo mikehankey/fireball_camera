@@ -16,13 +16,15 @@ MORPH_KERNEL = np.ones((10, 10), np.uint8)
 record = 1
 
 def cam_loop(pipe_parent):
+    #cv2.namedWindow("pepe")
     lc = 0
+    tstamp_prev = None
     motion_on = 0
     motion_off = 0
     config = read_config()
     print (config['cam_ip'])
 
-    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av1_1&user=admin&password=admin")
+    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av1_0&user=admin&password=admin")
 
     cv2.setUseOptimized(True)
     image_acc = None
@@ -40,7 +42,7 @@ def cam_loop(pipe_parent):
             frame_times.appendleft(frame_time)
             #pipe_parent.send(frame)
 
-        if count % 100 == 0:
+        if count % 300 == 0:
             time_diff = frame_time - time_start
             fps = count / time_diff.total_seconds()
             print("FPS: " + str(fps))
@@ -49,9 +51,10 @@ def cam_loop(pipe_parent):
             print ("LC:" + str(lc))
             time_start = frame_time
 
-        if count % 2 == 0:
-            alpha = .25
-            frame = cv2.resize(frame, (0,0), fx=0.3, fy=0.3)
+        if count % 3 == 0:
+            #alpha = .25
+            alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
+            frame = cv2.resize(frame, (0,0), fx=0.25, fy=0.25)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame = cv2.GaussianBlur(frame, (21, 21), 0)
             if image_acc is None:
@@ -61,22 +64,27 @@ def cam_loop(pipe_parent):
             _,threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
             thresh= cv2.dilate(threshold, None , iterations=2)
             (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-  
+            #cv2.imshow("pepe", frame)
+            #cv2.imshow("pepe", image_diff)
+            #cv2.waitKey(5)
             if len(cnts) == 0:
                motion_off = motion_off + 1
                print(len(cnts), motion_on, motion_off)
-            else :
+            elif len(cnts) < 3 :
                print(len(cnts), motion_on, motion_off)
                motion_on = motion_on + 1
                motion_off = 0
-            if motion_off > 5 and motion_on < 3:
+               #cv2.imshow("pepe", cv2.convertScaleAbs(image_diff))
+            else: 
+               print ("CNTS:", len(cnts)) 
+            if motion_off > 5 and motion_on < 5:
                motion_on = 0
             if lc < 3:
                motion_on = 0
-            if motion_off > 10 and motion_on >=3:
+            if motion_off > 10 and motion_on >=5:
                r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
-            if motion_off > 40 and motion_on >= 3: 
+            if motion_off > 30 and motion_on >= 5: 
                r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
                print("RECORD BUFFER NOW!\n")
                motion_on = 0
