@@ -70,7 +70,7 @@ def cam_loop(pipe_parent):
             if len(cnts) == 0:
                motion_off = motion_off + 1
                print(len(cnts), motion_on, motion_off)
-            elif len(cnts) < 3 :
+            elif len(cnts) < 30 :
                print(len(cnts), motion_on, motion_off)
                motion_on = motion_on + 1
                motion_off = 0
