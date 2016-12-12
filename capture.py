@@ -22,7 +22,7 @@ def cam_loop(pipe_parent):
     config = read_config()
     print (config['cam_ip'])
 
-    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av1_1&user=admin&password=admin")
+    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
 
     cv2.setUseOptimized(True)
 
