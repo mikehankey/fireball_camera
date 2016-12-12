@@ -16,7 +16,7 @@ R = 6378.1
 
 def read_config():
     config = {}
-    file = open("config.txt", "r")
+    file = open("config-atkins.txt", "r")
     for line in file:
       line = line.strip('\n')
       data = line.rsplit("=",2)
@@ -50,10 +50,10 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
         left_az = left_az + 360
     right_az = float(center_heading) + (float(cam_hdeg) / 2)
     bottom_el = float(cam_alt) - (float(cam_vdeg) / 2)
-    bottom_el = float(cam_alt) + (float(cam_vdeg) / 2)
-    ra = math.radians(10)
+    bottom_el = float(cam_alt) + (float(cam_vdeg) / 2) + 10
+    ra = math.radians(20)
     dist_lb = 80/math.tan(ra)
-    ra = math.radians(60)
+    ra = math.radians(65)
     dist_lt = 80/math.tan(ra)
 
     cam_lat = float(cam_lat)
@@ -67,8 +67,19 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
 
     cords = str(ulc_lon)+","+str(ulc_lat)+",80000\n" + str(urc_lon)+","+str(urc_lat)+",80000\n" + str(lrc_lon)+","+str(lrc_lat)+",80000\n" + str(llc_lon)+","+str(llc_lat)+",80000\n" + str(ulc_lon)+","+str(ulc_lat)+",80000\n"
 
-    print("<Placemark>\n")
+    print ("<?xml version='1.0' encoding='UTF-8'?>")
+    print ("<kml xmlns='http://www.opengis.net/kml/2.2'>")
+    print ("<Document>")
+    print ("<Style id='poly'>")
+    print ("<PolyStyle>")
+    print ("<color>550000cc</color>")
+    print ("</PolyStyle>")
+    print ("</Style>")
+    print ("<Placemark>")
+    print ("<styleUrl>#poly</styleUrl>")
+
     print("<Polygon>\n")
+    print("<color>ff0000ff</color>\n")
     print("<extrude>0</extrude>\n")
     print("<altitudeMode>relativeToGround</altitudeMode>\n")
     print("<outerBoundaryIs>\n")
@@ -80,6 +91,8 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
     print("</outerBoundaryIs>\n")
     print("</Polygon>\n")
     print("</Placemark>\n")
+    print("</Document>\n")
+    print("</kml>\n")
 
     out = open("fov.txt", "w")
     out.write(cords)
@@ -92,5 +105,7 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
 
 #(x, cam_lat, cam_lon, center_heading, el_start, cam_hdeg, cam_vdeg) = sys.argv
 config = read_config()
+if sys.argv[1] != None:
+    config['cam_heading'] = int(sys.argv[1])
 get_fov(config['cam_lat'], config['cam_lon'], config['cam_heading'], config['cam_alt'], config['cam_fov_x'], config['cam_fov_y'])
 
