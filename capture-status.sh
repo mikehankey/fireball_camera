@@ -15,7 +15,7 @@ else
 fi
 
 echo "check defunct"
-defunct=$(ps -aux | grep capture-light.py |grep defunct| wc -l);
+defunct=$(ps -aux | grep capture-hd.py |grep defunct| wc -l);
 echo $defunct
 if [[ $defunct -eq 1 ]]; then
      echo "Capture Processes Defunct. Restarting..."

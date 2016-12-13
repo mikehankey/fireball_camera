@@ -101,7 +101,7 @@ def cam_loop(pipe_parent, shared_dict):
 
  
 def show_loop(pipe_child, shared_dict):
-    cv2.namedWindow("pepe")
+    #cv2.namedWindow("pepe")
     config = read_config()
     print (config['cam_ip'])
 
@@ -156,8 +156,8 @@ def show_loop(pipe_child, shared_dict):
             shared_dict['motion_off'] = 0 
         if shared_dict['motion_off'] > 5 and shared_dict['motion_on'] < 3:
             shared_dict['motion_on'] = 0
-        cv2.imshow('pepe', image_diff)
-        cv2.waitKey(5)
+        #cv2.imshow('pepe', image_diff)
+        #cv2.waitKey(5)
         count = count + 1
         #shared_dict['motion_on'] = motion_on
         #shared_dict['motion_off'] = motion_off
