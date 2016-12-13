@@ -27,5 +27,8 @@ print ("WLAN IP: ", wlan0_ip)
 
 url = 'http://www.amsmeteors.org/members/api/cam_api/mkdevice?LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac
 print (url)
-r = requests.post('http://www.amsmeteors.org/members/api/cam_api/mkdevice?LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
+r = requests.get('http://www.amsmeteors.org/members/api/cam_api/mkdevice?LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
 print (r.text)
+#text = "CAM ID: 2"
+
+
