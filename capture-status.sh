@@ -1,11 +1,11 @@
 #!/bin/bash
 
 
-procount=$(ps -aux | grep capture-light.py |grep -v grep| wc -l);
+procount=$(ps -aux | grep capture-hd.py |grep -v grep| wc -l);
 echo $procount
-if [[ $procount -eq 4 ]]; then
+if [[ $procount -eq 6 ]]; then
      echo "Capture Processes Running"
-elif [[ $procount -eq 3 ]]; then
+elif [[ $procount -eq 5 ]]; then
      echo "Capture Processes Running..."
 else
      echo "Capture Processes NOT Running. Starting...";
