@@ -23,8 +23,14 @@ def cam_loop(pipe_parent, shared_dict):
     motion_off = 0
     config = read_config()
     print (config['cam_ip'])
-
-    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin")
+    print (config['hd'])
+    if int(config['hd']) == 1:
+        print ("capture_hd")
+        cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
+        resize = .25
+    else:
+        cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin&tcp")
+        resize = .5
 
     cv2.setUseOptimized(True)
     image_acc = None
@@ -34,6 +40,7 @@ def cam_loop(pipe_parent, shared_dict):
     frame_times = deque(maxlen=200)
     time_start = datetime.datetime.now()
     count = 0
+
     while True:
         _ , frame = cap.read()
         if _ is True:
@@ -41,7 +48,8 @@ def cam_loop(pipe_parent, shared_dict):
             frames.appendleft(frame)
             frame_times.appendleft(frame_time)
         if count % 3 == 0:
-            pipe_parent.send(cv2.resize(frame, (0,0), fx=0.25, fy=0.25))
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
         if count % 100 == 0:
             time_diff = frame_time - time_start
@@ -136,7 +144,7 @@ def show_loop(pipe_child, shared_dict):
         #print ("SHOW LOOP:", count)
 
         #frame = cv2.resize(frame, (0,0), fx=0.8, fy=0.8)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
         if image_acc is None:
             image_acc = np.empty(np.shape(frame))
