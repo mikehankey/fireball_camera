@@ -30,53 +30,88 @@ def cam_loop(pipe_parent, shared_dict):
         resize = .25
     else:
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin&tcp")
-        resize = .5
+        resize = .5 
 
     cv2.setUseOptimized(True)
     image_acc = None
 
+    log = open("/var/www/html/out/log.txt", "w")
+
     time.sleep(5)
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
+    #frame_data = deque(maxlen=200)
     time_start = datetime.datetime.now()
     count = 0
+    shared_dict['motion_on'] = 0
+    shared_dict['motion_off'] = 0
 
     while True:
         _ , frame = cap.read()
         if _ is True:
+            #if int(config['hd']) == 0:
+            #    frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
             frame_time = datetime.datetime.now()
             frames.appendleft(frame)
             frame_times.appendleft(frame_time)
-        if count % 3 == 0:
+        if count % 10 == 0:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
-        if count % 100 == 0:
+        if count % 500 == 0:
             time_diff = frame_time - time_start
             fps = count / time_diff.total_seconds()
             print("FPS: " + str(fps))
-            count = 1
+            print("MMO:", shared_dict['motion_on'], shared_dict['motion_off'])
+            count = 0 
             lc = lc + 1
             print ("LC:" + str(lc))
             time_start = frame_time
-        if lc < 5:
+            log.write("FPS:" + str(fps) + "\n")
+            log.flush()
+            cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
+
+        if lc < 3:
             shared_dict['motion_on'] = 0
             shared_dict['motion_off'] = 0 
+            shared_dict['cnts'] = 0 
+            #shared_dict['xywh'] = None
+            #shared_dict['area'] = None 
+            #shared_dict['perim'] = None 
+
   
 
       # check the lock, if it exists we need to dump the buffer
-        mmo= shared_dict['motion_on']; 
-        mmof= shared_dict['motion_off']; 
+        #mmo= shared_dict['motion_on']; 
+        #mmof= shared_dict['motion_off']; 
+        #cnts= shared_dict['cnts']; 
+        #if cnts > 0:
+        #    (x,y,w,h) = shared_dict['xywh']; 
+        #    area = shared_dict['area']; 
+        #    perim = shared_dict['perim']; 
+        #    avg_color = shared_dict['avg_color']; 
+        #    middle_pixel = shared_dict['middel_pixel']; 
+        #else: 
+        #    (x,y,w,h) = (0,0,0,0) 
+        #    shared_dict['area'] = 0
+        #    shared_dict['xywh'] = None
+        #    shared_dict['perim'] = 0
+        #    shared_dict['avg_color'] = 0
+        #    shared_dict['middle_pixel'] = 0
 
-        print("MMO:", mmo, mmof)
-
-        if (mmo >= 5 and mmof >= 15 and lc > 4):
+        #print("MMO:", shared_dict['cnts'], shared_dict['motion_on'], shared_dict['motion_off'], x,y,w,h,shared_dict['area'],shared_dict['perim'])
+ 
+        #fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(shared_dict['area']) + "|" + str(shared_dict['perim']) + "|" + str(shared_dict['avg_color']) + "|" + str(shared_dict['middle_pixel'])
+        fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" 
+        #frame_data.append(fds)
+        if (shared_dict['motion_on'] >= 5 and shared_dict['motion_off'] >= 15 and lc > 4):
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
             print("RECORD BUFFER NOW!\n")
             shared_dict['motion_on'] = 0
             shared_dict['motion_off'] = 0 
+            shared_dict['cnts'] = 0 
             mmo = 0
             mmof = 0
             lc = 0
@@ -93,14 +128,22 @@ def cam_loop(pipe_parent, shared_dict):
             else: 
                 fps = 20
             print ("FPS: ", fps)
-            writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
+
+            if int(config['hd']) == 0:
+                frame_sz = cv2.resize(frames[0], (0,0), fx=1, fy=.75)
+            else:
+                frame_sz = frames[0]
+
+            writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frame_sz.shape[1], frame_sz.shape[0]), True)
             while frames:
                 img = frames.pop()
+                img = cv2.resize(img, (0,0), fx=1, fy=.75)
                 ft = frame_times.pop()
+                #fd = frame_data.pop()
                 format_time = ft.strftime("%Y-%m-%d %H:%M:%S.")
                 dec_sec = ft.strftime("%f")
                 format_time = format_time + dec_sec
-                df.write(format_time +"\n")
+                df.write(format_time + "|" + "|" + str(fps) + "|\n")
                 writer.write(img)
                    #i = i + 1
             writer.release()
@@ -127,7 +170,7 @@ def show_loop(pipe_child, shared_dict):
     frame = pipe_child.recv()
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
-    frame_data = deque(maxlen=200)
+    #frame_data = deque(maxlen=200)
 
     motion_on = 0
     motion_off = 0
@@ -159,16 +202,43 @@ def show_loop(pipe_child, shared_dict):
         #print(cnts)
         if len(cnts) == 0:
             shared_dict['motion_off'] = shared_dict['motion_off'] + 1
+            #middle_pixel = 0
+            #avg_color = 0
         else:
+            #area = cv2.contourArea(cnts[0])
+            #perim = cv2.arcLength(cnts[0], True)
+            #print ("Perim:", perim)
+            #x,y,w,h = cv2.boundingRect(cnts[0])
+            #x2 = x+w
+            #y2 = y+h
+            #mx = int(x + (w/2))
+            #my = int(y + (h/2))
+            #print ("XY:", x,x2,y,y2)
+            #middle_pixel = frame[my,mx]
+            #middle_sum = np.sum(middle_pixel)
+            #crop_frame = frame[y:y2,x:x2]
+            #avg_color_per_row = np.average(crop_frame, axis=0)
+            #avg_color = np.average(avg_color_per_row, axis=0)
+
+
+
+            #shared_dict['xywh'] = (x,y,w,h)
+            #shared_dict['area'] = area
+            #shared_dict['perim'] = perim
+            #shared_dict['middel_pixel'] = middle_pixel 
+            #shared_dict['avg_color'] = avg_color 
+
             shared_dict['motion_on'] = shared_dict['motion_on'] + 1
             shared_dict['motion_off'] = 0 
+            shared_dict['cnts'] = len(cnts) 
+
+            print("MMO:", shared_dict['cnts'], shared_dict['motion_on'], shared_dict['motion_off'])
+
         if shared_dict['motion_off'] > 5 and shared_dict['motion_on'] < 3:
             shared_dict['motion_on'] = 0
         #cv2.imshow('pepe', image_diff)
         #cv2.waitKey(5)
         count = count + 1
-        #shared_dict['motion_on'] = motion_on
-        #shared_dict['motion_off'] = motion_off
 
 def read_config():
     config = {}
