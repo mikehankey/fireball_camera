@@ -42,6 +42,7 @@ def set_setting(config, setting, value):
 def adjust_brightness(config,settings,blow,bhigh):
    log = open("/var/www/html/out/log.txt", "a");
    means = get_cam_brightness(config)
+   print ("BLOW/HIGH:", blow, bhigh)
    if int(means[3]) > int(bhigh):
       print ("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
       log.write("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
@@ -62,7 +63,7 @@ def adjust_brightness(config,settings,blow,bhigh):
 config = read_config() 
 #cam_ip = config['cam_ip']
 sun_info = read_sun()
-if sun_info['dark'] == 0:
+if int(sun_info['dark']) == 1:
    blow = "30"
    bhigh = "45"
 else:

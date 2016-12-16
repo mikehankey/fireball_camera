@@ -66,7 +66,7 @@ else:
 
 #print (obs.previous_rising(ephem.Sun()))
 #print (obs.next_setting(ephem.Sun()))
-if int(sun_alt) < -10:
+if int(sun_alt) < -3:
    dark = 1
 else:
    dark = 0
