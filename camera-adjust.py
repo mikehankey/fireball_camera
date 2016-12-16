@@ -43,6 +43,10 @@ def adjust_brightness(config,settings,blow,bhigh):
    log = open("/var/www/html/out/log.txt", "a");
    means = get_cam_brightness(config)
    print ("BLOW/HIGH:", blow, bhigh)
+   if int(means[3]) == 0):
+      print ("Image totally black! error.")
+      exit()
+
    if int(means[3]) > int(bhigh):
       print ("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
       log.write("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
