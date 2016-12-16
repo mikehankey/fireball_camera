@@ -16,7 +16,7 @@ R = 6378.1
 
 def read_config():
     config = {}
-    file = open("config-atkins.txt", "r")
+    file = open("config.txt", "r")
     for line in file:
       line = line.strip('\n')
       data = line.rsplit("=",2)
@@ -105,7 +105,7 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
 
 #(x, cam_lat, cam_lon, center_heading, el_start, cam_hdeg, cam_vdeg) = sys.argv
 config = read_config()
-if sys.argv[1] != None:
+if len(sys.argv) > 1:
     config['cam_heading'] = int(sys.argv[1])
 get_fov(config['cam_lat'], config['cam_lon'], config['cam_heading'], config['cam_alt'], config['cam_fov_x'], config['cam_fov_y'])
 

@@ -1,0 +1,81 @@
+#!/usr/bin/python3 
+import subprocess 
+import time
+from collections import defaultdict
+from amscommon import read_config, read_sun
+import requests
+from urllib.request import urlretrieve
+import re
+
+
+
+def get_cam_brightness(config):
+   urlretrieve("http://" + config['cam_ip'] + "/cgi-bin/images_cgi?channel=0&user=admin&pwd=admin", 'cam.jpg')
+   proc = subprocess.Popen( ["identify", "-verbose", "/home/pi/fireball_camera/cam.jpg"], stdout=subprocess.PIPE, shell=False)
+   (out, err) = proc.communicate()
+   outstr = out.decode("utf-8")
+   means = [0,0,0,0] 
+   c = 0
+   for line in outstr.splitlines():
+      if "mean" in line:
+         trash = re.findall(r"[\w']+", line)
+         means[c] = trash[1]
+         c = c + 1
+        
+   return(means)
+
+def get_settings(config):
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=admin&action=get&channel=0"
+   settings = defaultdict()
+   r = requests.get(url)
+   resp = r.text
+   for line in resp.splitlines():
+      (set, val) = line.split("=")
+      settings[set] = val  
+   return(settings)
+
+def set_setting(config, setting, value):
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=admin&action=get&channel=0&" + setting + "=" + str(value)
+   r = requests.get(url)
+   return(r.text)
+
+def adjust_brightness(config,settings,blow,bhigh):
+   log = open("/var/www/html/out/log.txt", "a");
+   means = get_cam_brightness(config)
+   if int(means[3]) > int(bhigh):
+      print ("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
+      log.write("Image is too bright (" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
+      new_b = int(settings['Brightness']) - 10
+      resp = set_setting(config, "Brightness", new_b)
+      return(0)
+   elif int(means[3]) < int(blow): 
+      print ("Image is too dark(" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
+      log.write("Image is too dark(" + str(means[3]) + ") at Brightness=" + settings['Brightness'])
+      new_b = int(settings['Brightness']) + 10
+      resp = set_setting(config, "Brightness", new_b)
+      return(0)
+   else:
+      log.write("Image is just right at overall mean brightness: " + str(means[3]))
+      print ("Image is just right at overall mean brightness: " + str(means[3]))
+      return(1)
+
+config = read_config() 
+#cam_ip = config['cam_ip']
+sun_info = read_sun()
+if sun_info['dark'] == 0:
+   blow = "30"
+   bhigh = "45"
+else:
+   blow = "145"
+   bhigh = "160"
+
+
+cam_settings = get_settings(config)
+
+#set_setting(config, "Brightness", "1")
+loop = 0
+while (loop != 1):
+   print("keep trying")
+   cam_settings = get_settings(config)
+   loop = adjust_brightness(config, cam_settings, blow,bhigh)
+   time.sleep(2)

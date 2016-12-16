@@ -34,14 +34,15 @@ def cam_loop(pipe_parent, shared_dict):
 
     cv2.setUseOptimized(True)
     image_acc = None
+    time_start = datetime.datetime.now()
 
     log = open("/var/www/html/out/log.txt", "w")
+    log.write("Capture Process Started: " + time_start.strftime("%Y%m%d%H%M%S"))
 
     time.sleep(5)
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
     #frame_data = deque(maxlen=200)
-    time_start = datetime.datetime.now()
     count = 0
     shared_dict['motion_on'] = 0
     shared_dict['motion_off'] = 0
@@ -54,7 +55,7 @@ def cam_loop(pipe_parent, shared_dict):
             frame_time = datetime.datetime.now()
             frames.appendleft(frame)
             frame_times.appendleft(frame_time)
-        if count % 10 == 0:
+        if count % 5 == 0:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
@@ -67,7 +68,7 @@ def cam_loop(pipe_parent, shared_dict):
             lc = lc + 1
             print ("LC:" + str(lc))
             time_start = frame_time
-            log.write("FPS:" + str(fps) + "\n")
+            log.write( frame_time.strftime("%Y%m%d%H%M%S") + "|FPS:" + str(fps) + "|\n")
             log.flush()
             cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
 
@@ -104,7 +105,8 @@ def cam_loop(pipe_parent, shared_dict):
         #fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(shared_dict['area']) + "|" + str(shared_dict['perim']) + "|" + str(shared_dict['avg_color']) + "|" + str(shared_dict['middle_pixel'])
         fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" 
         #frame_data.append(fds)
-        if (shared_dict['motion_on'] >= 5 and shared_dict['motion_off'] >= 15 and lc > 4):
+
+        if (shared_dict['motion_on'] >= 3 and shared_dict['motion_off'] >= 7 and lc > 4):
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")

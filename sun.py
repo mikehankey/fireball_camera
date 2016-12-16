@@ -1,3 +1,4 @@
+#!/usr/bin/python3 
 import ephem
 import time
 
@@ -47,7 +48,9 @@ sun = ephem.Sun()
 sun.compute(obs)
 
 #print (obs.lat, obs.lon, obs.date)
-print ("Sun Alt: %s, Sun AZ: %s" % (sun.alt, sun.az))
+
+(sun_alt, x,y) = str(sun.alt).split(":")
+print ("Sun Alt: %s" % (sun_alt))
 
 saz = str(sun.az)
 (sun_az, x,y) = saz.split(":")
@@ -56,11 +59,23 @@ print ("CAM FOV IS : %s to %s " % (config['az_left'], config['az_right']))
 
 if (int(sun_az) >= config['az_left'] and int(sun_az) <= config['az_right']):
    print ("Uh Oh... Sun is in the cam's field of view.")
+   fov=1
 else:
    print ("Sun is not in the cam's field of view")
+   fov=0
 
 #print (obs.previous_rising(ephem.Sun()))
 #print (obs.next_setting(ephem.Sun()))
+if int(sun_alt) < -10:
+   dark = 1
+else:
+   dark = 0
 
+sun_file = open("/home/pi/fireball_camera/sun.txt", "w")
+sun_info = "az=" + str(sun_az) + "\n"
+sun_info = sun_info + "el=" + str(sun_alt) + "\n"
+sun_info = sun_info + "fov=" + str(fov) + "\n"
+sun_info = sun_info + "dark=" + str(dark) + "\n"
+sun_file.write(sun_info)
 
 
