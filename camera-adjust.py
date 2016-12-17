@@ -1,4 +1,5 @@
 #!/usr/bin/python3 
+import cv2
 import subprocess 
 import time
 from collections import defaultdict
@@ -10,8 +11,14 @@ import re
 
 
 def get_cam_brightness(config):
-   urlretrieve("http://" + config['cam_ip'] + "/cgi-bin/images_cgi?channel=0&user=admin&pwd=admin", 'cam.jpg')
+#   urlretrieve("http://" + config['cam_ip'] + "/cgi-bin/images_cgi?channel=0&user=admin&pwd=admin", 'cam.jpg')
+   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
+   _ , frame = cap.read()
+   cv2.imwrite("/home/pi/fireball_camera/cam.jpg", frame)
+
+
    proc = subprocess.Popen( ["identify", "-verbose", "/home/pi/fireball_camera/cam.jpg"], stdout=subprocess.PIPE, shell=False)
+   #proc = subprocess.Popen( ["identify", "-verbose", "/var/www/html/out/latest.jpg"], stdout=subprocess.PIPE, shell=False)
    (out, err) = proc.communicate()
    outstr = out.decode("utf-8")
    means = [0,0,0,0] 
@@ -43,7 +50,7 @@ def adjust_brightness(config,settings,blow,bhigh):
    log = open("/var/www/html/out/log.txt", "a");
    means = get_cam_brightness(config)
    print ("BLOW/HIGH:", blow, bhigh)
-   if int(means[3]) == 0):
+   if int(means[3]) == 0:
       print ("Image totally black! error.")
       exit()
 
@@ -69,7 +76,7 @@ config = read_config()
 sun_info = read_sun()
 if int(sun_info['dark']) == 1:
    blow = "30"
-   bhigh = "45"
+   bhigh = "75"
 else:
    blow = "145"
    bhigh = "160"
