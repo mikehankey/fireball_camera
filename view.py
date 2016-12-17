@@ -1,3 +1,5 @@
+#!/usr/bin/python3 
+from pathlib import Path
 import collections
 from collections import deque
 from PIL import Image, ImageChops
@@ -16,11 +18,13 @@ MORPH_KERNEL       = np.ones((10, 10), np.uint8)
 def day_or_night(file):
 
    year = file[0:4]
-   month = file[4:2]
-   day = file[6:2]
-   hour = file[8:2]
-   min = file[10:2]
-   print(year,month,day,hour,min)
+   month = file[4:6]
+   day = file[6:8]
+   hour = file[8:10]
+   min = file[10:12]
+   sec = file[12:14]
+   print("File:", file)
+   print(year,month,day,hour,min,sec)
    config = read_config()
    obs = ephem.Observer()
    obs.pressure = 0
@@ -38,8 +42,21 @@ def day_or_night(file):
       status = "night"
 
    #print (obs.lat, obs.lon, obs.date)
-   print ("Sun Alt: %s, Sun AZ: %s" % (sun.alt, sun.az))
+   #print ("Sun Alt: %s, Sun AZ: %s" % (sun.alt, sun.az))
+   (sun_alt, x,y) = str(sun.alt).split(":")
+   (sun_az, x,y) = str(sun.az).split(":")
+   print ("Sun Alt: %s" % (sun_alt))
+   if int(sun_alt) < -10:
+      status = "dark";
+   if int(sun_alt) >- 10 and int(sun_alt) < 5:
+      if int(sun_az) > 0 and int(sun_az) < 180:
+         status = "dawn"
+      else:
+         status = "dusk"
+   if int(sun_alt) >= 5:
+      status = "day";
 
+   return(status)
 
 def read_config():
     config = {}
@@ -79,31 +96,39 @@ def analyze(file):
     event_start_frame = 0
     event_end_frame = 0
     sum_color = 0
+    cons_motion = 0
+    max_cons_motion = 0
+    cons_motion_events = 0
     for line in fp:
-       (frame,countours,area,perimeter,convex,x,y,w,h,color,n) = line.split("|")
+       (frame,contours,area,perimeter,convex,x,y,w,h,color,n) = line.split("|")
        if frame != 'frame':
-          if countours != "":
+          if contours != "":
              motion = motion + 1
              motion_off = 0
-          if motion < 5  and countours == "":
+          if motion < 5  and contours == "":
              motion = 0
           if motion == 5 and event_start_frame == 0:
              event_start_frame = int(frame) 
-          if motion >= 1 and countours == "":
+          if motion >= 1 and contours == "":
              motion_off = motion_off + 1
           if motion > 5 and motion_off > 5 and event_end_frame == 0:
              cons_motion = motion
              event_end_frame = int(frame) - 5 
-          out = str(frame)+","+str(motion)+","+str(x)+","+str(y)+","+str(countours)+",\n"
+          out = str(frame)+","+str(motion)+","+str(x)+","+str(y)+","+str(contours)+",\n"
           sfp.write(out)
+          print(out)
           if (event_start_frame != 0 and event_end_frame == 0 and color != ""):
              #print ("COLOR:", color)
              sum_color = sum_color + int(color)
           frame_data.update({int(frame) : {'x': x, 'y': y}})
+          last_frame_motion = motion
+          last_frame_cnts = contours 
     out = "Event Start Frame : " + str(event_start_frame) + "\n"
     sfp.write(out)
+    print (out)
     out = "Event End Frame : " + str(event_end_frame) + "\n"
     sfp.write(out)
+    print (out)
     key_frame1 = int(event_start_frame)
     key_frame2 = int(event_start_frame + ((int(event_end_frame - event_start_frame) / 2)))
     key_frame3 = int(event_end_frame - 3)
@@ -111,6 +136,7 @@ def analyze(file):
 
     out = "Key Frames: " + str(key_frame1) + "," + str(key_frame2) + "," + str(key_frame3) + "\n"
     sfp.write(out)
+    print (out)
     elapsed_frames = key_frame3 - key_frame1
     if elapsed_frames > 0:
        avg_center_pixel = sum_color / elapsed_frames
@@ -118,6 +144,7 @@ def analyze(file):
        avg_center_pixel = 0
     out = "Sum Color/Frames: " + str(sum_color) + "/" + str(elapsed_frames) + "\n"
     sfp.write(out)
+    print (out)
     if cons_motion > 10 and event_end_frame > 0 and 'x' in frame_data[key_frame3] and 'x' in frame_data[key_frame2] and 'x' in frame_data[key_frame1]:
        if ( frame_data[key_frame1]['x'] != '' and frame_data[key_frame2]['x'] != '' and frame_data[key_frame3]['x'] != '' ):
           x1 = int(frame_data[key_frame1]['x'])
@@ -138,24 +165,39 @@ def analyze(file):
     else: 
        out = "Not enough consecutive motion."
        sfp.write(out)
+       print (out)
        
     meteor = "N"
     if (straight_line < 1 and avg_center_pixel > 500):
        meteor = "Y"
     sfp.write("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
+    print("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
     sfp.write("Straight Line:\t" + str(straight) + "," + str(straight_line)+"\n")
+    print("Straight Line:\t" + str(straight) + "," + str(straight_line)+"\n")
     sfp.write("Average Center Pixel Color:\t" + str(avg_center_pixel) + "\n")
+    print("Average Center Pixel Color:\t" + str(avg_center_pixel) + "\n")
     sfp.write("Likely Meteor:\t"+ str(meteor)+"\n")
+    print("Likely Meteor:\t"+ str(meteor)+"\n")
     if meteor == "N":
        false_file= file.replace("out/", "out/false/")
        false_data_file= data_file.replace("out/", "out/false/")
        false_summary_file= summary_file.replace("out/", "out/false/")
        cmd = "mv " + file + " " + false_file 
-       os.system(cmd)
+       #os.system(cmd)
        cmd = "mv " + data_file + " " + false_data_file
-       os.system(cmd)
+       #os.system(cmd)
        cmd = "mv " + summary_file + " " + false_summary_file
-       os.system(cmd)
+       #os.system(cmd)
+    else:  
+       maybe_file= file.replace("out/", "out/maybe/")
+       maybe_data_file= data_file.replace("out/", "out/maybe/")
+       maybe_summary_file= summary_file.replace("out/", "out/maybe/")
+       cmd = "mv " + file + " " + maybe_file 
+       #os.system(cmd)
+       cmd = "mv " + data_file + " " + maybe_data_file
+       #os.system(cmd)
+       cmd = "mv " + summary_file + " " + maybe_summary_file
+       #os.system(cmd)
   
 def view(file):
     jpg = file
@@ -178,7 +220,7 @@ def view(file):
     frames = deque(maxlen=256)
 
     fp = open(data_file, "w")
-    fp.write("frame|countours|area|perimeter|convex|x|y|w|h|color|\n")
+    fp.write("frame|contours|area|perimeter|convex|x|y|w|h|color|\n")
     mid_pix_total = 0
     while True:
         frame_file = jpg.replace(".jpg", "-" + str(count) + ".jpg");
@@ -226,8 +268,8 @@ def view(file):
             # crop out
             x2 = x+w
             y2 = y+h
-            mx = x + (w/2)
-            my = y + (h/2)
+            mx = int(x + (w/2))
+            my = int(y + (h/2))
             #print ("XY:", x,x2,y,y2)
             middle_pixel = nice_frame[my,mx]
             middle_sum = np.sum(middle_pixel)
@@ -250,7 +292,7 @@ def view(file):
             #print ("Poly: ", poly)
             #print ("Convex?: ", cv2.isContourConvex(cnts[0]))
             convex = cv2.isContourConvex(cnts[0])
-            #data = "frame|countours|area|perimeter|poly|convex|x|y|w|h|color|\n" 
+            #data = "frame|contours|area|perimeter|poly|convex|x|y|w|h|color|\n" 
             data = data + str(len(cnts)) + "|" + str(area) + "|" + str(perim) + "|"
             #data = data + str(poly) + "|"
             data = data + str(convex) + "|"
@@ -289,10 +331,15 @@ def view(file):
         cv2.waitKey(1)
 
 file = sys.argv[1]
-day_or_night(file)
-exit()
+status = day_or_night(file)
+print ("This video was taken during: ", status)
 
-view("/var/www/html/out/" + file)
+testing = "/var/www/html/out" + file
+test_data_file = testing.replace(".avi", ".txt");
+test_summary_file = test_data_file.replace(".txt", "-summary.txt")
+analyze_only = Path(test_summary_file);
+if (analyze_only == 0):
+   view("/var/www/html/out/" + file)
 print ("Analyze it...")
 analyze("/var/www/html/out/" + file)
 

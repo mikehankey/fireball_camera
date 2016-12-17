@@ -47,9 +47,17 @@ def cam_loop(pipe_parent, shared_dict):
     shared_dict['motion_on'] = 0
     shared_dict['motion_off'] = 0
 
+    cap_start_unix_time = time.time()
+    start_frame_time = cap.get(0)
+    cap_unix_time = cap_start_time + start_frame_time
+
     while True:
         _ , frame = cap.read()
         if _ is True:
+            currentFrame = cap.get(0)
+            cap_unix_time = cap_start_time + start_frame_time
+            print (currentFrame, start_frame_time - currentFrame)
+
             #if int(config['hd']) == 0:
             #    frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
             frame_time = datetime.datetime.now()

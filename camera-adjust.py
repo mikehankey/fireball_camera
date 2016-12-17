@@ -79,7 +79,7 @@ if int(sun_info['dark']) == 1:
    bhigh = "75"
 else:
    blow = "145"
-   bhigh = "160"
+   bhigh = "155"
 
 
 cam_settings = get_settings(config)
