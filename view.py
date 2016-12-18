@@ -1,5 +1,6 @@
 #!/usr/bin/python3 
 from pathlib import Path
+import glob
 import collections
 from collections import deque
 from PIL import Image, ImageChops
@@ -91,31 +92,39 @@ def analyze(file):
     frame_data = {}
     data_file = file.replace(".avi", ".txt");
     summary_file = data_file.replace(".txt", "-summary.txt")
+    object_file = data_file.replace(".txt", "-objects.jpg")
     fp = open(data_file, "r")
     sfp = open(summary_file, "w")
     event_start_frame = 0
     event_end_frame = 0
     sum_color = 0
-    cons_motion = 0
+    cons_motion = 1 
     max_cons_motion = 0
     cons_motion_events = 0
+    last_motion = 0
     for line in fp:
        (frame,contours,area,perimeter,convex,x,y,w,h,color,n) = line.split("|")
        if frame != 'frame':
           if contours != "":
              motion = motion + 1
              motion_off = 0
+             if last_motion > 0:
+                cons_motion = cons_motion + 1
+             if cons_motion > max_cons_motion:
+                max_cons_motion = cons_motion
           if motion < 5  and contours == "":
              motion = 0
+             last_motion = 0
+             cons_motion = 0
           if motion == 5 and event_start_frame == 0:
              event_start_frame = int(frame) 
           if motion >= 1 and contours == "":
              motion_off = motion_off + 1
           if motion > 5 and motion_off > 5 and event_end_frame == 0:
-             cons_motion = motion
              event_end_frame = int(frame) - 5 
           out = str(frame)+","+str(motion)+","+str(x)+","+str(y)+","+str(contours)+",\n"
           sfp.write(out)
+          cons_motion = motion
           print(out)
           if (event_start_frame != 0 and event_end_frame == 0 and color != ""):
              #print ("COLOR:", color)
@@ -138,14 +147,17 @@ def analyze(file):
     sfp.write(out)
     print (out)
     elapsed_frames = key_frame3 - key_frame1
-    if elapsed_frames > 0:
-       avg_center_pixel = sum_color / elapsed_frames
+    if cons_motion > 0:
+       avg_center_pixel = sum_color / cons_motion 
     else:
        avg_center_pixel = 0
-    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(elapsed_frames) + "\n"
+    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(cons_motion) + "\n"
     sfp.write(out)
     print (out)
-    if cons_motion > 10 and event_end_frame > 0 and 'x' in frame_data[key_frame3] and 'x' in frame_data[key_frame2] and 'x' in frame_data[key_frame1]:
+    out = "Consectutive Motion Frames: " + str(max_cons_motion) + "\n"
+    sfp.write(out)
+    print (out)
+    if max_cons_motion > 10 and event_end_frame > 0 and 'x' in frame_data[key_frame3] and 'x' in frame_data[key_frame2] and 'x' in frame_data[key_frame1]:
        if ( frame_data[key_frame1]['x'] != '' and frame_data[key_frame2]['x'] != '' and frame_data[key_frame3]['x'] != '' ):
           x1 = int(frame_data[key_frame1]['x'])
           y1 = int(frame_data[key_frame1]['y'])
@@ -182,29 +194,36 @@ def analyze(file):
        false_file= file.replace("out/", "out/false/")
        false_data_file= data_file.replace("out/", "out/false/")
        false_summary_file= summary_file.replace("out/", "out/false/")
+       false_object_file = object_file.replace("out/", "out/false/")
        cmd = "mv " + file + " " + false_file 
-       #os.system(cmd)
+       os.system(cmd)
        cmd = "mv " + data_file + " " + false_data_file
-       #os.system(cmd)
+       os.system(cmd)
        cmd = "mv " + summary_file + " " + false_summary_file
-       #os.system(cmd)
+       os.system(cmd)
+       cmd = "mv " + object_file + " " + false_object_file
+       os.system(cmd)
     else:  
        maybe_file= file.replace("out/", "out/maybe/")
        maybe_data_file= data_file.replace("out/", "out/maybe/")
        maybe_summary_file= summary_file.replace("out/", "out/maybe/")
        cmd = "mv " + file + " " + maybe_file 
-       #os.system(cmd)
+       maybe_object_file = object_file.replace("out/", "out/maybe/")
+       os.system(cmd)
        cmd = "mv " + data_file + " " + maybe_data_file
-       #os.system(cmd)
+       os.system(cmd)
        cmd = "mv " + summary_file + " " + maybe_summary_file
-       #os.system(cmd)
+       os.system(cmd)
+       cmd = "mv " + object_file + " " + maybe_object_file
+       os.system(cmd)
   
-def view(file):
+def view(file, show):
     jpg = file
     data_file = file
     jpg = jpg.replace(".avi", ".jpg");
     jpg = jpg.replace("out", "jpgs");
     data_file = data_file.replace(".avi", ".txt");
+    object_file = data_file.replace(".txt", "-objects.jpg")
 
     cap = cv2.VideoCapture(file)
     final_cv_image = None
@@ -215,10 +234,15 @@ def view(file):
     nice_image_acc = None
     final_image = None
     cur_image = None
-    cv2.namedWindow('pepe')
+    if show == 1:
+       cv2.namedWindow('pepe')
     count = 0
     frames = deque(maxlen=256)
-
+    out_jpg = np.zeros((500,500,3))
+    out_jpg_final = np.zeros((500,500,3))
+    oy = 0
+    ox = 0
+    max_h = 0
     fp = open(data_file, "w")
     fp.write("frame|contours|area|perimeter|convex|x|y|w|h|color|\n")
     mid_pix_total = 0
@@ -232,6 +256,12 @@ def view(file):
                return()
            #print (jpg)
            #cv2.imwrite(jpg, final_cv_image)
+
+           out_jpg_final = out_jpg[0:max_h,0:500]
+           if max_h > 0:
+              cv2.imwrite(object_file, out_jpg_final)
+           else: 
+              cv2.imwrite(object_file, out_jpg)
            return()
            #exit()
 
@@ -270,12 +300,28 @@ def view(file):
             y2 = y+h
             mx = int(x + (w/2))
             my = int(y + (h/2))
+ 
             #print ("XY:", x,x2,y,y2)
             middle_pixel = nice_frame[my,mx]
             middle_sum = np.sum(middle_pixel)
             #print("MID PIX:", middle_pixel, middle_sum)
             mid_pix_total = mid_pix_total + middle_sum
             crop_frame = nice_frame[y:y2,x:x2]
+            if w < 500 and max_h < 500:
+               if (ox + w) >= 500:
+                  oy += max_h
+                  ox = 0  
+               print ("OY,OY+H,OX,OX+W: ", oy, oy+h, ox, ox+w)
+               out_jpg[oy:oy+h,ox:ox+w] = crop_frame
+               if show == 1:
+                  cv2.imshow('pepe', cv2.convertScaleAbs(out_jpg))
+                  cv2.waitKey(1) 
+               ox = ox +w
+               if h > max_h :
+                  max_h = h
+                  print ("MAX Height Hit", max_h)
+
+
             avg_color_per_row = np.average(crop_frame, axis=0)
             avg_color = np.average(avg_color_per_row, axis=0)
             #print ("AVG COLOR: " , avg_color, np.sum(avg_color))
@@ -304,8 +350,7 @@ def view(file):
         else:
             data = data + "|||||||||"
         fp.write(data + "\n")
-     
-
+    
 
 
 
@@ -324,23 +369,29 @@ def view(file):
 
         #final_cv_image = np.array(cur_image)
         #cv2.imshow('pepe', final_cv_image)
-        if count % 1 == 0:
-            cv2.imshow('pepe', frame)
+        #if count % 1 == 0:
+        #    cv2.imshow('pepe', frame)
         count = count + 1
         #print (count)
-        cv2.waitKey(1)
+        #cv2.waitKey(1)
 
-file = sys.argv[1]
-status = day_or_night(file)
-print ("This video was taken during: ", status)
+try: 
+   file = sys.argv[1]
+   batch = 0
+except:
+   files = glob.glob("/var/www/html/out/*.avi") 
+   batch = 1
 
-testing = "/var/www/html/out" + file
-test_data_file = testing.replace(".avi", ".txt");
-test_summary_file = test_data_file.replace(".txt", "-summary.txt")
-analyze_only = Path(test_summary_file);
-if (analyze_only == 0):
-   view("/var/www/html/out/" + file)
-print ("Analyze it...")
-analyze("/var/www/html/out/" + file)
+if batch == 0:
+   status = day_or_night(file)
+   print ("This video was taken during: ", status)
+   view("/var/www/html/out/" + file, 1)
+   analyze("/var/www/html/out/" + file)
+else:
+   for file in files:
+      file = file.replace("/var/www/html/out/", "")
+      print (file)  
+      view("/var/www/html/out/" + file, 0)
+      analyze("/var/www/html/out/" + file)
 
 
