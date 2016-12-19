@@ -1,4 +1,5 @@
 #!/usr/bin/python3 
+import pytesseract
 from pathlib import Path
 import glob
 import collections
@@ -24,6 +25,7 @@ def day_or_night(file):
    hour = file[8:10]
    min = file[10:12]
    sec = file[12:14]
+   date_str = year + "/" + month + "/" + day + " " + hour + ":" + min
    print("File:", file)
    print(year,month,day,hour,min,sec)
    config = read_config()
@@ -32,9 +34,10 @@ def day_or_night(file):
    obs.horizon = '-0:34'
    obs.lat = config['cam_lat']
    obs.lon = config['cam_lon']
-   cur_date = time.strftime("%Y/%m/%d %H:%M")
+   #cur_date = time.strftime("%Y/%m/%d %H:%M")
+   cur_date = datetime.datetime.strptime(date_str, "%Y/%m/%d %H:%M")
    obs.date = cur_date
-
+   print ("FILE DATE: ", cur_date)
    sun = ephem.Sun()
    sun.compute(obs)
    if sun.alt > -10:
@@ -83,6 +86,8 @@ def read_config():
 def analyze(file):
     a = 0
     b = 0
+    bright_pixel_count = 0
+    bright_pixel_total = 0
     elapsed_frames = 0
     cons_motion = 0
     straight_line = 100
@@ -102,8 +107,11 @@ def analyze(file):
     max_cons_motion = 0
     cons_motion_events = 0
     last_motion = 0
+    mid_pix_count = 0
     for line in fp:
-       (frame,contours,area,perimeter,convex,x,y,w,h,color,n) = line.split("|")
+       (frame,contours,area,perimeter,convex,x,y,w,h,middle_pixel,n) = line.split("|")
+       if (middle_pixel== ""):
+          middle_pixel= 0
        if frame != 'frame':
           if contours != "":
              motion = motion + 1
@@ -122,22 +130,40 @@ def analyze(file):
              motion_off = motion_off + 1
           if motion > 5 and motion_off > 5 and event_end_frame == 0:
              event_end_frame = int(frame) - 5 
-          out = str(frame)+","+str(motion)+","+str(x)+","+str(y)+","+str(contours)+",\n"
+          if int(middle_pixel) > 0:
+             sum_color = sum_color + int(middle_pixel)
+             mid_pix_count = mid_pix_count + 1
+             if int(middle_pixel) >= 190:
+                print ("Bright Pixel Count/Mid Pix Total", bright_pixel_count, middle_pixel)
+                bright_pixel_count = bright_pixel_count + 1
+                bright_pixel_total = bright_pixel_total + int(middle_pixel)
+
+
+          out = str(frame)+","+str(contours)+","+str(area)+","+str(perimeter)+","+str(convex)+","+str(x) + "," + str(y) + "," + str(w) + "," + str(h) + "," + str(middle_pixel) + "," + str(n) + ",\n"
+          frame_data.update({int(frame) : {'x': x, 'y': y}})
           sfp.write(out)
           cons_motion = motion
           print(out)
-          if (event_start_frame != 0 and event_end_frame == 0 and color != ""):
+          if (event_start_frame != 0 and event_end_frame == 0 and middle_pixel != ""):
              #print ("COLOR:", color)
-             sum_color = sum_color + int(color)
-          frame_data.update({int(frame) : {'x': x, 'y': y}})
-          last_frame_motion = motion
-          last_frame_cnts = contours 
+             last_frame_motion = motion
+             last_frame_cnts = contours 
     out = "Event Start Frame : " + str(event_start_frame) + "\n"
     sfp.write(out)
     print (out)
     out = "Event End Frame : " + str(event_end_frame) + "\n"
     sfp.write(out)
     print (out)
+    if (bright_pixel_count > 0):
+       out = "Bright Frames: " + str(bright_pixel_count) + "\n"
+       sfp.write(out)
+       print (out)
+       out = "Bright Frame Avg: " + str(bright_pixel_total/bright_pixel_count) + "\n"
+       sfp.write(out)
+       print (out)
+    sfp.write(out)
+    print (out)
+
     key_frame1 = int(event_start_frame)
     key_frame2 = int(event_start_frame + ((int(event_end_frame - event_start_frame) / 2)))
     key_frame3 = int(event_end_frame - 3)
@@ -147,11 +173,11 @@ def analyze(file):
     sfp.write(out)
     print (out)
     elapsed_frames = key_frame3 - key_frame1
-    if cons_motion > 0:
-       avg_center_pixel = sum_color / cons_motion 
+    if cons_motion > 0 and mid_pix_count > 0:
+       avg_center_pixel = int(sum_color) / mid_pix_count
     else:
        avg_center_pixel = 0
-    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(cons_motion) + "\n"
+    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(mid_pix_count) + "\n"
     sfp.write(out)
     print (out)
     out = "Consectutive Motion Frames: " + str(max_cons_motion) + "\n"
@@ -180,7 +206,7 @@ def analyze(file):
        print (out)
        
     meteor = "N"
-    if (straight_line < 1 and avg_center_pixel > 500):
+    if (straight_line < 1 and avg_center_pixel > 425 or (bright_pixel_count > 10 )):
        meteor = "Y"
     sfp.write("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
     print("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
@@ -231,6 +257,7 @@ def view(file, show):
 
     tstamp_prev = None
     image_acc = None
+    last_frame = None
     nice_image_acc = None
     final_image = None
     cur_image = None
@@ -246,6 +273,7 @@ def view(file, show):
     fp = open(data_file, "w")
     fp.write("frame|contours|area|perimeter|convex|x|y|w|h|color|\n")
     mid_pix_total = 0
+    mid_pix_count = 0
     while True:
         frame_file = jpg.replace(".jpg", "-" + str(count) + ".jpg");
         _ , frame = cap.read()
@@ -256,8 +284,10 @@ def view(file, show):
                return()
            #print (jpg)
            #cv2.imwrite(jpg, final_cv_image)
-
-           out_jpg_final = out_jpg[0:max_h,0:500]
+           if max_h <= 500:
+              out_jpg_final = out_jpg[0:max_h,0:500]
+           else: 
+              out_jpg_final = out_jpg[0:500,0:500]
            if max_h > 0:
               cv2.imwrite(object_file, out_jpg_final)
            else: 
@@ -275,6 +305,8 @@ def view(file, show):
         #frame = cv2.resize(frame, (0,0), fx=0.8, fy=0.8)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
+        if last_frame is None:
+            last_frame = frame 
         if image_acc is None:
             image_acc = np.empty(np.shape(frame))
         image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
@@ -284,11 +316,20 @@ def view(file, show):
         (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         data = str(count) + "|" 
         if len(cnts) > 0:
+
+            image_diff = cv2.absdiff(last_frame.astype(frame.dtype), frame,)
+            _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
+            thresh= cv2.dilate(threshold, None , iterations=2)
+            (_, alt_cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if len(alt_cnts) != 0:
+               cnts = alt_cnts
+
             area = cv2.contourArea(cnts[0])
             perim = cv2.arcLength(cnts[0], True)
             #print ("Perim:", perim)
-
+            #for cnt in cnts:
             x,y,w,h = cv2.boundingRect(cnts[0])
+               
 
             #ellipse = cv2.fitEllipse(cnts[0])
             #print ("Ellipse:", len(ellipse), ellipse)
@@ -302,24 +343,36 @@ def view(file, show):
             my = int(y + (h/2))
  
             #print ("XY:", x,x2,y,y2)
-            middle_pixel = nice_frame[my,mx]
+
+            gray_frame = cv2.cvtColor(nice_frame, cv2.COLOR_BGR2GRAY)
+            middle_pixel = gray_frame[my,mx]
             middle_sum = np.sum(middle_pixel)
             #print("MID PIX:", middle_pixel, middle_sum)
-            mid_pix_total = mid_pix_total + middle_sum
+            mid_pix_total = mid_pix_total + middle_pixel
+            mid_pix_count = mid_pix_count + 1
+            cv2.circle(nice_frame,(mx,my),5,(255,0,0))
             crop_frame = nice_frame[y:y2,x:x2]
-            if w < 500 and max_h < 500:
-               if (ox + w) >= 500:
-                  oy += max_h
-                  ox = 0  
-               print ("OY,OY+H,OX,OX+W: ", oy, oy+h, ox, ox+w)
+            cy = (y + y2) / 2
+            cx = (x + x2) / 2
+            text = (pytesseract.image_to_string(Image.fromarray(crop_frame)))
+            print (text)
+            if h > max_h and h < 300:
+               max_h = h
+               print ("MAX Height Hit", max_h)
+
+            if ( w) < 400 and (oy + h) < 500 and len(text) == 0:
+               print ("OY,OY+H,OX,OX+W,color,cnts: ", oy, oy+h, ox, ox+w, middle_pixel, len(cnts))
                out_jpg[oy:oy+h,ox:ox+w] = crop_frame
                if show == 1:
                   cv2.imshow('pepe', cv2.convertScaleAbs(out_jpg))
                   cv2.waitKey(1) 
                ox = ox +w
-               if h > max_h :
-                  max_h = h
-                  print ("MAX Height Hit", max_h)
+            else: 
+               print("Crop to big for summary pic!", oy,oy+h,ox,ox+w,h,w)
+               time.sleep(5)
+            if (ox + w ) >= 500 and (w < 400):
+               oy += max_h
+               ox = 0  
 
 
             avg_color_per_row = np.average(crop_frame, axis=0)
@@ -346,12 +399,12 @@ def view(file, show):
             data = data + str(y) + "|"
             data = data + str(w) + "|"
             data = data + str(h) + "|"
-            data = data + str(middle_sum) + "|"
+            data = data + str(middle_pixel) + "|"
         else:
             data = data + "|||||||||"
         fp.write(data + "\n")
     
-
+        last_frame = frame 
 
 
 
@@ -360,8 +413,8 @@ def view(file, show):
         #print (cnts)
 
 
-        if cur_image is None:
-            cur_image = Image.fromarray(frame)
+        #if cur_image is None:
+        #    cur_image = Image.fromarray(frame)
 
             #temp = cv2.convertScaleAbs(nice_image_acc)
             #nice_image_acc_pil = Image.fromarray(temp)

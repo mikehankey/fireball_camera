@@ -42,6 +42,7 @@ obs.horizon = '-0:34'
 obs.lat = config['cam_lat']
 obs.lon = config['cam_lon']
 cur_date = time.strftime("%Y/%m/%d %H:%M") 
+print ("CUR DATE: ", cur_date)
 obs.date = cur_date
 
 sun = ephem.Sun()
