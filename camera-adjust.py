@@ -86,8 +86,10 @@ cam_settings = get_settings(config)
 
 #set_setting(config, "Brightness", "1")
 loop = 0
-while (loop != 1):
+c = 0
+while (c < 10):
    print("keep trying")
    cam_settings = get_settings(config)
    loop = adjust_brightness(config, cam_settings, blow,bhigh)
    time.sleep(2)
+   c = c + 1
