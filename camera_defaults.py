@@ -33,7 +33,7 @@ r = requests.get(url)
 print (r.text)
 
 print ("Set the OSD settings.")
-url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str(cam_id) + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2"
+url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str(cam_id) + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2&TitleValue=0"
 print (url)
 r = requests.get(url)
 print (r.text)
