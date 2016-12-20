@@ -360,9 +360,12 @@ def view(file, show):
                max_h = h
                print ("MAX Height Hit", max_h)
 
-            if ( w) < 400 and (oy + h) < 500 and len(text) == 0:
+            if (ox + w) < 500 and (oy + h) < 500 and len(text) == 0:
                print ("OY,OY+H,OX,OX+W,color,cnts: ", oy, oy+h, ox, ox+w, middle_pixel, len(cnts))
-               out_jpg[oy:oy+h,ox:ox+w] = crop_frame
+               try: 
+                  out_jpg[oy:oy+h,ox:ox+w] = crop_frame
+               except:
+                  print("crop too big for summary!")
                if show == 1:
                   cv2.imshow('pepe', cv2.convertScaleAbs(out_jpg))
                   cv2.waitKey(1) 
