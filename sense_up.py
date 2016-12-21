@@ -55,11 +55,23 @@ def get_calibration_frames():
          fps = 100 / time_diff
          format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
          outfile = "{}/{}.avi".format("/var/www/html/out/cal", format_time)
-         writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
+         if int(config['hd']) == 0:
+            frame_sz = cv2.resize(frames[0], (0,0), fx=1, fy=.75)
+         else:
+            frame_sz = frames[0]
+
+
+         writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frame_sz.shape[1], frame_sz.shape[0]), True)
          flc = 0
          while frames:
             if (flc > 30):
                img = frames.pop()
+               if int(config['hd']) == 0:
+                  frame_sz = cv2.resize(img, (0,0), fx=1, fy=.75)
+               else:
+                  frame_sz = img
+               img = frame_sz
+
                frame_time = frame_times.pop()
                format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
                dec_sec = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%f")
