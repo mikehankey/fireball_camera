@@ -56,10 +56,10 @@ def cam_loop(pipe_parent, shared_dict):
         _ , frame = cap.read()
         if _ is True:
             currentFrame = cap.get(0)
-            cap_unix_time = cap_start_unix_time + (currentFrame/ 1000)
             this_time = time.time()
+            cap_unix_time = cap_start_unix_time + (currentFrame/ 1000)
             latency = this_time - cap_unix_time
-            print (currentFrame, start_frame_time - currentFrame, latency)
+            print (this_time, cap_unix_time, latency)
 
             #if int(config['hd']) == 0:
             #    frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
