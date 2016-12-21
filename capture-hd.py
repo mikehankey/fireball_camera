@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 #from subprocess import call
+from pathlib import Path
 import os
 import requests
 from collections import deque
@@ -82,7 +83,14 @@ def cam_loop(pipe_parent, shared_dict):
             log.flush()
             cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
 
-        if lc < 3:
+            file_exists = Path("/home/pi/fireball_camera/calnow");
+            if (file_exists.is_file()):
+                calnow = 1
+            else:
+                calnow = 0
+
+
+        if lc < 3 or calnow == 1:
             shared_dict['motion_on'] = 0
             shared_dict['motion_off'] = 0 
             shared_dict['cnts'] = 0 

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import numpy as np
 import requests
 import cv2
@@ -22,6 +23,7 @@ def read_config():
 def get_calibration_frames():
    config = read_config()
    print ("Sensing Up.")
+   fp = open("/home/pi/fireball_camera/calnow", "w")
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
@@ -33,25 +35,24 @@ def get_calibration_frames():
    time.sleep(3)
    print ("Wake")
 
-   cap.set(3, 640)
-   cap.set(4, 480)
    frames = deque(maxlen=200) 
    frame_times = deque(maxlen=200) 
    count = 0
 
    print ("Collecting calibration video.")
-   while count < 91:
+   while count < 301:
       _ , frame = cap.read()
       if _ is True:
-         frame_time = time.time()
-         frames.appendleft(frame)
-         frame_times.appendleft(frame_time)
+         if count > 100:
+            frame_time = time.time()
+            frames.appendleft(frame)
+            frame_times.appendleft(frame_time)
 
-      if count == 90:
+      if count == 300:
          print ("Saving video.")
          dql = len(frame_times) - 1
          time_diff = frame_times[1] - frame_times[dql]
-         fps = 90 / time_diff
+         fps = 100 / time_diff
          format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
          outfile = "{}/{}.avi".format("/var/www/html/out/cal", format_time)
          writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'MJPG'), fps, (frames[0].shape[1], frames[0].shape[0]), True)
@@ -72,9 +73,11 @@ def get_calibration_frames():
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
    cap.release()
    time.sleep(3)
+   os.system("rm /home/pi/fireball_camera/calnow")
    return(outfile)
 
 def stack_calibration_video(outfile):
+   frames = deque(maxlen=200) 
    print("Stack File")
    count = 0
    show = None
@@ -86,18 +89,20 @@ def stack_calibration_video(outfile):
    tstamp_prev = None
    image_acc = None
    dst = None
+   dst_x = None
    while count < 89:
       _ , frame = cap.read()
       print (count)
       if frame is None:
          continue
+      frames.appendleft(frame)
 
       alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
       if count == 80:
          sframe = frame
    
       #alpha = .23
-      alpha = .6
+      alpha = .8
       nice_frame = frame
       #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       #frame = cv2.GaussianBlur(frame, (21, 21), 0)
@@ -108,7 +113,7 @@ def stack_calibration_video(outfile):
       if dst is None:
          dst = np.empty(np.shape(frame))
       image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
-      #hello = cv2.accumulateWeighted(frame, image_acc, alpha)
+      hello = cv2.accumulateWeighted(frame, image_acc, alpha)
       abs_frame = cv2.convertScaleAbs(frame)
       abs_image_acc = cv2.convertScaleAbs(image_acc)
       if dst is None:
@@ -120,8 +125,40 @@ def stack_calibration_video(outfile):
       cv2.imshow('pepe', dst)  
       cv2.waitKey(1)
       count = count + 1
+   
+   image_acc = np.empty(np.shape(frame))
+
+   framex = frames[45]
+   framey = frames[88]
+   image_diff = cv2.absdiff(framex.astype(framey.dtype), framey,)
+   print(image_diff)
+   cv2.imshow("pepe",image_diff)
+   cv2.waitKey(0)
+   
+
+   for i in range(1,5):
+      k = i * 5 + 30
+      frame = frames[i+25]
+      cv2.imshow('pepe', frame)  
+      cv2.waitKey(0)
+      image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
+      cv2.imshow('pepe', image_diff)  
+      cv2.waitKey(0)
+      hello = cv2.accumulateWeighted(frame, image_acc, alpha)
+      abs_frame = cv2.convertScaleAbs(frame)
+      abs_image_acc = cv2.convertScaleAbs(image_acc)
+      if dst_x is None:
+         dst_x = abs_image_acc
+      else: 
+         dst_x = cv2.convertScaleAbs(dst_x)
+      cv2.imshow('pepe', dst_x)  
+      cv2.waitKey(0)
+
+
    jpg_file = outfile.replace(".avi", ".jpg")
    cv2.imwrite(jpg_file, dst)
+   jpg_file_x = outfile.replace(".avi", "-x.jpg")
+   cv2.imwrite(jpg_file_x, dst_x)
    jpg_file = jpg_file.replace(".jpg", "-single.jpg")
    print (jpg_file)
    sframe = cv2.convertScaleAbs(sframe)
