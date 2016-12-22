@@ -1,8 +1,20 @@
 import cv2
 import numpy as np
+import sys
+import os
+import time 
 
-jpg_file = "calibresult.png"
-star_file = "stars-out.jpg"
+jpg_file = "/var/www/html/out/cal/" + sys.argv[1]
+star_file = jpg_file.replace(".jpg", "-stars-out.jpg")
+star_data_file = jpg_file.replace(".jpg", "-stars-out.txt")
+
+
+
+
+
+#jpg_file = "../test.jpg"
+#star_file = "stars-out.jpg"
+#star_data_file = "stars-out.txt"
 image = cv2.imread(jpg_file)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 #gray = cv2.GaussianBlur(gray, (1,1), 1)
@@ -37,8 +49,8 @@ for y in range(gray.shape[0] - 100):
          diff = avg_pix_s - avg_pix
 
          x_y_diff = abs((last_x + last_y) - (x + y))
-         if crop_frame.shape[0] > 0 and crop_frame.shape[1] > 0 and diff > 5 and (x_y_diff > 4):
-            #print ("X,Y,AVG,SAVG,DIFF:", x,y,pixel,avg_pix, avg_pix_s)
+         if crop_frame.shape[0] > 0 and crop_frame.shape[1] > 0 and diff > 20 and (x_y_diff > 4):
+            print ("X,Y,AVG,SAVG,DIFF:", x,y,pixel,avg_pix, avg_pix_s, diff)
 
             #edges = cv2.Canny(crop_frame,80,200)
 
@@ -90,62 +102,32 @@ for y in range(gray.shape[0] - 100):
 dtype = [('x', int), ('y', int), ('avg_pix', float), ('avg_pix_s', float), ('pix_dif', float)]
 star_arry = np.array(stars, dtype=dtype)
 np.sort(star_arry, order='pix_dif')
- 
+
+fp = open(star_data_file, "w")
+fp.write("x,y\n")
 print ("Stars Found: ", stars_found)
 for star_x, star_y, pix_val, pix_val_sm,pix_dif in np.sort(star_arry,order='pix_dif')[::-1]:
+      data = str(star_x) + "," + str(star_y) + "\n"
       print (star_x, star_y)
+      fp.write(data)
       cv2.circle(gray, (star_x, star_y), 10, (255,0,0), 1, 1)
+
+fp.close() 
+time.sleep(1)
 
 cv2.imshow("Image", gray)
 cv2.waitKey(0)
+print ("Total Stars Found: ", stars_found)
 
 cv2.imwrite(star_file, gray)
 
-exit()
 
 
-params = cv2.SimpleBlobDetector_Params()
+xyfits = star_data_file.replace(".txt", ".fits")
+cmd = "/usr/bin/python /usr/local/astrometry/bin/text2fits.py -f \"ff\" -s \",\" " + star_data_file + " " + xyfits 
+print (cmd)
+os.system(cmd)
 
-params.minThreshold = 200 
-params.maxThreshold = 255 
-
-params.filterByArea = True
-params.minArea = 3 
-#params.maxArea = 100
-
-params.filterByConvexity = False 
-#params.minConvexity = .87
-#params.maxConvexity = 1
-#params.minCircularity= .1
-
-detector = cv2.SimpleBlobDetector_create(params)
-
-keypoints = detector.detect(gray)
-
-im_with_points = cv2.drawKeypoints(gray, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv2.imshow("Image", im_with_points)
-cv2.waitKey(0)
-
-
-exit()
-thresh = 150 
-maxValue=255
-
-th, dst = cv2.threshold(gray, thresh, maxValue, cv2.THRESH_BINARY)
-
-#(minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
-#cv2.circle(gray, maxLoc, 5, (255, 0, 0), 2)
-#view_mask = cv2.convertScaleAbs(gray)
-#exit()
-
-cv2.imshow("Image", dst)
-cv2.waitKey(0)
-#(contours, hierarchy, x) = cv2.findContours(img_filt, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-#print (len(contours))
-
-#for c in contours:
-#   print (c)
-   #cv2.drawContours(img_filt, [c], -1, (0, 255,0), 2)
-   #cv2.imshow("Image", img_filt)
-   #cv2.waitKey(0)
+cmd = "/usr/local/astrometry/bin/solve-field " + xyfits + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
+print (cmd)
+os.system(cmd)
