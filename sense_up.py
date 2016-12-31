@@ -172,9 +172,14 @@ def stack_calibration_video(outfile):
    jpg_file_x = outfile.replace(".avi", "-x.jpg")
    cv2.imwrite("/var/www/html/out/cal/" + jpg_file_x, dst_x)
    jpg_file = jpg_file.replace(".jpg", "-single.jpg")
+   jpg_undst = jpg_file.replace(".jpg", "-undistort.jpg")
    print (jpg_file)
    sframe = cv2.convertScaleAbs(sframe)
    cv2.imwrite("/var/www/html/out/cal/" + jpg_file, sframe)
+
+   cmd = "/usr/bin/convert -distort Barrel '0.0 0.0 -.1 1.0' /var/www/html/out/cal/" + jpg_file + " /var/www/html/out/cal/" + jpg_undst 
+   print (cmd)
+   os.system(cmd)
 
    #img_filt = cv2.medianBlur(cv2.imread('jpg_file',0), 5)
    #img_th = cv2.adaptiveThreshold(img_filt,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)

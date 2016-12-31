@@ -29,6 +29,7 @@ url = 'http://www.amsmeteors.org/members/api/cam_api/mkdevice?LAN_MAC=' + eth0_m
 print (url)
 r = requests.get('http://www.amsmeteors.org/members/api/cam_api/mkdevice?LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
 print (r.text)
-#text = "CAM ID: 2"
-
+fp = open("register.txt", "w")
+fp.write(r.text)
+fp.close()
 
