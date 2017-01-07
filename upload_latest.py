@@ -13,11 +13,11 @@ config = read_config()
 # UPLOAD LATEST CAM FRAME (every hour)
 
 api_key = config['ams_api_key']
-cam_id  = config['cam_id']
+device_id  = config['cam_id']
 url = "http://www.amsmeteors.org/members/api/cam_api/upload_latest"
 file = "/var/www/html/out/latest.jpg"
 stat = os.stat(file)
-print (stat)
+#print (stat)
 #datetime = stat.st_birthtime
 dt = datetime.datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
  
@@ -32,7 +32,7 @@ dt = datetime.datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S'
 _file = {'file_data': open(file, 'rb')}
 
 # The Data to send with the file
-_data= {'api_key': api_key, 'cam_id': cam_id, 'datetime': dt}
+_data= {'api_key': api_key, 'device_id': device_id, 'datetime': dt, 'format' : 'json'}
  
 session = requests.Session()
 del session.headers['User-Agent']
