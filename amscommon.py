@@ -16,3 +16,50 @@ def read_sun():
       data = line.rsplit("=",2)
       sun_info[data[0]] = data[1]
     return(sun_info)
+
+def put_device_info(conf)
+   import requests
+   import mimetypes
+   import sys
+
+   # PUT DEVICE INFO
+   #api_key = "QwCsPJKr87y15Sy"
+   api_key = "7oZl2o7erVCq7gZ"
+   device_id  = 1
+   url = "http://dev.amsmeteors.vm/members/api/cam_api/put_device_info"
+
+   # The Data to send with the file
+   _data= {
+      # required
+      'api_key': conf['api_key'],
+      'device_id': conf['device_id'],
+
+      # optional
+      #'LAN_MAC': 'b8:27:eb:59:33:a9',
+      #'WLAN_MAC': 'b8:27:eb:59:33:a9',
+      # USER CAN'T CHANGE
+      # MISSING
+      'wlan_ip': conf['wlan_ip']
+      'lan_ip': conf['lan_ip']
+      'cam_ip': conf['cam_ip']
+      'fov': conf['fov'],
+      'heading': conf['heading'],
+      'elv_angle': conf['elv_angle]',
+      'pixel_scale': conf['pixel_scale']
+
+      # chip geoloc
+      'device_lat': conf['device_lat'],
+      'device_lon': conf['device_lon'],
+      'device_elv': conf['device_elv'],
+      'format': 'json'
+   }
+
+   session = requests.Session()
+   del session.headers['User-Agent']
+   del session.headers['Accept-Encoding']
+
+   with requests.Session() as session:
+      response = session.post(url, data= _data)
+
+   print response.text
+   response.raw.close()
