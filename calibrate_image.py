@@ -21,7 +21,7 @@ star_data_file = jpg_file.replace(".jpg", "-stars-out.txt")
 #print (cmd)
 #os.system(cmd)
 
-os.system("/usr/local/astrometry/bin/solve-field /var/www/html/out/cal/20161222112409.jpg --verbose --no-delete-temp --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95 ")
+os.system("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95 ")
 #os.system(cmd)
 
 cmd = "jpegtopnm " + jpg_file + "|plot-constellations -w " + wcs_file + " -o " + grid_file + " -i - -N -C -G 600"
