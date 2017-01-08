@@ -17,7 +17,7 @@ def read_sun():
       sun_info[data[0]] = data[1]
     return(sun_info)
 
-def put_device_info(conf)
+def put_device_info(conf):
    import requests
    import mimetypes
    import sys
@@ -35,24 +35,35 @@ def put_device_info(conf)
       'device_id': conf['device_id'],
 
       # optional
-      #'LAN_MAC': 'b8:27:eb:59:33:a9',
-      #'WLAN_MAC': 'b8:27:eb:59:33:a9',
       # USER CAN'T CHANGE
       # MISSING
-      'wlan_ip': conf['wlan_ip']
-      'lan_ip': conf['lan_ip']
-      'cam_ip': conf['cam_ip']
+      'wlan_ip': conf['wlan_ip'],
+      'lan_ip': conf['lan_ip'],
+      'cam_ip': conf['cam_ip'],
       'fov': conf['fov'],
       'heading': conf['heading'],
-      'elv_angle': conf['elv_angle]',
-      'pixel_scale': conf['pixel_scale']
+      'elv_angle': conf['elv_angle'],
+      'pixel_scale': conf['pixel_scale'],
 
       # chip geoloc
-      'device_lat': conf['device_lat'],
-      'device_lon': conf['device_lon'],
-      'device_elv': conf['device_elv'],
-      'format': 'json'
    }
+
+   try: 
+      _data.append({'device_lat': conf['device_lat']})
+   except:
+      print ("skipping field.")
+   try: 
+      _data.append({'device_lon': conf['device_lon']})
+   except:
+      print ("skipping field.")
+   try: 
+      _data.append({'device_elv': conf['device_elv']})
+   except:
+      print ("skipping field")
+   try:
+      _data.append({'format': 'json'})
+   except:
+      print ("skipping field")
 
    session = requests.Session()
    del session.headers['User-Agent']

@@ -41,10 +41,10 @@ def show_loop(pipe_child):
     config = read_config()
     print (config['cam_ip'])
 
-    cam_lat = config['cam_lat']
-    cam_lon = config['cam_lon']
-    cam_operator = config['cam_operator']
-    cam_id= config['cam_id']
+    device_lat = config['device_lat']
+    device_lon = config['device_lon']
+    device_operator = config['device_operator']
+    device_id= config['device_id']
 
     image_acc = None
     nice_image_acc = None
@@ -87,7 +87,7 @@ def show_loop(pipe_child):
             dec_sec_f = dec_sec[:2]
             cframe = frame
             format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y-%m-%d %H:%M:%S.")
-            cv2.putText(cframe, "AMSMeteors.org / " + cam_operator + " " + format_time + dec_sec_f + " UTC " + cam_id + " " + cam_lat + " " + cam_lon,
+            cv2.putText(cframe, "AMSMeteors.org / " + device_operator + " " + format_time + dec_sec_f + " UTC " + device_id + " " + device_lat + " " + device_lon,
             (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
             cv2.imwrite("/var/www/html/out/latest.jpg", cframe)
 
@@ -112,7 +112,7 @@ def show_loop(pipe_child):
             #   dec_sec_f = dec_sec[:2]
             #   cframe = frame
             #   format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y-%m-%d %H:%M:%S.")
-            #   cv2.putText(cframe, "AMSMeteors.org / " + cam_operator + " " + format_time + dec_sec_f + " UTC " + cam_id + " " + cam_lat + " " + cam_lon,
+            #   cv2.putText(cframe, "AMSMeteors.org / " + device_operator + " " + format_time + dec_sec_f + " UTC " + device_id + " " + device_lat + " " + device_lon,
             #   (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
             #   format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
             #   cal_file = "/var/www/html/out/cal" + format_time + ".jpg"
@@ -193,7 +193,7 @@ def show_loop(pipe_child):
                        #img_data  = frame_data.pop()
                        #fts = ft.strftime("%Y%m%d %H:%M:%S.%f|")
                        df.write(format_time +"\n")
-                       #cv2.putText(img, img_time.strftime("AMSMeteors.org / " + cam_operator + " %Y%m%d %H:%M:%S." + dec_sec_f + " UTC " + cam_id + ": " + cam_lat + " " + cam_lon),
+                       #cv2.putText(img, img_time.strftime("AMSMeteors.org / " + cam_operator + " %Y%m%d %H:%M:%S." + dec_sec_f + " UTC " + device_id + ": " + device_lat + " " + device_lon),
                        #(10, img.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
                        #cv2.imwrite("out/" + str(i) + ".jpg", img)
                        writer.write(img)

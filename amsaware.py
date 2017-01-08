@@ -213,4 +213,4 @@ check_date = sys.argv[1]
 
 (max_lat, max_lon, min_lat, min_lon) = read_fov()
 config = read_config()
-get_close_events(check_date + " 00:00:00", check_date + ' 23:59:59', config['cam_lat'], config['cam_lon'], max_lat, max_lon, min_lat, min_lon)
+get_close_events(check_date + " 00:00:00", check_date + ' 23:59:59', config['device_lat'], config['device_lon'], max_lat, max_lon, min_lat, min_lon)

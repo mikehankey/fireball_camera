@@ -176,10 +176,10 @@ def show_loop(pipe_child, shared_dict):
     config = read_config()
     print (config['cam_ip'])
 
-    cam_lat = config['cam_lat']
-    cam_lon = config['cam_lon']
-    cam_operator = config['cam_operator']
-    cam_id= config['cam_id']
+    device_lat = config['device_lat']
+    device_lon = config['device_lon']
+    device_operator = config['device_operator']
+    device_id= config['device_id']
 
     image_acc = None
     nice_image_acc = None

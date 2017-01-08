@@ -1,5 +1,6 @@
 #!/usr/bin/python3 
 import pytesseract
+from io import BytesIO
 from pathlib import Path
 import glob
 import collections
@@ -15,6 +16,9 @@ import time
 import ephem
 import sys
 import os
+#from wand.image import Image
+#from wand.display import display
+
 MORPH_KERNEL       = np.ones((10, 10), np.uint8)
 
 def day_or_night(file):
@@ -32,8 +36,8 @@ def day_or_night(file):
    obs = ephem.Observer()
    obs.pressure = 0
    obs.horizon = '-0:34'
-   obs.lat = config['cam_lat']
-   obs.lon = config['cam_lon']
+   obs.lat = config['device_lat']
+   obs.lon = config['device_lon']
    #cur_date = time.strftime("%Y/%m/%d %H:%M")
    cur_date = datetime.datetime.strptime(date_str, "%Y/%m/%d %H:%M")
    obs.date = cur_date
@@ -70,17 +74,21 @@ def read_config():
       data = line.rsplit("=",2)
       config[data[0]] = data[1]
       #print key, value
+ 
 
-    config['az_left'] = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
-    config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
+    config['cam_fov_x'] = 60
+    config['cam_fov_y'] = 40
+
+    config['az_left'] = int(config['heading']) - (int(config['cam_fov_x'])/2)
+    config['az_right'] = int(config['heading']) + (int(config['cam_fov_x'])/2)
     if (config['az_right'] > 360):
        config['az_right'] = config['az_right'] - 360
     if (config['az_left'] > 360):
        config['az_left'] = config['az_left'] - 360
     if (config['az_left'] < 0):
        config['az_left'] = config['az_left'] + 360
-    config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
-    config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
+    config['el_bottom'] = int(config['device_elv']) - (int(config['cam_fov_y'])/2)
+    config['el_top'] = int(config['device_elv']) + (int(config['cam_fov_y'])/2)
     return(config)
 
 def analyze(file):
@@ -244,6 +252,7 @@ def analyze(file):
        os.system(cmd)
   
 def view(file, show):
+    stk_img = None
     jpg = file
     data_file = file
     jpg = jpg.replace(".avi", ".jpg");
@@ -289,24 +298,31 @@ def view(file, show):
            else: 
               out_jpg_final = out_jpg[0:500,0:500]
            if max_h > 0:
-              cv2.imwrite(object_file, out_jpg_final)
+              #stack_frame /= count * .25
+              cv2.imwrite(object_file, stack_frame)
+              #cv2.imwrite(object_file, out_jpg_final)
            else: 
-              cv2.imwrite(object_file, out_jpg)
+              #stack_frame /= count * .25
+              #cv2.imwrite(object_file, out_jpg)
+              cv2.imwrite(object_file, stack_frame)
            return()
            #exit()
 
 #        frames.appendleft(frame)
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        nice_frame = frame
+        if count == 0:
+           stack_frame = gray_frame 
 
         alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
         #print ("ALPHA: ", alpha)
-        nice_frame = frame
         #frame = cv2.resize(frame, (0,0), fx=0.8, fy=0.8)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.GaussianBlur(frame, (21, 21), 0)
         if last_frame is None:
-            last_frame = frame 
+            last_frame = nice_frame 
         if image_acc is None:
             image_acc = np.empty(np.shape(frame))
         image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
@@ -317,7 +333,7 @@ def view(file, show):
         data = str(count) + "|" 
         if len(cnts) > 0:
 
-            image_diff = cv2.absdiff(last_frame.astype(frame.dtype), frame,)
+            image_diff_nice = cv2.absdiff(last_frame.astype(last_frame.dtype), nice_frame,)
             _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
             thresh= cv2.dilate(threshold, None , iterations=2)
             (_, alt_cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -336,24 +352,42 @@ def view(file, show):
             #if len(ellipse) == 5:
             #   cv2.ellipse(frame,ellipse,(0,255,0),2)
 
-            # crop out
-            x2 = x+w
-            y2 = y+h
-            mx = int(x + (w/2))
-            my = int(y + (h/2))
+
+            if count % 20 == 0:
+               for cnt in cnts:
+                  # crop out
+                  x,y,w,h = cv2.boundingRect(cnt)
+                  x2 = x+w
+                  y2 = y+h
+                  mx = int(x + (w/2))
+                  my = int(y + (h/2))
+                  crop_frame = gray_frame[y:y2,x:x2]
+                  stack_frame[y:y2,x:x2] = crop_frame 
+                  #   stack_frame[...,0] = np.clip(stack_frame[...,0], 0, 255)
+                  #   print (stack_frame[y:y2,x:x2])
  
             #print ("XY:", x,x2,y,y2)
 
-            gray_frame = cv2.cvtColor(nice_frame, cv2.COLOR_BGR2GRAY)
             middle_pixel = gray_frame[my,mx]
             middle_sum = np.sum(middle_pixel)
             #print("MID PIX:", middle_pixel, middle_sum)
             mid_pix_total = mid_pix_total + middle_pixel
             mid_pix_count = mid_pix_count + 1
-            cv2.circle(nice_frame,(mx,my),5,(255,0,0))
-            crop_frame = nice_frame[y:y2,x:x2]
+            #cv2.circle(nice_frame,(mx,my),5,(255,0,0))
             cy = (y + y2) / 2
-            cx = (x + x2) / 2
+            cx = (x + x2) / 2 
+            #stack_frame[y:y2,x:x2] = crop_frame 
+            #if stk_img is None :
+            #   stk_img = Image.fromarray(stack_frame)
+            #   last_stk_img = Image.fromarray(stack_frame)
+            #else:
+            #   stk_img = Image.fromarray(nice_frame)
+            #   stk_img = Image.blend(stk_img, last_stk_img, .95) 
+            #   last_stk_img = stk_img 
+            #stack_frame += image_diff_nice
+            #display(stk_img)
+            #if count % 10 == 0:
+            #   stk_img.show()
             text = (pytesseract.image_to_string(Image.fromarray(crop_frame)))
             print (text)
             if h > max_h and h < 300:
@@ -367,7 +401,8 @@ def view(file, show):
                except:
                   print("crop too big for summary!")
                if show == 1:
-                  cv2.imshow('pepe', cv2.convertScaleAbs(out_jpg))
+                  #cv2.imshow('pepe', cv2.convertScaleAbs(stack_frame))
+                  cv2.imshow('pepe', stack_frame)
                   cv2.waitKey(1) 
                ox = ox +w
             else: 
@@ -384,7 +419,8 @@ def view(file, show):
             tjpg = jpg
             tjpg = tjpg.replace(".jpg", "-" + str(count) + ".jpg")
            # print ("TJPG", tjpg)
-            cv2.imwrite(tjpg, crop_frame)
+            #cv2.imwrite(tjpg, crop_frame)
+            #cv2.imwrite(tjpg, stack_frame)
 
 
             cv2.rectangle(frame,(x,y),(x+w,y+h),(255,255,255),1)
@@ -407,7 +443,7 @@ def view(file, show):
             data = data + "|||||||||"
         fp.write(data + "\n")
     
-        last_frame = frame 
+        last_frame = nice_frame 
 
 
 

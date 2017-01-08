@@ -10,7 +10,7 @@ from amscommon import read_config
 config = read_config()
 
 cam_ip = config['cam_ip']
-cam_id = config['cam_id']
+device_id = config['device_id']
 
 print ("Setting up defaults for camera on IP address:", cam_ip)
 
@@ -33,7 +33,7 @@ r = requests.get(url)
 print (r.text)
 
 print ("Set the OSD settings.")
-url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str(cam_id) + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2&TitleValue=0"
+url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str(device_id) + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2&TitleValue=0"
 print (url)
 r = requests.get(url)
 print (r.text)

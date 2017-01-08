@@ -13,7 +13,7 @@ config = read_config()
 # UPLOAD LATEST CAM FRAME (every hour)
 
 api_key = config['ams_api_key']
-device_id  = config['cam_id']
+device_id  = config['device_id']
 url = "http://www.amsmeteors.org/members/api/cam_api/upload_latest"
 file = "/var/www/html/out/latest.jpg"
 stat = os.stat(file)

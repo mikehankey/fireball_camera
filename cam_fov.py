@@ -3,15 +3,9 @@ import sys
 R = 6378.1
 
 
-#cam_lat = 39.588747
-#cam_lon = -76.584339
-#center_heading = 34
-#el_start = 10
-#fov_hdeg = 70
-#fov_vdeg = 60
 
 # usage
-# python cams.py cam_lat, cam_lon, center_heading, el_start, fov_hdeg, fov_vdeg
+# python cams.py lat, lon, center_heading, el_start, fov_hdeg, fov_vdeg
 # python cams.py 39.588747 -76.584339 34 10 70 60
 
 def read_config():
@@ -43,27 +37,29 @@ def find_point (lat, lon, d, brng):
 
 
 
-def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
+def get_fov(device_lat, device_lon, center_heading, device_elv, heading, elv_angle):
 
     left_az = float(center_heading) - (float(cam_hdeg) / 2)
     if left_az < 0:
         left_az = left_az + 360
     right_az = float(center_heading) + (float(cam_hdeg) / 2)
-    bottom_el = float(cam_alt) - (float(cam_vdeg) / 2)
-    bottom_el = float(cam_alt) + (float(cam_vdeg) / 2) + 10
+    bottom_el = float(device_elv) - (float(cam_vdeg) / 2)
+    bottom_el = float(device_elv) + (float(cam_vdeg) / 2) + 10
     ra = math.radians(20)
     dist_lb = 80/math.tan(ra)
     ra = math.radians(65)
     dist_lt = 80/math.tan(ra)
 
-    cam_lat = float(cam_lat)
-    cam_lon = float(cam_lon)
+    print ("Dist:", dist_lb, dist_lt)
+
+    device_lat = float(device_lat)
+    device_lon = float(device_lon)
 
 
-    (llc_lat, llc_lon) = find_point(cam_lat, cam_lon, dist_lb, math.radians(left_az))
-    (ulc_lat, ulc_lon) = find_point(cam_lat, cam_lon, dist_lt, math.radians(left_az))
-    (lrc_lat, lrc_lon) = find_point(cam_lat, cam_lon, dist_lb, math.radians(right_az))
-    (urc_lat, urc_lon) = find_point(cam_lat, cam_lon, dist_lt, math.radians(right_az))
+    (llc_lat, llc_lon) = find_point(device_lat, device_lon, dist_lb, math.radians(left_az))
+    (ulc_lat, ulc_lon) = find_point(device_lat, device_lon, dist_lt, math.radians(left_az))
+    (lrc_lat, lrc_lon) = find_point(device_lat, device_lon, dist_lb, math.radians(right_az))
+    (urc_lat, urc_lon) = find_point(device_lat, device_lon, dist_lt, math.radians(right_az))
 
     cords = str(ulc_lon)+","+str(ulc_lat)+",80000\n" + str(urc_lon)+","+str(urc_lat)+",80000\n" + str(lrc_lon)+","+str(lrc_lat)+",80000\n" + str(llc_lon)+","+str(llc_lat)+",80000\n" + str(ulc_lon)+","+str(ulc_lat)+",80000\n"
 
@@ -103,9 +99,9 @@ def get_fov(cam_lat, cam_lon, center_heading, cam_alt, cam_hdeg, cam_vdeg):
 #    print ("LLC:", llc_lat, llc_lon)
 #    print ("LRC:", lrc_lat, lrc_lon)
 
-#(x, cam_lat, cam_lon, center_heading, el_start, cam_hdeg, cam_vdeg) = sys.argv
+#(x, device_lat, device_lon, center_heading, el_start, cam_hdeg, cam_vdeg) = sys.argv
 config = read_config()
 if len(sys.argv) > 1:
-    config['cam_heading'] = int(sys.argv[1])
-get_fov(config['cam_lat'], config['cam_lon'], config['cam_heading'], config['cam_alt'], config['cam_fov_x'], config['cam_fov_y'])
+    config['heading'] = int(sys.argv[1])
+get_fov(config['device_lat'], config['device_lon'], config['heading'], config['device_elv'], config['cam_fov_x'], config['cam_fov_y'])
 

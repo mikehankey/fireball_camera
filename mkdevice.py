@@ -13,7 +13,7 @@ try:
 except:
    new_install = 1
 try: 
-   cam_id = config['ams_api_key']
+   device_id = config['device_id']
 except:
    new_install = 1
 
@@ -53,14 +53,13 @@ fp.close()
 
 data = json.loads(r.text)
 print (data)
-print ("Cam ID: ", data['result'][0]['cam_id'])
+print ("Device ID: ", data['result'][0]['device_id'])
 exit()
 
 for key in data['result']:
-   print ("Cam ID: ", key['cam_id'])
+   print ("Cam ID: ", key['device_id'])
    print ("Cam IP: ", key['cam_ip'])
    print ("Heading: ", key['heading'])
-   print ("Cam Lat: ", key['cam_lat'])
-   print ("Cam Lon: ", key['cam_lng'])
-   print ("Cam Elv: ", key['cam_elv'])
-   #print ("Cam Alt: ", key['cam_alt'])
+   print ("Device Lat: ", key['device_lat'])
+   print ("Device Lon: ", key['device_lng'])
+   print ("Device Elv: ", key['device_elv'])
