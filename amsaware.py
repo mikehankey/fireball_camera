@@ -42,9 +42,9 @@ def read_fov():
     return(max_lat, max_lon, min_lat, min_lon)
 
 def get_ams_reports(ams_year, ams_event_id,type, ratings):
-   ams_api_key = "QwCsPJKr87y15Sy"
+   api_key = "QwCsPJKr87y15Sy"
    url = "http://www.amsmeteors.org/members/api/open_api/get_reports_for_event"
-   data = {'api_key' : ams_api_key, 'year' : ams_year, 'event_id' : ams_event_id, 'format' : 'json', 'override' : 0, 'ratings' : ratings}
+   data = {'api_key' : api_key, 'year' : ams_year, 'event_id' : ams_event_id, 'format' : 'json', 'override' : 0, 'ratings' : ratings}
    r = requests.get(url, params=data)
    dates = []
    my_data = r.json()
@@ -90,9 +90,9 @@ def avg_dates (avg_date_utc, datetimes):
 
 def get_ams_event(year, event_id, ratings):
    num_reports = 0
-   ams_api_key = "QwCsPJKr87y15Sy"
+   api_key = "QwCsPJKr87y15Sy"
    url = "http://www.amsmeteors.org/members/api/open_api/get_event"
-   data = {'api_key' : ams_api_key, 'year' : year, 'event_id' : event_id, 'format' : 'json', 'ratings': ratings, 'override': 0}
+   data = {'api_key' : api_key, 'year' : year, 'event_id' : event_id, 'format' : 'json', 'ratings': ratings, 'override': 0}
    r = requests.get(url, params=data)
    my_data = r.json()
    if "result" not in my_data.keys():
@@ -161,9 +161,9 @@ def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat,
 
    events = set() 
    event_dates = {} 
-   ams_api_key = "QwCsPJKr87y15Sy"
+   api_key = "QwCsPJKr87y15Sy"
    url = "http://www.amsmeteors.org/members/api/open_api/get_close_reports"
-   data = {'api_key' : ams_api_key, 'start_date' : start_date, 'end_date' : end_date, 'lat': lat, 'lng': lon, 'format' : 'json'}
+   data = {'api_key' : api_key, 'start_date' : start_date, 'end_date' : end_date, 'lat': lat, 'lng': lon, 'format' : 'json'}
    print (data)
    r = requests.get(url, params=data)
    my_data = r.json()

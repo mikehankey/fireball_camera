@@ -5,8 +5,19 @@ def read_config():
       line = line.strip('\n')
       data = line.rsplit("=",2)
       config[data[0]] = data[1]
+    file.close()
     return(config)
 
+def write_config(config):
+    if len(config) < 3:
+       print ("Error not enough config vars passed.")
+       exit()
+    file = open("config-test.txt", "w")
+    for key in config:
+      line = key + "=" + config[key] + "\n"
+      file.write(line)
+    file.close()
+    print ("Config written.")
 
 def read_sun():
     sun_info = {}
@@ -21,12 +32,23 @@ def put_device_info(conf):
    import requests
    import mimetypes
    import sys
+   import netifaces 
 
    # PUT DEVICE INFO
    #api_key = "QwCsPJKr87y15Sy"
-   api_key = "7oZl2o7erVCq7gZ"
-   device_id  = 1
-   url = "http://dev.amsmeteors.vm/members/api/cam_api/put_device_info"
+   #api_key = "7oZl2o7erVCq7gZ"
+   #device_id  = 1
+   url = "http://www.amsmeteors.org/members/api/cam_api/put_device_info"
+
+   try:
+      eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+   except:
+      eth0_ip = "0.0.0.0"
+   try:
+      wlan0_ip= netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
+   except:
+      wlan0_ip = "0.0.0.0"
+
 
    # The Data to send with the file
    _data= {
@@ -37,10 +59,9 @@ def put_device_info(conf):
       # optional
       # USER CAN'T CHANGE
       # MISSING
-      'wlan_ip': conf['wlan_ip'],
-      'lan_ip': conf['lan_ip'],
+      'wlan_ip': wlan0_ip,
+      'lan_ip': eth0_ip,
       'cam_ip': conf['cam_ip'],
-      'fov': conf['fov'],
       'heading': conf['heading'],
       'elv_angle': conf['elv_angle'],
       'pixel_scale': conf['pixel_scale'],
@@ -48,29 +69,29 @@ def put_device_info(conf):
       # chip geoloc
    }
 
-   try: 
-      _data.append({'device_lat': conf['device_lat']})
-   except:
-      print ("skipping field.")
-   try: 
-      _data.append({'device_lon': conf['device_lon']})
-   except:
-      print ("skipping field.")
-   try: 
-      _data.append({'device_elv': conf['device_elv']})
-   except:
-      print ("skipping field")
-   try:
-      _data.append({'format': 'json'})
-   except:
-      print ("skipping field")
+   _data['device_lat'] = conf['device_lat']
+   _data['device_lon'] = conf['device_lon']
+   _data['device_elv'] = conf['device_elv']
 
-   session = requests.Session()
-   del session.headers['User-Agent']
-   del session.headers['Accept-Encoding']
+   fov = open('/home/pi/fireball_camera/fov.txt', 'r').read().replace('\n', '|')
+   _data['fov'] = fov 
 
-   with requests.Session() as session:
-      response = session.post(url, data= _data)
+   _data['format'] = 'json'
+   #print(fov)
+   #print(_data)
 
-   print (response.text)
-   response.raw.close()
+   #session = requests.Session()
+   #del session.headers['User-Agent']
+   #del session.headers['Accept-Encoding']
+
+   print (url)
+   print (_data)
+  
+   r = requests.post(url, data=_data) 
+   print (r.text)
+   
+
+   #with requests.Session() as session:
+   #   response = session.post(url, data= _data)
+   #print (response)
+   #response.raw.close()
