@@ -5,6 +5,8 @@ import sys
 import ephem
 import math
 from amscommon import read_config
+from amscommon import write_config 
+from amscommon import put_device_info 
 R = 6378.1
 
 def Decdeg2DMS( Decin ):
@@ -141,8 +143,8 @@ if 1 == 1:
    p1, p2 = find_point(float(config['device_lat']), float(config['device_lon']), dist, math.radians(az))
    print ("{0} km Distance to 80km altitude at {1} elevation angle for top left corner.".format( dist, el))
    print (p1,p2)
-   cords_start = str(p2) + "," + str(p1) + ",0\n"
-   cords = str(p2) + "," + str(p1) + ",0\n"
+   cords_start = "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
+   cords = "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    
    print ("")
 
@@ -150,13 +152,13 @@ if 1 == 1:
    # Upper Right 
    (ra, dec) = find_corner(file, "640", "1")
    print ("RA/DEC of 640,1:", ra,dec)
-   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_alt'], caldate)
+   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 640,1:", az,el)
    if el < 10:
       el = 10
    dist = 80/math.tan(math.radians(el))
    p1, p2 = find_point(float(config['device_lat']), float(config['device_lon']), dist, math.radians(az))
-   cords = cords + str(p2) + "," + str(p1) + ",0\n"
+   cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for top right corner.".format( dist, el))
    print ("")
 
@@ -165,34 +167,37 @@ if 1 == 1:
    # Lower Right 
    (ra, dec) = find_corner(file, "640", "380")
    print ("RA/DEC of 640,380:", ra,dec)
-   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_alt'], caldate)
+   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 640,380:", az,el)
    if el < 10:
       el = 10
    dist = 80/math.tan(math.radians(el))
    p1, p2 = find_point(float(config['device_lat']), float(config['device_lon']), dist, math.radians(az))
-   cords = cords + str(p2) + "," + str(p1) + ",0\n"
+   cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for bottom right corner.".format( dist, el))
    print ("")
 
    # Lower Left 
    (ra, dec) = find_corner(file, "1", "380")
    print ("RA/DEC of 1,380:", ra,dec)
-   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_alt'], caldate)
+   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 1,380:", az,el)
    if el < 10:
       el = 10
    dist = 80/math.tan(math.radians(el))
    p1, p2 = find_point(float(config['device_lat']), float(config['device_lon']), dist, math.radians(az))
-   cords = cords + str(p2) + "," + str(p1) + ",0\n"
+   cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for bottom left corner.".format( dist, el))
    print ("")
 
    (ra, dec) = find_corner(file, "320", "190")
    print ("CENTER RA/DEC of 320,190:", ra,dec)
-   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_alt'], caldate)
+   (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 320,190:", az,el)
-
+   config['heading'] = str(az)
+   config['elv_angle'] = str(el)
+   write_config(config)
+   put_device_info(config)
 
    cords = cords + cords_start
  
@@ -225,4 +230,7 @@ if 1 == 1:
 
    fp = open("kml.kml", "w")
    fp.write(kml)
+   fp.close()
+   fp = open("fov.txt", "w")
+   fp.write(cords)
    fp.close()

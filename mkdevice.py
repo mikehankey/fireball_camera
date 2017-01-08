@@ -9,7 +9,7 @@ new_install = 0
 
 # check to see if this is a new install.
 try: 
-   api_key = config['ams_api_key']
+   api_key = config['api_key']
 except:
    new_install = 1
 try: 
