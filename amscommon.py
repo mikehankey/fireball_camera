@@ -72,5 +72,5 @@ def put_device_info(conf):
    with requests.Session() as session:
       response = session.post(url, data= _data)
 
-   print response.text
+   print (response.text)
    response.raw.close()
