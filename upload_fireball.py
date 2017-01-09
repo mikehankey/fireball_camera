@@ -9,14 +9,18 @@ import time
 from amscommon import read_config
 
 file = sys.argv[1]
+video_file = sys.argv[2]
+summary_file = sys.argv[3]
+motion_frames = sys.argv[4]
+cons_motion = sys.argv[5]
+color = sys.argv[6]
+straight_line = sys.argv[7]
+bp_frames = sys.argv[8]
+meteor_yn = sys.argv[9]
+best_cal = sys.argv[10]
+
 config = read_config()
-motion_frames = sys.argv[2]
-cons_motion = sys.argv[3]
-color = sys.argv[4]
-straight_line = sys.argv[5]
-bp_frames = sys.argv[6]
-meteor_yn = sys.argv[7]
-best_cal = sys.argv[8]
+
 # UPLOAD LATEST CAM FRAME (every hour)
 
 api_key = config['api_key']
@@ -35,7 +39,7 @@ dt = datetime.datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S'
 #misc_info = sys.argv[2]
 
 # The File to send
-_file = {'video_file': open(file, 'rb'), 'stack_file': open(stack_file, 'rb')}
+_file = {'video_file': open(file, 'rb'), 'stack_file': open(stack_file, 'rb'), 'event_summary': open(summary_file, 'rb'}
 
 # The Data to send with the file
 _data= { 
