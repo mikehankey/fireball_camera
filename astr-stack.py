@@ -96,4 +96,4 @@ def view(file, show):
     #med_out = Image.fromarray(np.uint8(median_array))
     #med_out.save('all_medout.jpg', 'JPEG')
 
-view("/var/www/html/out/" + sys.argv[1], "a")
+view("/var/www/html/out/cal/" + sys.argv[1], "a")

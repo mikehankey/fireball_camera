@@ -12,7 +12,7 @@ def write_config(config):
     if len(config) < 3:
        print ("Error not enough config vars passed.")
        exit()
-    file = open("config-test.txt", "w")
+    file = open("config.txt", "w")
     for key in config:
       line = key + "=" + config[key] + "\n"
       file.write(line)

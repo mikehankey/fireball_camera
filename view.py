@@ -16,6 +16,7 @@ import time
 import ephem
 import sys
 import os
+from amscommon import read_config
 #from wand.image import Image
 #from wand.display import display
 
@@ -66,30 +67,6 @@ def day_or_night(file):
 
    return(status)
 
-def read_config():
-    config = {}
-    file = open("config.txt", "r")
-    for line in file:
-      line = line.strip('\n')
-      data = line.rsplit("=",2)
-      config[data[0]] = data[1]
-      #print key, value
- 
-
-    config['cam_fov_x'] = 60
-    config['cam_fov_y'] = 40
-
-    config['az_left'] = int(config['heading']) - (int(config['cam_fov_x'])/2)
-    config['az_right'] = int(config['heading']) + (int(config['cam_fov_x'])/2)
-    if (config['az_right'] > 360):
-       config['az_right'] = config['az_right'] - 360
-    if (config['az_left'] > 360):
-       config['az_left'] = config['az_left'] - 360
-    if (config['az_left'] < 0):
-       config['az_left'] = config['az_left'] + 360
-    config['el_bottom'] = int(config['device_elv']) - (int(config['cam_fov_y'])/2)
-    config['el_top'] = int(config['device_elv']) + (int(config['cam_fov_y'])/2)
-    return(config)
 
 def analyze(file):
     a = 0

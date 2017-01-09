@@ -52,14 +52,8 @@ fp.write(r.text)
 fp.close()
 
 data = json.loads(r.text)
-print (data)
-print ("Device ID: ", data['result'][0]['device_id'])
+dev_data = data['result'][0]['cam'][0]
+for key in dev_data:
+   print (key, dev_data[key])
 exit()
 
-for key in data['result']:
-   print ("Cam ID: ", key['device_id'])
-   print ("Cam IP: ", key['cam_ip'])
-   print ("Heading: ", key['heading'])
-   print ("Device Lat: ", key['device_lat'])
-   print ("Device Lon: ", key['device_lng'])
-   print ("Device Elv: ", key['device_elv'])
