@@ -187,10 +187,11 @@ sun_info = read_sun()
 if cmd == 'sense_up':
    if int(sun_info['dark']) != 1:
       print ("It must be dark to sense up.")
-      exit()
+      #exit()
    outfile = get_calibration_frames()
    #stack_calibration_video(outfile)
    os.system("rm /home/pi/fireball_camera/calibrate.txt")
+   print ("outfile=",outfile)
 if cmd == 'stack':
    outfile = sys.argv[2]
    stack_calibration_video(outfile)

@@ -5,6 +5,7 @@ def read_config():
       line = line.strip('\n')
       data = line.rsplit("=",2)
       config[data[0]] = data[1]
+    config['hd'] = 0
     file.close()
     return(config)
 

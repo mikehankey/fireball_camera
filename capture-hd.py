@@ -7,6 +7,7 @@ from collections import deque
 #from queue import Queue
 import multiprocessing
 #from multiprocessing import Process, Manager
+from amscommon import read_config
 import datetime
 import cv2
 import numpy as np
@@ -24,7 +25,6 @@ def cam_loop(pipe_parent, shared_dict):
     motion_off = 0
     config = read_config()
     print (config['cam_ip'])
-    config['hd'] = 1
     if int(config['hd']) == 1:
         print ("capture_hd")
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
@@ -260,20 +260,6 @@ def show_loop(pipe_child, shared_dict):
         #cv2.waitKey(5)
         count = count + 1
 
-def read_config():
-    config = {}
-    file = open("config.txt", "r")
-    for line in file:
-      line = line.strip('\n')
-      data = line.rsplit("=",2)
-      config[data[0]] = data[1]
-      #print key, value
-    return(config)
-
-
-
-
- 
 def write_buffer(frames):
     print ("YA, write")
     for i in range(len(frames), 0, -1):

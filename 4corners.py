@@ -63,11 +63,13 @@ def find_corner (file, x, y):
    radec = radec.replace(' ', '')
    ra, dec = radec.split(",")
    print ("ASTR RA/DEC: ", ra,dec)
+   radd = float(ra)
+   decdd = float(dec)
    ra= RAdeg2HMS(ra)
    #(h,m,s) = ra.split(":")
    #ra = h + " h " + m + " min"
    dec = Decdeg2DMS(dec)
-   return(ra, dec)
+   return(ra, dec, radd, decdd)
 
 def radec_to_azel(ra,dec,lat,lon,alt, caldate):
    body = ephem.FixedBody()
@@ -127,14 +129,29 @@ if 1 == 1:
    h = caldate[8:10]
    mm = caldate[10:12]
    s = caldate[12:14]
-   caldate = y + "/" + m + "/" + d + " " + h + ":" + m + ":" + s 
+   caldate = y + "/" + m + "/" + d + " " + h + ":" + mm + ":" + s 
    print (caldate)
    cords = ""
 
+    #'center_ra_dec' : '90.00|90.00',
+    #'center_az_el' : '90.00|90.00',
+    #'center_az_el' : '90.00|90.00',
+    #'pixel_scale' : 2.123,
+    #'ulc_ra_dec' : '90.00|90.00',
+    #'urc_ra_dec' : '90.00|90.00',
+    #'llc_ra_dec' : '90.00|90.00',
+    #'lrc_ra_dec' : '90.00|90.00',
+    #'ulc_az_el' : '90.00|90.00',
+    #'urc_az_el' : '90.00|90.00',
+    #'llc_az_el' : '90.00|90.00',
+    #'lrc_az_el' : '90.00|90.00',
+
    # Upper Left
-   (ra, dec) = find_corner(file, "1", "1")
+   (ra, dec, radd, decdd) = find_corner(file, "1", "1")
+  
    print ("RA/DEC of 1,1:", ra,dec)
    (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
+   print ("RA/DEC of 1,1:", ra,dec)
    print ("AZ/EL of 1,1:", az,el)
    if el < 10:
       el = 10
@@ -145,12 +162,13 @@ if 1 == 1:
    print (p1,p2)
    cords_start = "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    cords = "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
-   
    print ("")
+   config['ulc_ra_dec'] = "{0:.2f}".format(radd) + "|{0:.2f}".format(decdd)
+   config['ulc_az_el'] = "{0:.2f}".format(az) + "|{0:.2f}".format(el)
 
 
    # Upper Right 
-   (ra, dec) = find_corner(file, "640", "1")
+   (ra, dec, radd, decdd) = find_corner(file, "640", "1")
    print ("RA/DEC of 640,1:", ra,dec)
    (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 640,1:", az,el)
@@ -161,11 +179,13 @@ if 1 == 1:
    cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for top right corner.".format( dist, el))
    print ("")
+   config['urc_ra_dec'] = "{0:.2f}".format(radd) + "|{0:.2f}".format(decdd)
+   config['urc_az_el'] = "{0:.2f}".format(az) + "|{0:.2f}".format(el)
 
 
 
    # Lower Right 
-   (ra, dec) = find_corner(file, "640", "380")
+   (ra, dec, radd, decdd) = find_corner(file, "640", "380")
    print ("RA/DEC of 640,380:", ra,dec)
    (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 640,380:", az,el)
@@ -176,9 +196,11 @@ if 1 == 1:
    cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for bottom right corner.".format( dist, el))
    print ("")
+   config['lrc_ra_dec'] = "{0:.2f}".format(radd) + "|{0:.2f}".format(decdd)
+   config['lrc_az_el'] = "{0:.2f}".format(az) + "|{0:.2f}".format(el)
 
    # Lower Left 
-   (ra, dec) = find_corner(file, "1", "380")
+   (ra, dec, radd, decdd) = find_corner(file, "1", "380")
    print ("RA/DEC of 1,380:", ra,dec)
    (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 1,380:", az,el)
@@ -189,15 +211,30 @@ if 1 == 1:
    cords = cords + "{0:.2f}".format(p2) + "," + "{0:.2f}".format(p1) + ",0\n"
    print ("{0} km Distance to 80km altitude at {1} elevation angle for bottom left corner.".format( dist, el))
    print ("")
+   config['llc_ra_dec'] = "{0:.2f}".format(radd) + "|{0:.2f}".format(decdd)
+   config['llc_az_el'] = "{0:.2f}".format(az) + "|{0:.2f}".format(el)
 
-   (ra, dec) = find_corner(file, "320", "190")
+   (ra, dec, radd, decdd) = find_corner(file, "320", "190")
    print ("CENTER RA/DEC of 320,190:", ra,dec)
    (az, el) = radec_to_azel(ra,dec,config['device_lat'],config['device_lon'],config['device_elv'], caldate)
    print ("AZ/EL of 320,190:", az,el)
    config['heading'] = str(az)
    config['elv_angle'] = str(el)
+   config['center_ra_dec'] = "{0:.2f}".format(radd) + "|{0:.2f}".format(decdd)
+   config['center_az_el'] = "{0:.2f}".format(az) + "|{0:.2f}".format(el)
+
+   cmd = "/usr/local/astrometry/bin/wcsinfo " + file + " | grep pixscale" 
+   output = subprocess.check_output(cmd, shell=True)
+   print (output)
+   (t, pixel_scale) = output.decode("utf-8").split(" ")
+   pixel_scale = pixel_scale.replace("\n", "")
+   config['pixel_scale'] = pixel_scale
+   
+
    write_config(config)
    put_device_info(config)
+
+
 
    cords = cords + cords_start
  
