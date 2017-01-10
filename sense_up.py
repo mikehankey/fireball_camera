@@ -8,22 +8,12 @@ import datetime
 import sys
 from collections import deque
 import iproc
-from amscommon import read_sun
+from amscommon import read_sun, read_config
 
 
-def read_config():
-    config = {}
-    file = open("config.txt", "r")
-    for line in file:
-      line = line.strip('\n')
-      data = line.rsplit("=",2)
-      config[data[0]] = data[1]
-      #print key, value
-    return(config)
 
 def get_calibration_frames():
    config = read_config()
-   print ("Sensing Up.")
    fp = open("/home/pi/fireball_camera/calnow", "w")
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
@@ -32,15 +22,12 @@ def get_calibration_frames():
    cv2.setUseOptimized(True)
    lock = open("/home/pi/fireball_camera/calibrate.txt", "w")
    time_start = time.time()
-   print ("Sleep")
    time.sleep(3)
-   print ("Wake")
 
    frames = deque(maxlen=200) 
    frame_times = deque(maxlen=200) 
    count = 0
 
-   print ("Collecting calibration video.")
    while count < 301:
       _ , frame = cap.read()
       if _ is True:
@@ -50,7 +37,6 @@ def get_calibration_frames():
             frame_times.appendleft(frame_time)
 
       if count == 300:
-         print ("Saving video.")
          dql = len(frame_times) - 1
          time_diff = frame_times[1] - frame_times[dql]
          fps = 100 / time_diff
@@ -91,11 +77,9 @@ def get_calibration_frames():
 
 def stack_calibration_video(outfile):
    frames = deque(maxlen=200) 
-   print("Stack File")
    count = 0
    show = None
-   print ("/var/www/html/out/cal/" + outfile)
-   cv2.namedWindow('pepe')
+   #cv2.namedWindow('pepe')
    cap = cv2.VideoCapture("/var/www/html/out/cal/" + outfile)
    time.sleep(2)
    count = 0
@@ -105,7 +89,6 @@ def stack_calibration_video(outfile):
    dst_x = None
    while count < 89:
       _ , frame = cap.read()
-      print (count)
       if frame is None:
          continue
       frames.appendleft(frame)
@@ -115,7 +98,7 @@ def stack_calibration_video(outfile):
          sframe = frame
    
       #alpha = .23
-      alpha = .8
+      alpha = .5
       nice_frame = frame
       #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       #frame = cv2.GaussianBlur(frame, (21, 21), 0)
@@ -135,8 +118,8 @@ def stack_calibration_video(outfile):
          dst = cv2.convertScaleAbs(dst)
       dst = cv2.addWeighted(abs_frame, alpha, dst, alpha, 0)
       #nice_avg = cv2.convertScaleAbs(image_dst)
-      cv2.imshow('pepe', dst)  
-      cv2.waitKey(1)
+      #cv2.imshow('pepe', dst)  
+      #cv2.waitKey(1)
       count = count + 1
    
    image_acc = np.empty(np.shape(frame))
@@ -144,7 +127,6 @@ def stack_calibration_video(outfile):
    framex = frames[45]
    framey = frames[88]
    image_diff = cv2.absdiff(framex.astype(framey.dtype), framey,)
-   print(image_diff)
    cv2.imshow("pepe",image_diff)
    cv2.waitKey(0)
    
@@ -173,7 +155,6 @@ def stack_calibration_video(outfile):
    jpg_file_x = outfile.replace(".avi", "-x.jpg")
    cv2.imwrite("/var/www/html/out/cal/" + jpg_file_x, dst_x)
    jpg_file = jpg_file.replace(".jpg", "-single.jpg")
-   print (jpg_file)
    sframe = cv2.convertScaleAbs(sframe)
    cv2.imwrite("/var/www/html/out/cal/" + jpg_file, sframe)
 
@@ -189,9 +170,9 @@ if cmd == 'sense_up':
       print ("It must be dark to sense up.")
       #exit()
    outfile = get_calibration_frames()
+   print (outfile)
    #stack_calibration_video(outfile)
    os.system("rm /home/pi/fireball_camera/calibrate.txt")
-   print ("outfile=",outfile)
 if cmd == 'stack':
    outfile = sys.argv[2]
    stack_calibration_video(outfile)

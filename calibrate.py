@@ -1,16 +1,22 @@
-#/usr/bin/python3 
-# wrapper for end-to-end calibration
-# 1) run sense up and gather data ./sense-up.py sense_up
-# 2) try to stack video into final image ./sense-up.py stack file
-# 3) try to plate-solve the stacked image ./calibrate-image.py file
-# 4) if calibration is successful upload calibration files
+#!/usr/bin/python3 
 
 import sys
 import os
+import subprocess
+
+def do_it_all():
+   cmd = "./sense_up.py sense_up"
+   output = subprocess.check_output(cmd, shell=True)
+   print (output) 
+   output = subprocess.check_output(cmd, shell=True)
+   star_file = output.decode("utf-8")
+   cmd = "./sense_up.py stack " + star_file 
+
+   print (cmd) 
+   #output = subprocess.check_output(cmd, shell=True)
+   #output = output.decode("utf-8")
+   #print (output)
 
 if sys.argv[1] == 'all':
+   print ("Do it all")
    do_it_all()
-
-
-def do_it_all:
-   cmd = "./sense_up.py sense_up"
