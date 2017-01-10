@@ -30,11 +30,11 @@ def do_it_all():
       print ("Not enough stars. Calibration Failed.") 
    
 
-   #cmd = "./calibrate_image.py cal_file" 
-   #print (cmd) 
-   #output = subprocess.check_output(cmd, shell=True)
-   #output = output.decode("utf-8")
-   #print (output)
+   cmd = "./calibrate_image.py " + cal_file
+   print (cmd) 
+   output = subprocess.check_output(cmd, shell=True)
+   output = output.decode("utf-8")
+   print (output)
 
 if sys.argv[1] == 'all':
    print ("Do it all")

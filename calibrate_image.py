@@ -5,7 +5,7 @@ import sys
 import os
 import time 
 
-jpg_file = "/var/www/html/out/cal/" + sys.argv[1]
+jpg_file = sys.argv[1]
 wcs_file = jpg_file.replace(".jpg", ".wcs")
 grid_file = jpg_file.replace(".jpg", "-grid.png")
 

@@ -87,8 +87,8 @@ for star_x, star_y, pix_val, pix_val_sm,pix_dif in np.sort(star_arry,order='pix_
 #fp.close() 
 time.sleep(1)
 
-cv2.imshow("Image", gray)
-cv2.waitKey(0)
+#cv2.imshow("Image", gray)
+#cv2.waitKey(0)
 print ("Total Stars Found: ", stars_found)
 
 #cv2.imwrite(star_file, gray)
