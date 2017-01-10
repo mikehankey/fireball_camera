@@ -24,7 +24,7 @@ def cam_loop(pipe_parent, shared_dict):
     motion_off = 0
     config = read_config()
     print (config['cam_ip'])
-    print (config['hd'])
+    config['hd'] = 1
     if int(config['hd']) == 1:
         print ("capture_hd")
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
