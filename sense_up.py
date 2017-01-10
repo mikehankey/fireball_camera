@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import numpy as np
+from pathlib import Path
 import requests
 import cv2
 import os
@@ -80,7 +81,16 @@ def stack_calibration_video(outfile):
    count = 0
    show = None
    #cv2.namedWindow('pepe')
-   cap = cv2.VideoCapture("/var/www/html/out/cal/" + outfile)
+
+   file_exists = Path(outfile)
+   if (file_exists.is_file()):
+      print("File found.")
+   else:
+      print("File not found.", outfile)
+      exit()
+
+
+   cap = cv2.VideoCapture(outfile)
    time.sleep(2)
    count = 0
    tstamp_prev = None
@@ -90,6 +100,7 @@ def stack_calibration_video(outfile):
    while count < 89:
       _ , frame = cap.read()
       if frame is None:
+         print ("Frame is none.")
          continue
       frames.appendleft(frame)
 
@@ -127,18 +138,18 @@ def stack_calibration_video(outfile):
    framex = frames[45]
    framey = frames[88]
    image_diff = cv2.absdiff(framex.astype(framey.dtype), framey,)
-   cv2.imshow("pepe",image_diff)
-   cv2.waitKey(0)
+   #cv2.imshow("pepe",image_diff)
+   #cv2.waitKey(0)
    
 
    for i in range(1,5):
       k = i * 5 + 30
       frame = frames[i+25]
-      cv2.imshow('pepe', frame)  
-      cv2.waitKey(0)
+      #cv2.imshow('pepe', frame)  
+      #cv2.waitKey(0)
       image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
-      cv2.imshow('pepe', image_diff)  
-      cv2.waitKey(0)
+      #cv2.imshow('pepe', image_diff)  
+      #cv2.waitKey(0)
       hello = cv2.accumulateWeighted(frame, image_acc, alpha)
       abs_frame = cv2.convertScaleAbs(frame)
       abs_image_acc = cv2.convertScaleAbs(image_acc)
@@ -146,17 +157,22 @@ def stack_calibration_video(outfile):
          dst_x = abs_image_acc
       else: 
          dst_x = cv2.convertScaleAbs(dst_x)
-      cv2.imshow('pepe', dst_x)  
-      cv2.waitKey(0)
+      #cv2.imshow('pepe', dst_x)  
+      #cv2.waitKey(0)
 
 
+   print ("Writing out files.")
    jpg_file = outfile.replace(".avi", ".jpg")
-   cv2.imwrite("/var/www/html/out/cal/" + jpg_file, dst)
+   print (jpg_file)
+   print (dst)
+   cv2.imwrite(jpg_file, dst)
+
    jpg_file_x = outfile.replace(".avi", "-x.jpg")
-   cv2.imwrite("/var/www/html/out/cal/" + jpg_file_x, dst_x)
+   cv2.imwrite(jpg_file_x, dst_x)
    jpg_file = jpg_file.replace(".jpg", "-single.jpg")
    sframe = cv2.convertScaleAbs(sframe)
-   cv2.imwrite("/var/www/html/out/cal/" + jpg_file, sframe)
+   cv2.imwrite(jpg_file, sframe)
+   print ("Done")
 
    #img_filt = cv2.medianBlur(cv2.imread('jpg_file',0), 5)
    #img_th = cv2.adaptiveThreshold(img_filt,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
