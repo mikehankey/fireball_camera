@@ -38,9 +38,9 @@ obs = ephem.Observer()
 obs.pressure = 0
 obs.horizon = '-0:34'
 #print (deg_to_dms(float(config['device_lat'])))
-#print (deg_to_dms(float(config['device_lon'])))
+#print (deg_to_dms(float(config['device_lng'])))
 obs.lat = config['device_lat']
-obs.lon = config['device_lon']
+obs.lon = config['device_lng']
 cur_date = time.strftime("%Y/%m/%d %H:%M") 
 print ("CUR DATE: ", cur_date)
 obs.date = cur_date
