@@ -3,6 +3,7 @@
 import time
 from collections import defaultdict
 from amscommon import read_config, read_sun
+import os
 import requests
 from urllib.request import urlretrieve
 
@@ -44,6 +45,7 @@ def nighttime_settings(config):
    set_setting(config, "Gamma", "30")
    set_setting(config, "InfraredLamp", "high")
    set_setting(config, "TRCutLevel", "high")
+   time.sleep(5)
    os.system("rm /home/pi/fireball_camera/calnow")
 
 def daytime_settings(config):
@@ -61,6 +63,7 @@ def daytime_settings(config):
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
    os.system("rm /home/pi/fireball_camera/calnow")
+   time.sleep(5)
 
 config = read_config()
 

@@ -1,4 +1,5 @@
 #!/usr/bin/python3 
+import requests
 import pytesseract
 from io import BytesIO
 from pathlib import Path
@@ -16,11 +17,69 @@ import time
 import ephem
 import sys
 import os
-from amscommon import read_config
+from amscommon import read_config, caldate
 #from wand.image import Image
 #from wand.display import display
 
 MORPH_KERNEL       = np.ones((10, 10), np.uint8)
+
+def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) :
+   url = "http://www.amsmeteors.org/members/api/cam_api/log_fireball_event"
+   _data = {
+    'api_key': config['api_key'],
+    'device_id': config['device_id'],
+    'datetime': values['datetime'],
+    'motion_frames' : values['motion_frames'],
+    'cons_motion': values['cons_motion'],
+    'color' : int(values['color']),
+    'straight_line' : values['straight_line'],
+    'bp_frames' : values['bp_frames'],
+    'format': 'json',
+    'meteor_yn': values['meteor_yn'] 
+   }
+
+
+   summary = maybe_summary_file.replace("-summary", "")
+   os.system("mv " + maybe_summary_file + " " + summary)
+   event_stack = maybe_object_file
+   event = maybe_file
+ 
+   _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'rb') }
+
+   session = requests.Session()
+   del session.headers['User-Agent']
+   del session.headers['Accept-Encoding']
+
+   with requests.Session() as session:
+      response = session.post(url, data= _data, files=_files)
+
+   print (response.text)
+   response.raw.close()
+
+def log_motion_capture(config, file, values):
+   url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
+   _files = {'event_stack': open(file, 'rb')}
+   _data = {
+    'api_key': config['api_key'],
+    'device_id': config['device_id'],
+    'datetime': values['datetime'],
+    'motion_frames' : values['motion_frames'],
+    'cons_motion': values['cons_motion'],
+    'color' : int(values['color']),
+    'straight_line' : values['straight_line'],
+    'bp_frames' : values['bp_frames'],
+    'format': 'json',
+    'meteor_yn': values['meteor_yn'] 
+   }
+   session = requests.Session()
+   del session.headers['User-Agent']
+   del session.headers['Accept-Encoding']
+
+   with requests.Session() as session:
+      response = session.post(url, data= _data, files=_files)
+
+   print (response.text)
+   response.raw.close() 
 
 def day_or_night(file):
 
@@ -69,6 +128,7 @@ def day_or_night(file):
 
 
 def analyze(file):
+    config = read_config()
     a = 0
     b = 0
     bright_pixel_count = 0
@@ -118,7 +178,7 @@ def analyze(file):
           if int(middle_pixel) > 0:
              sum_color = sum_color + int(middle_pixel)
              mid_pix_count = mid_pix_count + 1
-             if int(middle_pixel) >= 190:
+             if int(middle_pixel) >= 180:
                 print ("Bright Pixel Count/Mid Pix Total", bright_pixel_count, middle_pixel)
                 bright_pixel_count = bright_pixel_count + 1
                 bright_pixel_total = bright_pixel_total + int(middle_pixel)
@@ -191,7 +251,7 @@ def analyze(file):
        print (out)
        
     meteor = "N"
-    if (straight_line < 1 and avg_center_pixel > 425 or (bright_pixel_count > 10 )):
+    if (straight_line < 1 and avg_center_pixel > 40 or (bright_pixel_count > 10 )):
        meteor = "Y"
     sfp.write("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
     print("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
@@ -214,6 +274,18 @@ def analyze(file):
        os.system(cmd)
        cmd = "mv " + object_file + " " + false_object_file
        os.system(cmd)
+       el = false_object_file.split("/")
+       motion_date = caldate(el[-1])
+       values = {
+          'datetime': motion_date,
+          'motion_frames' : elapsed_frames,
+          'cons_motion': max_cons_motion,
+          'color' : avg_center_pixel,
+          'straight_line' : straight_line,
+          'bp_frames' : bright_pixel_count,
+          'meteor_yn': meteor
+       }
+       log_motion_capture(config, false_object_file, values) 
     else:  
        maybe_file= file.replace("out/", "out/maybe/")
        maybe_data_file= data_file.replace("out/", "out/maybe/")
@@ -227,6 +299,22 @@ def analyze(file):
        os.system(cmd)
        cmd = "mv " + object_file + " " + maybe_object_file
        os.system(cmd)
+
+       el = maybe_object_file.split("/")
+       best_calibration = "20170101020202"
+       motion_date = caldate(el[-1])
+       values = {
+          'datetime': motion_date,
+          'best_calibration' : best_calibration,
+          'motion_frames' : elapsed_frames,
+          'cons_motion': max_cons_motion,
+          'color' : avg_center_pixel,
+          'straight_line' : straight_line,
+          'bp_frames' : bright_pixel_count,
+          'meteor_yn': meteor
+       }
+       log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
+
   
 def view(file, show):
     stk_img = None
@@ -330,16 +418,16 @@ def view(file, show):
             #   cv2.ellipse(frame,ellipse,(0,255,0),2)
 
 
-            if count % 20 == 0:
-               for cnt in cnts:
+            #if count % 20 == 0:
+            #   for cnt in cnts:
                   # crop out
-                  x,y,w,h = cv2.boundingRect(cnt)
-                  x2 = x+w
-                  y2 = y+h
-                  mx = int(x + (w/2))
-                  my = int(y + (h/2))
-                  crop_frame = gray_frame[y:y2,x:x2]
-                  stack_frame[y:y2,x:x2] = crop_frame 
+            x,y,w,h = cv2.boundingRect(cnts[0])
+            x2 = x+w
+            y2 = y+h
+            mx = int(x + (w/2))
+            my = int(y + (h/2))
+            crop_frame = gray_frame[y:y2,x:x2]
+            stack_frame[y:y2,x:x2] = crop_frame 
                   #   stack_frame[...,0] = np.clip(stack_frame[...,0], 0, 255)
                   #   print (stack_frame[y:y2,x:x2])
  
@@ -377,10 +465,10 @@ def view(file, show):
                   out_jpg[oy:oy+h,ox:ox+w] = crop_frame
                except:
                   print("crop too big for summary!")
-               if show == 1:
+               #if show == 1:
                   #cv2.imshow('pepe', cv2.convertScaleAbs(stack_frame))
-                  cv2.imshow('pepe', stack_frame)
-                  cv2.waitKey(1) 
+                  #cv2.imshow('pepe', stack_frame)
+                  #cv2.waitKey(1) 
                ox = ox +w
             else: 
                print("Crop to big for summary pic!", oy,oy+h,ox,ox+w,h,w)

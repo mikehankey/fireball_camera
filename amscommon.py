@@ -1,3 +1,14 @@
+
+def caldate(caldate):
+   y = caldate[0:4]
+   m = caldate[4:6]
+   d = caldate[6:8]
+   h = caldate[8:10]
+   mm = caldate[10:12]
+   s = caldate[12:14]
+   caldate = y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + s 
+   return(caldate)
+
 def read_config():
     config = {}
     file = open("config.txt", "r")
