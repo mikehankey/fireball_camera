@@ -280,6 +280,9 @@ if __name__ == '__main__':
 
     config = read_config()
     print (config['cam_ip'])
+ 
+    os.system("./logger.py 'capture program started.'")
+
     try:
        if (config['device_lat'] != ''):
           print ("setup.")
