@@ -15,7 +15,7 @@ def write_config(config):
        exit()
     file = open("config.txt", "w")
     for key in config:
-      line = key + "=" + config[key] + "\n"
+      line = key + "=" + str(config[key]) + "\n"
       file.write(line)
     file.close()
     print ("Config written.")
@@ -71,8 +71,8 @@ def put_device_info(conf):
    }
 
    _data['device_lat'] = conf['device_lat']
-   _data['device_lon'] = conf['device_lon']
-   _data['device_elv'] = conf['device_elv']
+   _data['device_lon'] = conf['device_lng']
+   _data['device_alt'] = conf['device_alt']
 
    fov = open('/home/pi/fireball_camera/fov.txt', 'r').read().replace('\n', '|')
    _data['fov'] = fov 

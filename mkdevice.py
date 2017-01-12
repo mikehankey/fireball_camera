@@ -2,7 +2,7 @@
 import requests, json
 import sys
 import netifaces
-from amscommon import read_config
+from amscommon import read_config, write_config
 config = read_config()
 
 new_install = 0
@@ -52,8 +52,24 @@ fp.write(r.text)
 fp.close()
 
 data = json.loads(r.text)
+for key in data['result'][1]:
+   print (key)
+
 dev_data = data['result'][0]['cam'][0]
+operator_data = data['result'][1]['operator'][0]
+for key in operator_data:
+   if type(operator_data[key]) is str:
+      print (key, operator_data[key])
+      config[key]=operator_data[key]
+
 for key in dev_data:
-   print (key, dev_data[key])
+   if type(dev_data[key]) is str:
+      print (key, dev_data[key])
+      config[key]=dev_data[key]
+print ("CONFIG")
+print (config)
+print ("CONFIG")
+write_config(config)
+print (operator_data)
 exit()
 

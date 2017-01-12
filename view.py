@@ -38,7 +38,7 @@ def day_or_night(file):
    obs.pressure = 0
    obs.horizon = '-0:34'
    obs.lat = config['device_lat']
-   obs.lon = config['device_lon']
+   obs.lon = config['device_lng']
    #cur_date = time.strftime("%Y/%m/%d %H:%M")
    cur_date = datetime.datetime.strptime(date_str, "%Y/%m/%d %H:%M")
    obs.date = cur_date

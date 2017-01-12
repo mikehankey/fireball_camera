@@ -25,6 +25,8 @@ def cam_loop(pipe_parent, shared_dict):
     motion_off = 0
     config = read_config()
     print (config['cam_ip'])
+
+
     if int(config['hd']) == 1:
         print ("capture_hd")
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
@@ -174,11 +176,13 @@ def cam_loop(pipe_parent, shared_dict):
 def show_loop(pipe_child, shared_dict):
     #cv2.namedWindow("pepe")
     config = read_config()
+
+
     print (config['cam_ip'])
 
     device_lat = config['device_lat']
-    device_lon = config['device_lon']
-    device_operator = config['device_operator']
+    device_lng = config['device_lng']
+    device_operator = config['first_name'] + " " + config['last_name']
     device_id= config['device_id']
 
     image_acc = None
@@ -273,6 +277,19 @@ if __name__ == '__main__':
     print ("Capture Program")
     #logger = multiprocessing.log_to_stderr()
     #logger.setLevel(multiprocessing.SUBDEBUG)
+
+    config = read_config()
+    print (config['cam_ip'])
+ 
+    os.system("./logger.py 'capture program started.'")
+
+    try:
+       if (config['device_lat'] != ''):
+          print ("setup.")
+    except:
+          print ("device not setup yet.")
+          exit()
+
  
     pipe_parent, pipe_child = multiprocessing.Pipe()
     man = multiprocessing.Manager()

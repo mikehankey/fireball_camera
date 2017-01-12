@@ -84,20 +84,7 @@ def adjust_brightness(config,settings,blow,bhigh,brightness_min, brightness_max)
       return(1)
 
 config = read_config() 
-#cam_ip = config['cam_ip']
 sun_info = read_sun()
-if int(sun_info['dark']) == 1:
-   blow = "30"
-   bhigh = "75"
-else:
-   blow = "145"
-   bhigh = "155"
-if int(sun_info['dark']) == 1:
-   brightness_min = "40"
-   brightness_max = "65"
-else:
-   brightness_min = "95"
-   brightness_max = "130"
 
 
 cam_settings = get_settings(config)
