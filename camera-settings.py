@@ -35,6 +35,7 @@ def WDR(config, on):
    print (r.text)
 
 def nighttime_settings(config):
+   fp = open("/home/pi/fireball_camera/calnow", "w")
    WDR(config, 0)
    ### BLC 
    set_special(config, "1017", "150")
@@ -43,8 +44,10 @@ def nighttime_settings(config):
    set_setting(config, "Gamma", "30")
    set_setting(config, "InfraredLamp", "high")
    set_setting(config, "TRCutLevel", "high")
+   os.system("rm /home/pi/fireball_camera/calnow")
 
 def daytime_settings(config):
+   fp = open("/home/pi/fireball_camera/calnow", "w")
    ### 
    WDR(config, 1)
    ### IR mode
@@ -57,6 +60,7 @@ def daytime_settings(config):
    set_setting(config, "Contrast", "128")
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
+   os.system("rm /home/pi/fireball_camera/calnow")
 
 config = read_config()
 
