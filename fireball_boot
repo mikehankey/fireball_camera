@@ -11,7 +11,7 @@ if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
 fi
 
 cd /home/pi/fireball_camera
-su -u pi './boot.py'
+sudo -u pi './boot.py'
 
 ### BEGIN INIT INFO
 # Provides:          skeleton
