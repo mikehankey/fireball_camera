@@ -17,17 +17,21 @@ def read_config():
       data = line.rsplit("=",2)
       config[data[0]] = data[1]
       #print key, value
-
-    config['az_left'] = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
-    config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
-    if (config['az_right'] > 360):
-       config['az_right'] = config['az_right'] - 360
-    if (config['az_left'] > 360):
-       config['az_left'] = config['az_left'] - 360
-    if (config['az_left'] < 0):
-       config['az_left'] = config['az_left'] + 360
-    config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
-    config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
+    try:
+       config['az_left'] = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
+       config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
+       if (config['az_right'] > 360):
+          config['az_right'] = config['az_right'] - 360
+       if (config['az_left'] > 360):
+          config['az_left'] = config['az_left'] - 360
+       if (config['az_left'] < 0):
+          config['az_left'] = config['az_left'] + 360
+       config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
+       config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
+    except:
+       print ("camera not yet calibrated.")
+       config['az_left'] = 0
+       config['az_right'] = 0
     return(config)
 
 
@@ -72,11 +76,23 @@ if int(sun_alt) < -3:
 else:
    dark = 0
 
+if int(sun_alt) < -3:
+   status = "dark";
+if int(sun_alt) > -3 and int(sun_alt) < 5:
+      if int(sun_az) > 0 and int(sun_az) < 180:
+         status = "dawn"
+      else:
+         status = "dusk"
+if int(sun_alt) >= 5:
+   status = "day"
+
+
 sun_file = open("/home/pi/fireball_camera/sun.txt", "w")
 sun_info = "az=" + str(sun_az) + "\n"
 sun_info = sun_info + "el=" + str(sun_alt) + "\n"
 sun_info = sun_info + "fov=" + str(fov) + "\n"
 sun_info = sun_info + "dark=" + str(dark) + "\n"
+sun_info = sun_info + "status=" + str(status) + "\n"
 sun_file.write(sun_info)
 
 
