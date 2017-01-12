@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 #this script sets up the cameras default params
 # important backdoor URLS
 # OSD - /videoosd.asp?
@@ -10,7 +11,7 @@ from amscommon import read_config
 config = read_config()
 
 cam_ip = config['cam_ip']
-device_id = config['device_id']
+#device_id = config['device_id']
 
 print ("Setting up defaults for camera on IP address:", cam_ip)
 
@@ -20,20 +21,9 @@ print (url)
 r = requests.get(url)
 print (r.text)
 
-print ("Set the video encoding params.")
-url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd=admin&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=512&FrameRate1=5&Profile1=Main Profile&PicLevel1=1"
-
-print (url)
-r = requests.get(url)
-print (r.text)
-
-url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd=admin&channel=0&EncType2=H.264&Resolution2=640*480&KeyInterval2=25&FrameRate2=25&BitflowType2=VBR&NormalBitrate2=2048&PicLevel2=1&Profile2=Main Profile&quality2=1&ratectrl2=1"
-print (url)
-r = requests.get(url)
-print (r.text)
 
 print ("Set the OSD settings.")
-url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str(device_id) + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2&TitleValue=0"
+url = "http://" + str(cam_ip) + "/cgi-bin/textoverlay_cgi?action=set&user=admin&pwd=admin&channel=0&Title=" + str("AMS") + "&DateValue=1&TimeValue=1&WeekValue=0&BitrateValue=0&Color=2&TitleValue=0"
 print (url)
 r = requests.get(url)
 print (r.text)
@@ -47,7 +37,7 @@ for x in range(0,140):
 
 url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=2000&paramchannel=0&paramcmd=2006&paramctrl=0&paramstep=0&paramreserved=0"
 print (url)
-for x in range(0,135):
+for x in range(0,138):
     r = requests.get(url)
     print (r.text)
 
@@ -98,5 +88,19 @@ print (url)
 r = requests.get(url)
 print (r.text)
 
+# default shutter speed of 50
+r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
 
+
+print ("Set the video encoding params.")
+url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd=admin&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=512&FrameRate1=5&Profile1=Main Profile&PicLevel1=1"
+
+print (url)
+r = requests.get(url)
+print (r.text)
+
+url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd=admin&channel=0&EncType2=H.264&Resolution2=640*480&KeyInterval2=25&FrameRate2=25&BitflowType2=VBR&NormalBitrate2=2048&PicLevel2=1&Profile2=Main Profile&quality2=1&ratectrl2=1"
+print (url)
+r = requests.get(url)
+print (r.text)
 
