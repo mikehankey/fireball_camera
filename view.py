@@ -382,12 +382,14 @@ def view(file, show):
               out_jpg_final = out_jpg[0:500,0:500]
            if max_h > 0:
               #stack_frame /= count * .25
+              print ("Writing Object File", object_file)
               cv2.imwrite(object_file, stack_frame)
               #cv2.imwrite(object_file, out_jpg_final)
            else: 
               #stack_frame /= count * .25
               #cv2.imwrite(object_file, out_jpg)
               cv2.imwrite(object_file, stack_frame)
+              print ("Writing Object File", object_file)
            return()
            #exit()
 
