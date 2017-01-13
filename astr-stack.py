@@ -15,7 +15,7 @@ import sys
 
 def view(file, show):
 
-    out_file = file.replace(".avi", "-stacked.jpg")
+    out_file = file.replace(".avi", ".jpg")
     #print (file)
     #print (out_file)
     img_matrix = [] 
@@ -25,13 +25,18 @@ def view(file, show):
     frame = None 
     last_frame = None 
     image_acc = None 
+    nc = 0
     while (frame is None):
         _ , frame = cap.read()
         print("Frame is none.")
+        nc = nc + 1
+        if nc > 20:
+           print ("Can't read the file", file)
+           exit()
     stack_frame = np.array(frame,dtype=np.float32)
     im = np.array(frame,dtype=np.float32)
     final_image = Image.fromarray(frame)
-    cv2.namedWindow('pepe')
+    #cv2.namedWindow('pepe')
     while True:
         _ , frame = cap.read()
         nice_frame = frame
@@ -76,8 +81,8 @@ def view(file, show):
                    elif ch[3] < 0:
                        cv2.drawContours(nice_frame, [cnt], 0, (0,255,0), 3)
                print (len(cnts), " contours found.", hierarchy[0])
-               cv2.imshow("pepe", nice_frame)
-               cv2.waitKey(1)
+               #cv2.imshow("pepe", nice_frame)
+               #cv2.waitKey(1)
 
 
 
@@ -96,4 +101,4 @@ def view(file, show):
     #med_out = Image.fromarray(np.uint8(median_array))
     #med_out.save('all_medout.jpg', 'JPEG')
 
-view("/var/www/html/out/cal/" + sys.argv[1], "a")
+view(sys.argv[1], "a")

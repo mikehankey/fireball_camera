@@ -53,7 +53,7 @@ _data= {
    'straight_line':  straight_line,
    'bp_frames':  bp_frames,
    'meteor_yn':  meteor_yn,
-   'best_calibration':  best_calibration,
+   'best_calibration':  config['best_caldate'],
 }
  
 session = requests.Session()

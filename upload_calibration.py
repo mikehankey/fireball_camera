@@ -3,7 +3,7 @@ import requests
 import mimetypes
 import sys
 from pathlib import Path
-from amscommon import read_config
+from amscommon import read_config, write_config
 
 # UPLOAD CALIBRATION FILES AND STATUS
 
@@ -38,12 +38,13 @@ url = "http://www.amsmeteors.org/members/api/cam_api/log_calibration_files"
 star_file   = file;
 wcs_file    = file.replace(".jpg", ".wcs")
 const_file  = file.replace(".jpg", "-grid.png")
-
+cal_file = y + m + d + h + mm + s 
 
 # Check that WCS file exists else cal failed.
 file_exists = Path(wcs_file)
 if (file_exists.is_file()):
    print("Calibration was successful.")
+   config['best_caldate'] = cal_file
    # The Files to send
    _file = {'stars': open(star_file, 'rb'), 'wcs': open(wcs_file, 'rb'), 'constellation': open(const_file, 'rb')}
    _data= {
@@ -77,7 +78,7 @@ else:
       'status' : status
    }
 
-
+write_config(config)
 session = requests.Session()
 del session.headers['User-Agent']
 del session.headers['Accept-Encoding'] 

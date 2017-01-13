@@ -83,7 +83,7 @@ def radec_to_azel(ra,dec,lat,lon,alt, caldate):
    obs.lon = ephem.degrees(lon)
    obs.date = caldate 
    print ("CALDATE:", caldate)
-   obs.elevation=int(alt)
+   obs.elevation=float(alt)
    body.compute(obs)
    az = str(body.az)
    el = str(body.alt)

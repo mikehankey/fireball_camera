@@ -41,11 +41,16 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
 
    summary = maybe_summary_file.replace("-summary", "")
    os.system("mv " + maybe_summary_file + " " + summary)
-   event_stack = maybe_object_file
-   event = maybe_file
- 
-   _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'rb') }
+   print("mv " + maybe_summary_file + " " + summary)
 
+   event_stack = maybe_object_file.replace("-objects", "")
+   event = maybe_file
+   #time.sleep(1)
+   os.system("cat " + summary + "> /tmp/sum.txt")
+ 
+   _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'r') }
+
+   print ("Summary TXT: ", summary)
    session = requests.Session()
    del session.headers['User-Agent']
    del session.headers['Accept-Encoding']
@@ -57,8 +62,10 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
    response.raw.close()
 
 def log_motion_capture(config, file, values):
+   stack_file = file.replace("-objects", "")
+   os.system("cp " + file + " " + stack_file)
    url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
-   _files = {'event_stack': open(file, 'rb')}
+   _files = {'event_stack': open(stack_file, 'rb')}
    _data = {
     'api_key': config['api_key'],
     'device_id': config['device_id'],
@@ -261,6 +268,8 @@ def analyze(file):
     print("Average Center Pixel Color:\t" + str(avg_center_pixel) + "\n")
     sfp.write("Likely Meteor:\t"+ str(meteor)+"\n")
     print("Likely Meteor:\t"+ str(meteor)+"\n")
+    fp.close()
+    sfp.close()
     if meteor == "N":
        false_file= file.replace("out/", "out/false/")
        false_data_file= data_file.replace("out/", "out/false/")
@@ -270,8 +279,11 @@ def analyze(file):
        os.system(cmd)
        cmd = "mv " + data_file + " " + false_data_file
        os.system(cmd)
+
        cmd = "mv " + summary_file + " " + false_summary_file
+       print ("SUMMARY FILE CMD", cmd)
        os.system(cmd)
+
        cmd = "mv " + object_file + " " + false_object_file
        os.system(cmd)
        el = false_object_file.split("/")
@@ -296,16 +308,20 @@ def analyze(file):
        cmd = "mv " + data_file + " " + maybe_data_file
        os.system(cmd)
        cmd = "mv " + summary_file + " " + maybe_summary_file
+       print (cmd)
        os.system(cmd)
        cmd = "mv " + object_file + " " + maybe_object_file
        os.system(cmd)
+       cmd = "./astr-stack.py " + maybe_file
+       print (cmd)
+       os.system(cmd)
+
 
        el = maybe_object_file.split("/")
-       best_calibration = "20170101020202"
        motion_date = caldate(el[-1])
        values = {
           'datetime': motion_date,
-          'best_calibration' : best_calibration,
+          'best_calibration' : config['best_caldate'],
           'motion_frames' : elapsed_frames,
           'cons_motion': max_cons_motion,
           'color' : avg_center_pixel,
@@ -313,6 +329,8 @@ def analyze(file):
           'bp_frames' : bright_pixel_count,
           'meteor_yn': meteor
        }
+       
+
        log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
 
   
