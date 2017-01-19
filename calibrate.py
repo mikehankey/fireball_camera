@@ -21,18 +21,18 @@ def do_it_all():
 
 
    # check to see if stars are present
-   cal_file = star_file.replace(".avi", ".jpg")
-   cmd = "./count_stars.py " + cal_file
-   output = subprocess.check_output(cmd, shell=True)
-   output = output.decode("utf-8")
-   output = output.replace("\n", "") 
-   output = output.replace(" ", "") 
-   (trash, total_stars) = output.split(":")
-   print (total_stars)
-   if int(total_stars) > 0:
-      print ("Plenty of stars. Try Plate Solve.") 
-   else:
-      print ("Not enough stars. Calibration Failed.") 
+   #cal_file = star_file.replace(".avi", ".jpg")
+   #cmd = "./count_stars.py " + cal_file
+   #output = subprocess.check_output(cmd, shell=True)
+   #output = output.decode("utf-8")
+   #output = output.replace("\n", "") 
+   #output = output.replace(" ", "") 
+   #(trash, total_stars) = output.split(":")
+   #print (total_stars)
+   #if int(total_stars) > 0:
+   #   print ("Plenty of stars. Try Plate Solve.") 
+   #else:
+   #   print ("Not enough stars. Calibration Failed.") 
    
 
    # plate solve the image 
