@@ -42,7 +42,7 @@ def cam_loop(pipe_parent, shared_dict):
     log = open("/var/www/html/out/log.txt", "w")
     log.write("Capture Process Started: " + time_start.strftime("%Y%m%d%H%M%S"))
 
-    time.sleep(5)
+    time.sleep(7)
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
     #frame_data = deque(maxlen=200)

@@ -20,6 +20,7 @@ def view(file, show):
     #print (out_file)
     img_matrix = [] 
     count = 0
+    print ("FILE:", file)
     cap = cv2.VideoCapture(file)
     time.sleep(2)
     frame = None 

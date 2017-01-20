@@ -47,8 +47,6 @@ def put_device_info(conf):
    import netifaces 
 
    # PUT DEVICE INFO
-   #api_key = "QwCsPJKr87y15Sy"
-   #api_key = "7oZl2o7erVCq7gZ"
    #device_id  = 1
    url = "http://www.amsmeteors.org/members/api/cam_api/put_device_info"
 

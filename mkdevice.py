@@ -2,7 +2,7 @@
 import requests, json
 import sys
 import netifaces
-from amscommon import read_config, write_config
+from amscommon import read_config, write_config, put_device_info
 config = read_config()
 
 new_install = 0
@@ -70,6 +70,7 @@ print ("CONFIG")
 print (config)
 print ("CONFIG")
 write_config(config)
+put_device_info(config)
 print (operator_data)
 exit()
 
