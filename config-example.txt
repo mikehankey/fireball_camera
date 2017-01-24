@@ -1,14 +1,1 @@
-cam_ip=192.168.1.88
-device_id=2
-api_key=
-output_dir=/var/www/html/out
-device_lat=39.588738
-device_lon=-76.584314
-device_elv=300
-device_operator=Michael Hankey
-heading=80
-elv_angle=30
-cam_fov_x=80
-cam_fov_y=60
-hd=0
-pixel_scale=0
+cam_ip=192.168.1.80
