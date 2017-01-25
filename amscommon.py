@@ -72,9 +72,6 @@ def put_device_info(conf):
       'wlan_ip': wlan0_ip,
       'lan_ip': eth0_ip,
       'cam_ip': conf['cam_ip'],
-      'heading': conf['heading'],
-      'elv_angle': conf['elv_angle'],
-      'pixel_scale': conf['pixel_scale'],
 
       # chip geoloc
    }
@@ -82,7 +79,12 @@ def put_device_info(conf):
    _data['device_lat'] = conf['device_lat']
    _data['device_lon'] = conf['device_lng']
    _data['device_alt'] = conf['device_alt']
-
+   try:
+      _data['heading'] = conf['heading']
+      _data['elv_angle'] = conf['elv_angle']
+      _data['pixel_scale'] =  conf['pixel_scale']
+   except:
+      print ("Not calibrated yet.")
    fov = open('/home/pi/fireball_camera/fov.txt', 'r').read().replace('\n', '|')
    _data['fov'] = fov 
 
