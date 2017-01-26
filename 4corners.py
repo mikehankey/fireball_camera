@@ -230,7 +230,7 @@ if 1 == 1:
    pixel_scale = pixel_scale.replace("\n", "")
    config['pixel_scale'] = pixel_scale
    
-
+   config['fov'] = cords.replace("\n", "|")
    write_config(config)
    put_device_info(config)
 
