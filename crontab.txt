@@ -28,7 +28,7 @@
 # sync the device code with the repo once a day. 
 
 0 17 * * * cd /home/pi/fireball_camera; ./sync-code.sh > /dev/null
-1,16,31,46 * * * * cd /home/pi/fireball_camera ./sun.py> /dev/null
-01,10,20,30,40,50 * * * * cd /home/pi/fireball_camera ./camera-settings.py> /dev/null
+1,16,31,46 * * * * cd /home/pi/fireball_camera; ./sun.py> /dev/null
+01,10,20,30,40,50 * * * * cd /home/pi/fireball_camera; ./camera-settings.py> /dev/null
 10,40 * * * * cd /home/pi/fireball_camera; ./upload_latest.py > /dev/null
 5,20,35,50 * * * * cd /home/pi/fireball_camera; ./view.py > /dev/null
