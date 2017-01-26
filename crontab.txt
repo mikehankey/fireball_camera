@@ -32,3 +32,4 @@
 01,10,20,30,40,50 * * * * cd /home/pi/fireball_camera; ./camera-settings.py> /dev/null
 10,40 * * * * cd /home/pi/fireball_camera; ./upload_latest.py > /dev/null
 5,20,35,50 * * * * cd /home/pi/fireball_camera; ./view.py > /dev/null
+#test

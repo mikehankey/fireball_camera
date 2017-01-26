@@ -191,4 +191,9 @@ if cmd == 'sense_up':
    os.system("rm /home/pi/fireball_camera/calibrate.txt")
 if cmd == 'stack':
    outfile = sys.argv[2]
+
+   el = outfile.split("/")
+   if len(el) <= 1:
+      outfile = "/var/www/html/out/cal/" + outfile
+
    stack_calibration_video(outfile)

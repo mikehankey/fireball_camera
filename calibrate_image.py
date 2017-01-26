@@ -6,6 +6,12 @@ import os
 import time 
 
 jpg_file = sys.argv[1]
+
+el = jpg_file.split("/")
+if len(el) <= 1:
+   jpg_file = "/var/www/html/out/cal/" + jpg_file 
+
+
 wcs_file = jpg_file.replace(".jpg", ".wcs")
 grid_file = jpg_file.replace(".jpg", "-grid.png")
 
