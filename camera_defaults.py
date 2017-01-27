@@ -41,8 +41,8 @@ for x in range(0,138):
     r = requests.get(url)
     print (r.text)
 
-#LSC OPEN
-url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1048&paramctrl=1&paramstep=0&paramreserved=0"
+#LSC CLOSE 
+url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1048&paramctrl=0&paramstep=0&paramreserved=0"
 print (url)
 r = requests.get(url)
 print (r.text)
