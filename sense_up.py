@@ -21,7 +21,7 @@ def set_setting(config, setting, value):
 def get_calibration_frames():
    config = read_config()
    fp = open("/home/pi/fireball_camera/calnow", "w")
-   set_setting(config, "Brightness", 165)
+   set_setting(config, "Brightness", 86)
 
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
