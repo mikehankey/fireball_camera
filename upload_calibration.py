@@ -10,7 +10,9 @@ from amscommon import read_config, write_config
 config = read_config()
 
 try:
-   file = "/var/www/html/out/cal/" + sys.argv[1]
+   el = sys.argv[1].split("/")
+   caldate= el[-1]
+   file = "/var/www/html/out/cal/" + caldate 
 except:
    print ("Usage: ./upload_calibration.py file.jpg")
    exit()
@@ -20,7 +22,6 @@ if (file_exists.is_file()):
 else:
    print("File not found:", file)
    exit()
-caldate = sys.argv[1] 
 y = caldate[0:4]
 m = caldate[4:6]
 d = caldate[6:8]
