@@ -11,11 +11,18 @@ from collections import deque
 import iproc
 from amscommon import read_sun, read_config
 
+def set_setting(config, setting, value):
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=admin&action=get&channel=0&" + setting + "=" + str(value)
+   r = requests.get(url)
+   return(r.text)
+
 
 
 def get_calibration_frames():
    config = read_config()
    fp = open("/home/pi/fireball_camera/calnow", "w")
+   set_setting(config, "Brightness", 165)
+
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
@@ -71,6 +78,7 @@ def get_calibration_frames():
 
    # sense camera down
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+   set_setting(config, "Brightness", 65)
    cap.release()
    time.sleep(3)
    os.system("rm /home/pi/fireball_camera/calnow")
