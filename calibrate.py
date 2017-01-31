@@ -21,7 +21,7 @@ def do_it_all():
 
 
    # check to see if stars are present
-   #cal_file = star_file.replace(".avi", ".jpg")
+   cal_file = star_file.replace(".avi", ".jpg")
    #cmd = "./count_stars.py " + cal_file
    #output = subprocess.check_output(cmd, shell=True)
    #output = output.decode("utf-8")
