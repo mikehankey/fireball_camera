@@ -119,8 +119,11 @@ config = read_config()
 
 if 1 == 1:
    
-   file = "/var/www/html/out/cal/" + sys.argv[1]
-   caldate = sys.argv[1]
+
+   el = sys.argv[1].split("/")
+   caldate = el[-1] 
+   file = sys.argv[1]
+   #caldate = sys.argv[1]
    y = caldate[0:4]
    m = caldate[4:6]
    d = caldate[6:8]
