@@ -1,3 +1,13 @@
+sudo mkdir /var/www
+sudo mkdir /var/www/html
+sudo mkdir /var/www/html/out
+sudo mkdir /var/www/html/out/false
+sudo mkdir /var/www/html/out/maybe
+sudo mkdir /var/www/html/out/cal
+sudo chown -R pi:pi /var/www
+exit()
+
+
 ## enable shell login on pi
 ## enable vnc login on pi raspi-config
 ## sudo apt-get --yes --force-yes update
