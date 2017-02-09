@@ -85,8 +85,11 @@ def put_device_info(conf):
       _data['pixel_scale'] =  conf['pixel_scale']
    except:
       print ("Not calibrated yet.")
-   fov = open('/home/pi/fireball_camera/fov.txt', 'r').read().replace('\n', '|')
-   _data['fov'] = fov 
+   try:
+      fov = open('/home/pi/fireball_camera/fov.txt', 'r').read().replace('\n', '|')
+      _data['fov'] = fov 
+   except: 
+      fov = ""
 
    _data['format'] = 'json'
    #print(fov)
