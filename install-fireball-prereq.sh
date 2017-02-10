@@ -1,11 +1,11 @@
-sudo mkdir /var/www
-sudo mkdir /var/www/html
-sudo mkdir /var/www/html/out
-sudo mkdir /var/www/html/out/false
-sudo mkdir /var/www/html/out/maybe
-sudo mkdir /var/www/html/out/cal
-sudo chown -R pi:pi /var/www
-exit()
+#sudo mkdir /var/www
+#sudo mkdir /var/www/html
+#sudo mkdir /var/www/html/out
+#sudo mkdir /var/www/html/out/false
+#sudo mkdir /var/www/html/out/maybe
+#sudo mkdir /var/www/html/out/cal
+#sudo chown -R pi:pi /var/www
+#exit()
 
 
 ## enable shell login on pi
@@ -29,18 +29,28 @@ exit()
 #unzip opencv.zip
 #wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.1.0.zip
 #unzip opencv_contrib.zip
+
+#sudo apt-get install -y tesseract-ocr libtesseract-dev libleptonica-dev
+
 #
 ##python
 #wget https://bootstrap.pypa.io/get-pip.py
 #sudo python3 get-pip.py
 #pip install numpy
 #pip install netifaces
+#sudo pip install pyephem
+
+#sudo apt-get install python3-dateutil
+#sudo apt-get install python3-pil
+#sudo pip install pytesseract
+
 #
 ##compile opencv
 #
 
+
 cd ~/opencv-3.1.0/
-mkdir build
+#mkdir build
 cd build
 #make clean
 cmake -D CMAKE_BUILD_TYPE=RELEASE \
@@ -104,3 +114,13 @@ sudo ldconfig
 #when done
 #sudo rm /usr/bin/gcc
 #sudo mv /usr/bin/gcc.back /usr/bin/gcc
+#index-4116.fits  index-4117.fits  index-4118.fits  index-4119.fits
+
+#wget http://broiler.astrometry.net/~dstn/4100/index-4116.fits
+#sudo mv index-4116.fits /usr/local/astrometry/data 
+#wget http://broiler.astrometry.net/~dstn/4100/index-4117.fits
+#sudo mv index-4117.fits /usr/local/astrometry/data 
+#wget http://broiler.astrometry.net/~dstn/4100/index-4118.fits
+#sudo mv index-4118.fits /usr/local/astrometry/data 
+#wget http://broiler.astrometry.net/~dstn/4100/index-4119.fits
+#sudo mv index-4119.fits /usr/local/astrometry/data 

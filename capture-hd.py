@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 #from subprocess import call
+import numpy as np
+print (np.__path__)
+print (np.__version__)
 from pathlib import Path
 import os
 import requests
@@ -10,13 +13,13 @@ import multiprocessing
 from amscommon import read_config
 import datetime
 import cv2
-import numpy as np
 import iproc 
 import time
 import syslog
 import sys
 MORPH_KERNEL = np.ones((10, 10), np.uint8)
 record = 1
+
 
 def cam_loop(pipe_parent, shared_dict):
     lc = 0

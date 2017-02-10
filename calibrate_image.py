@@ -19,6 +19,8 @@ star_file = jpg_file.replace(".jpg", "-stars-out.jpg")
 star_data_file = jpg_file.replace(".jpg", "-stars-out.txt")
 
 
+
+
 #cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
 
 #cmd = "/usr/local/astrometry/bin/solve-field " + xyfits + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
@@ -31,7 +33,8 @@ star_data_file = jpg_file.replace(".jpg", "-stars-out.txt")
 os.system("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95 ")
 #os.system(cmd)
 
-cmd = "jpegtopnm " + jpg_file + "|plot-constellations -w " + wcs_file + " -o " + grid_file + " -i - -N -C -G 600"
+cmd = "/usr/bin/jpegtopnm " + jpg_file + "|/usr/local/astrometry/bin/plot-constellations -w " + wcs_file + " -o " + grid_file + " -i - -N -C -G 600"
+print (cmd)
 os.system(cmd)
 
 cmd = "/usr/local/astrometry/bin/wcsinfo " + wcs_file + " > " + star_data_file
