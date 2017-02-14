@@ -38,7 +38,7 @@ print ("WLAN MAC: ", wlan0_mac)
 print ("ETH0 IP: ", eth0_ip)
 print ("WLAN IP: ", wlan0_ip)
 
-r = requests.get('http://www.amsmeteors.org/members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
+r = requests.get('http://www.amsmeteors.org/members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + 'wlan_ip=' + wlan0_ip)
 #print (r.text)
 fp = open("register.txt", "w")
 fp.write(r.text)

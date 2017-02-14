@@ -19,7 +19,7 @@ fp = open("/home/pi/fireball_camera/booted.txt", "w")
 fp.write("booted")
 fp.close()
 
-os.system("./mkdevice.py")
+os.system("cd /home/pi/fireball_camera; ./mkdevice.py")
 
 try:
     eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
@@ -31,4 +31,4 @@ except:
     wlan0_ip = "0.0.0.0"
 
 msg = "reboot " + eth0_ip + "/" + wlan0_ip
-os.system("./logger.py '" + msg + "'")
+os.system("cd /home/pi/fireball_camera; ./logger.py '" + msg + "'")

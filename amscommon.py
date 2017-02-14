@@ -11,7 +11,7 @@ def caldate(caldate):
 
 def read_config():
     config = {}
-    file = open("config.txt", "r")
+    file = open("/home/pi/fireball_camera/config.txt", "r")
     for line in file:
       line = line.strip('\n')
       data = line.rsplit("=",2)
@@ -24,7 +24,7 @@ def write_config(config):
     if len(config) < 3:
        print ("Error not enough config vars passed.")
        exit()
-    file = open("config.txt", "w")
+    file = open("/home/pi/fireball_camera/config.txt", "w")
     for key in config:
       line = key + "=" + str(config[key]) + "\n"
       file.write(line)
