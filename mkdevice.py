@@ -70,7 +70,7 @@ out.write(hostname)
 out.close()
 #os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
 
-exit()
+#exit()
 
 # GET THE DEVICE INFO
 
