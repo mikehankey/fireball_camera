@@ -68,7 +68,7 @@ print ("ID: ", hostname)
 out = open("/home/pi/fireball_camera/host", "w") 
 out.write(hostname)
 out.close()
-os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
+#os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
 
 exit()
 
