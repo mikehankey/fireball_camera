@@ -5,6 +5,7 @@ import glob
 import os
 import json
 import re
+import sys
 from os import listdir
 from os.path import isfile, join
  
@@ -18,10 +19,10 @@ def read_file(file_path):
 
 data = {"detection":[]}
 c = 0
-for filename in glob.glob('/var/www/html/out/maybe/*.avi'):  
+for filename in glob.glob(sys.argv[1]+'*.avi'):  
     filename = os.path.basename(filename)
     d = {}
-    d['name']     = os.path.splitext(filename)[0]
+    d['name'] = os.path.splitext(filename)[0]
     
     m = re.search(r'(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})', d['name'])
     
@@ -33,7 +34,7 @@ for filename in glob.glob('/var/www/html/out/maybe/*.avi'):
     d['preview'] = d['name'] + ".jpg"
     d['summary'] = d['name'] + "-summary.txt"
     
-    d['summaryTxt'] = read_file('/var/www/html/out/maybe/'+d['name'] + "-summary.txt")
+    d['summaryTxt'] = read_file(sys.argv[1]+d['name'] + "-summary.txt")
     
     data["detection"].append({'detect': d})
     
