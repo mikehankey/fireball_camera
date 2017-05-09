@@ -1,3 +1,6 @@
+# DELETE DETECTIONS FILES
+# with the following extensions: ".jpg","-objects.jpg","-summary.txt",".avi",".txt"
+
 import os 
 import sys
 from os.path import isfile
