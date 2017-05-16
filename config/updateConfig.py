@@ -17,6 +17,7 @@ for key in jsonObject:
  
     value = jsonObject[key]
     
+    # Encrypt the Cam Password
     if(key=='cam_pwd'):
         c = Crypt()
         value = c.encrypt(value)
