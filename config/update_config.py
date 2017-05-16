@@ -25,6 +25,8 @@ for key in config:
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd='+config['cam_pwd']+'&username=admin&password='+value
             print fname
+            
+           
         
         # It is not the first time
         else:
@@ -32,8 +34,13 @@ for key in config:
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password='+value
             print fname
+             
         
-        f = urllib.urlopen(fname)
+        # Remove the old cam_pwd so we dont have 2 in the config file
+        del config['cam_pwd']
+        
+        # Call to CGI
+        urllib.urlopen(fname)
         
         # Encrypt the Cam Password to store it in the config file
         c     = Crypt()
@@ -41,6 +48,7 @@ for key in config:
      
         line =  "cam_pwd=" + str(value) + "\n"
         file.write(line)   
+        
     
     else:
           
