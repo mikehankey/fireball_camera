@@ -1,3 +1,4 @@
+from pprint import pprint
 
 def caldate(caldate):
    y = caldate[0:4]
@@ -14,8 +15,12 @@ def read_config():
     file = open("/home/pi/fireball_camera/config.txt", "r")
     for line in file:
       line = line.strip('\n')
-      data = line.rsplit("=",2)
-      config[data[0]] = data[1]
+      
+      #Find first index of =
+      #modify to allow encoded pwds with '='
+      c = line.index('=')
+      config[line[0:c]] = line[c+1:]
+      #data = line.rsplit("=",1)
     config['hd'] = 0
     file.close()
     return(config)
@@ -107,6 +112,6 @@ def put_device_info(conf):
    
 
    #with requests.Session() as session:
-   #   response = session.post(url, data= _data)
+   #response = session.post(url, data= _data)
    #print (response)
    #response.raw.close()
