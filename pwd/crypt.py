@@ -23,18 +23,3 @@ class Crypt(object):
     def decrypt(self, s):
         t = self.cipher.decrypt(base64.b64decode(s))
         return unpad16(t)
-
-     
-
-#p = 'allonsEnfants2LaPatrie!'
-#s = sys.argv[1] # Password (crypted or not)
-#f = sys.argv[2] # Function    
-
-#c = Crypt(p)
-
-#if( f == 'encrypt'):
-#    x = base64.b64encode(c.encrypt(s))
-#else:
-#    x = c.decrypt(base64.b64decode(s))
-#
-#print x  

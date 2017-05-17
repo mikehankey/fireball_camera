@@ -12,7 +12,7 @@ import re
 
 def get_cam_brightness(config):
 #   urlretrieve("http://" + config['cam_ip'] + "/cgi-bin/images_cgi?channel=0&user=admin&pwd=admin", 'cam.jpg')
-   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
+   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=" + config['cam_pwd'] + "&tcp")
    _ , frame = cap.read()
    cv2.imwrite("/home/pi/fireball_camera/cam.jpg", frame)
 
@@ -32,7 +32,7 @@ def get_cam_brightness(config):
    return(means)
 
 def get_settings(config):
-   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=admin&action=get&channel=0"
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0"
    settings = defaultdict()
    r = requests.get(url)
    resp = r.text
@@ -42,7 +42,7 @@ def get_settings(config):
    return(settings)
 
 def set_setting(config, setting, value):
-   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=admin&action=get&channel=0&" + setting + "=" + str(value)
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
    return(r.text)
 

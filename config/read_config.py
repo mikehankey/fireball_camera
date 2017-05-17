@@ -10,15 +10,11 @@ from amscommon import read_config, write_config
 sys.path.insert(1, os.path.join(sys.path[0], '../pwd'))
 from crypt import Crypt
 
-config = read_config()
-
-print config
+config = read_config() 
 
 if 'cam_pwd' in config:
     #We decrypt the cam password
-    c     = Crypt() 
-    print "IN READ CONFIG2"
-    print config['cam_pwd']
+    c = Crypt() 
     config['cam_pwd'] = c.decrypt(config['cam_pwd'])
 
 print json.dumps(config, ensure_ascii=False, encoding="utf-8")

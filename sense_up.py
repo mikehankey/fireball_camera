@@ -12,7 +12,7 @@ import iproc
 from amscommon import read_sun, read_config
 
 def set_setting(config, setting, value):
-   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=admin&action=get&channel=0&" + setting + "=" + str(value)
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
    return(r.text)
 

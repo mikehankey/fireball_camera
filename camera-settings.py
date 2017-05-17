@@ -8,12 +8,12 @@ import requests
 from urllib.request import urlretrieve
 
 def set_setting(config, setting, value):
-   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=admin&action=get&channel=0&" + setting + "=" + str(value)
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
    return(r.text)
 
 def get_settings(config):
-   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=admin&action=get&channel=0"
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0"
    settings = defaultdict()
    r = requests.get(url)
    resp = r.text
