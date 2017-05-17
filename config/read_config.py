@@ -12,9 +12,13 @@ from crypt import Crypt
 
 config = read_config()
 
+print config
+
 if 'cam_pwd' in config:
-    # We decrypt the cam password
+    #We decrypt the cam password
     c     = Crypt() 
+    print "IN READ CONFIG2"
+    print config['cam_pwd']
     config['cam_pwd'] = c.decrypt(config['cam_pwd'])
 
 print json.dumps(config, ensure_ascii=False, encoding="utf-8")
