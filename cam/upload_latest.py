@@ -1,6 +1,10 @@
 #!/usr/bin/python3
-from pathlib import Path
+import sys
 import os
+# Add ../ for amscommon
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from pathlib import Path
 import requests
 from collections import deque
 import multiprocessing
@@ -11,7 +15,7 @@ import datetime
 import time
 import json
 import syslog
-import sys
+
 
 config = read_config()
 
