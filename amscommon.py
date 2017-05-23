@@ -1,5 +1,10 @@
-from pprint import pprint
-
+# Add ../pw for crypt
+import sys
+import os
+ 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './pwd')))
+from crypt import Crypt
+  
 def caldate(caldate):
    y = caldate[0:4]
    m = caldate[4:6]
@@ -13,15 +18,21 @@ def caldate(caldate):
 def read_config():
     config = {}
     file = open("/home/pi/fireball_camera/config.txt", "r")
+    
     for line in file:
       line = line.strip('\n')
       
       #Find first index of =
-      #modify to allow encoded pwds with '='
       c = line.index('=')
       config[line[0:c]] = line[c+1:]
-      #data = line.rsplit("=",1)
+    
     config['hd'] = 0
+    
+    if 'cam_pwd' in config:
+        #We decrypt the cam password
+        c = Crypt() 
+        config['cam_pwd'] = c.decrypt(config['cam_pwd'])
+    
     file.close()
     return(config)
 

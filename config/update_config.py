@@ -66,9 +66,5 @@ file.close()
 #Read again before sending  
 configNEW = read_config() 
 
-if 'cam_pwd' in configNEW:
-    #We decrypt the cam password
-    c = Crypt() 
-    configNEW['cam_pwd'] = c.decrypt(configNEW['cam_pwd'])
-
+ 
 print json.dumps(configNEW, ensure_ascii=False, encoding="utf-8")

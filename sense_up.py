@@ -15,8 +15,7 @@ def set_setting(config, setting, value):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
    return(r.text)
-
-
+ 
 
 def get_calibration_frames():
    config = read_config()
@@ -189,6 +188,8 @@ def stack_calibration_video(outfile):
 
 cmd = sys.argv[1]
 sun_info = read_sun()
+print ("IN SENSE UP - SUN INFO")
+print (sun_info)
 if cmd == 'sense_up':
    if int(sun_info['dark']) != 1:
       print ("It must be dark to sense up.")
