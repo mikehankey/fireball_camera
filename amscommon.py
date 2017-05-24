@@ -29,9 +29,12 @@ def read_config():
     config['hd'] = 0
     
     if 'cam_pwd' in config:
-        #We decrypt the cam password
-        c = Crypt() 
-        config['cam_pwd'] = c.decrypt(config['cam_pwd'])
+        try:
+            #We decrypt the cam password if it is crypted
+            c = Crypt() 
+            config['cam_pwd'] = c.decrypt(config['cam_pwd'])
+        except:
+             config['cam_pwd'] = config['cam_pwd']
     
     file.close()
     return(config)
