@@ -32,7 +32,7 @@ def read_config():
         try:
             #We decrypt the cam password if it is crypted
             c = Crypt() 
-            config['cam_pwd'] = c.decrypt(config['cam_pwd'])
+            config['cam_pwd']  = c.decrypt(config['cam_pwd'])
         except:
              config['cam_pwd'] = config['cam_pwd']
     

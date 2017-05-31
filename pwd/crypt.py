@@ -1,7 +1,6 @@
 import struct
 import sys
 import base64
-
 from Crypto.Cipher import AES
 
 def pad16(s):
