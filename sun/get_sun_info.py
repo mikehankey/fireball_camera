@@ -5,15 +5,13 @@ import sys
 import os
 
 # Add ../ for amscommon
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from amscommon import read_config, write_config
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../config')))
+from read_config_func import read_config_raw 
 
 # Add ../pw for crypt
 sys.path.insert(1, os.path.join(sys.path[0], '../pwd'))
 from crypt import Crypt
-
-config = read_config() 
-
+  
 def deg_to_dms(deg):
     d = int(deg)
     md = abs(deg - d) * 60
@@ -22,7 +20,7 @@ def deg_to_dms(deg):
     return [d, m, sd]
  
  
-config = read_config()
+config = read_config_raw()
 
 print(config);
 

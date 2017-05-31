@@ -66,5 +66,4 @@ file.close()
 #Read again before sending  
 configNEW = read_config() 
 
- 
 print json.dumps(configNEW, ensure_ascii=False, encoding="utf-8")
