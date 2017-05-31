@@ -23,12 +23,10 @@ try:
         config['az_left'] = config['az_left'] + 360
         config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
         config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
-    # Calibration Done    
-    config['calibration'] = '1'
+    config['calibration'] = '1' #Calibration Done  
 except:
-    config['az_left'] = 0
-    config['az_right'] = 0
-    # Calibration TO BE DONE
-    config['calibration'] = '0'
+    config['az_left']   = 0
+    config['az_right']  = 0
+    config['calibration'] = '0' #Calibration TO BE DONE
 
 print json.dumps(config, ensure_ascii=False, encoding="utf-8")

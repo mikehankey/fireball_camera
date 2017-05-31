@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# Test if the capture is on 
 
 procount=$(ps -aux | grep capture-hd.py |grep -v grep| wc -l);
 if [[ $procount -eq 6 ]]; then
