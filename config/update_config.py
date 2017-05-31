@@ -1,3 +1,6 @@
+# UPDATE CONFIG FILE 
+# WITH INFO PASSED AS JSON 
+
 import sys
 import os
 import urllib
@@ -5,9 +8,8 @@ import json
 import copy
 import pprint
 
-# Add ../ for amscommon
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from amscommon import read_config, write_config
+from read_config_func import read_config_raw
+
 sys.path.insert(1, os.path.join(sys.path[0], '../pwd'))
 from crypt import Crypt
   
@@ -16,7 +18,6 @@ config  = json.loads(sys.argv[1]) # Config info
 file = open("/home/pi/fireball_camera/config.txt", "w")
 
 tmp_config = copy.copy(config)
-
 
 for key in config:
 
@@ -53,7 +54,6 @@ for key in config:
         file.write(line)
         
         del tmp_config['new_cam_pwd']
-        
 
  
 for key in tmp_config:
@@ -64,6 +64,5 @@ for key in tmp_config:
 file.close()
 
 #Read again before sending  
-configNEW = read_config() 
-
-print json.dumps(configNEW, ensure_ascii=False, encoding="utf-8")
+configN = read_config_raw();
+print json.dumps(configN, ensure_ascii=False, encoding="utf-8")

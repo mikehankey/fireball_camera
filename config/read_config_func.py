@@ -8,7 +8,7 @@ from amscommon import read_config, write_config
 # Read the config file and parse FOV & EL
 def read_config_raw():
     config = read_config() 
-     
+    
     try:
         config['az_left']  = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
         config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
