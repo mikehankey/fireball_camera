@@ -14,7 +14,7 @@ def set_parameters(argv):
     #python ./cam/set_parameters.py '{"Brightness": 29}' 
       
     config = read_config()
-    possible_values = ['Brightness','Contrast','Saturation','Chroma'];
+    possible_values = ['Brightness','Contrast','Gamma','Chroma'];
    
     # Get Parameters passed in arg
     if(len(argv)!=0):

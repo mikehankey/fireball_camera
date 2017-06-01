@@ -1,7 +1,6 @@
 import json 
 
 # Add ../ for amscommon
-from read_config_func import read_config_raw
+from config_func import get_config
   
-config = read_config_raw();
-print json.dumps(config, ensure_ascii=False, encoding="utf-8")
+print get_config()

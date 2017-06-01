@@ -1,7 +1,10 @@
 import json
 import os
 import sys
-from set_parameters import set_parameters
+from cam_functions import set_parameters
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../file_management')))
+from read_param_file import read_file
 
 #Ex: 
 #python ./cam/get_parameter_from_file.py Night
@@ -10,20 +13,10 @@ from set_parameters import set_parameters
 log_file  = "/home/pi/fireball_camera/cam_calib/" + sys.argv[1]
  
 # Parse Data
-data = {}
-file = open(log_file, "r")
- 
-for line in file:
-  line = line.strip('\n')
-   
-  #Find first index of =
-  c = line.index('=')
-  data[line[0:c]] = line[c+1:]
-
-file.close()
+data = read_file(log_file,'JSON')
 
 # Update Cam Config
-set_parameters([json.dumps(data, ensure_ascii=False, encoding="utf-8")])
+set_parameters([data])
 
 # Return Data
-print (json.dumps(data, ensure_ascii=False, encoding="utf-8"))
+print(data)

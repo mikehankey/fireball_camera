@@ -8,7 +8,7 @@ import json
 import copy
 import pprint
 
-from read_config_func import read_config_raw
+from config_func import read_config_raw
 
 sys.path.insert(1, os.path.join(sys.path[0], '../pwd'))
 from crypt import Crypt

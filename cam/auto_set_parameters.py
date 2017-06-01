@@ -5,7 +5,7 @@ import json
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../sun')))
 from get_info_func import get_sun_info 
 
-from parameters_files import upload_parameter_file 
+from cam_functions import upload_parameter_file 
 
 #1- Get Sun Info 
 sun_info =  json.loads(get_sun_info())

@@ -66,4 +66,3 @@ with requests.Session() as session:
  
 print json.dumps(json.loads(response.text), ensure_ascii=False, encoding="utf-16")
 response.raw.close() 
-

@@ -7,7 +7,7 @@ import json
 
 # Add ../ for amscommon
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../config')))
-from read_config_func import read_config_raw 
+from config_func import read_config_raw 
  
 
 # Convert deg to dms  
