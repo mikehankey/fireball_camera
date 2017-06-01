@@ -13,7 +13,7 @@ from read_param_file import read_file
  
 # Update (live) Camera config
 # FROM A JSON Object passed in agrv
-def set_parameters(argv): 
+def set_parameters(_file,argv): 
 
     #Ex: 
     #python ./cam/set_parameters.py '{"Brightness": 29}' 
@@ -33,7 +33,11 @@ def set_parameters(argv):
                 parameters += '&' + key + '=' +  str(new_values[key])
          
         if(parameters != ''):
-            update_cam(parameters);
+             # Get Specific Parameters
+             parameters = update_specific_param(parameters,_file)
+
+             # Update Cam Parameters
+             update_cam(parameters)
        
         else:
             print 'No Parameters to Update'
@@ -42,6 +46,12 @@ def set_parameters(argv):
         print 'No Parameters to Update (argv)'
         
          
+#Set special parameters to cam
+def set_special(config, field, value):
+    fname = "http://" + str(config['cam_ip']) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=" + str(field) + "&paramctrl=" + str(value) + "&paramstep=0&paramreserved=0"
+    # Call to CGI
+    urllib.urlopen(fname) 
+
  
 # Update Camera parameters
 # With parameters passed as URL string (&[key]=[val]&...)
@@ -51,11 +61,40 @@ def update_cam(parameters):
     
     # Update the cam live parameters
     fname = 'http://'+config['cam_ip']+'/cgi-bin/videoparameter_cgi?action=set&channel=0&user=admin&pwd='+config['cam_pwd'] + parameters
-    
+  
     # Call to CGI
     urllib.urlopen(fname)
  
  
+
+# Update specific parameters depending on the param file select (Night/Day/Calibration)
+def update_specific_param(parameters,parameters_file_name):
+    
+    # Get the cam_pwd & ip
+    config = read_config_raw()
+
+    #Add Specific parameters for calib/day/night
+    if(parameters_file_name=='Night'):
+        
+        #Add to parameters string
+        parameters+= "&InfraredLamp=high"
+        parameters+= "&TRCutLevel=high"
+
+        ### BLC 
+        set_special(config, "1017", "75")
+
+    elif(parameters_file_name=='Day'): 
+
+        ### BLC 
+        set_special(config, "1017", "150")
+
+        #Add to parameters string
+        parameters+= "&InfraredLamp=low"
+        parameters+= "&TRCutLevel=low"
+ 
+    return parameters    
+
+
 # Update live camera parameters with parameters contained 
 # in the file passed "parameters_file_name"
 # ex: upload_parameter_file('Night')
@@ -64,12 +103,15 @@ def upload_parameter_file(parameters_file_name):
     file =  "/home/pi/fireball_camera/cam_calib/"+parameters_file_name;
     
     # Parse Data (URL Format)
-    parameters = read_file(file,"URL")
+    parameters = read_file(file,"URL") 
 
-    print('PARAMETERS ' + parameters)
-    
+   
+    # Get Specific Parameters
+    parameters = update_specific_param(parameters,parameters_file_name)
+
+    # Update Cam Parameters
     update_cam(parameters)
-    
+
     # Update the config file with the name of the set of parameters loaded
     add_to_config('parameters',parameters_file_name)
  
@@ -80,11 +122,17 @@ def update_parameters(_file,new_values):
     possible_values = ['Brightness','Contrast','Gamma','Chroma','File'] 
     parameters = ''
 
+    # Build the parameters URL string
     for key in new_values:
-        if key in possible_values and key != 'file':
+        if key in possible_values and key != 'file' and key != 'File':
             parameters += '&' + key + '=' +  str(new_values[key])
      
     if(parameters != ''):
+ 
+         # Get Specific Parameters
+        parameters = update_specific_param(parameters,_file)
+
+         # Update Cam Parameters
         update_cam(parameters)
         
         # Replace only the new values passed in the calib file

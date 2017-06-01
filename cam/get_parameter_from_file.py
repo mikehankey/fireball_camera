@@ -16,7 +16,7 @@ log_file  = "/home/pi/fireball_camera/cam_calib/" + sys.argv[1]
 data = read_file(log_file,'JSON')
 
 # Update Cam Config
-set_parameters([data])
+set_parameters(sys.argv[1],[data])
 
 # Return Data
 print(data)
