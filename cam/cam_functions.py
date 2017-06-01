@@ -82,11 +82,15 @@ def update_specific_param(parameters,parameters_file_name):
 
         ### BLC 
         set_special(config, "1017", "75")
+        ## WR - ON
+        set_special(config, "1037", "0") 
 
     elif(parameters_file_name=='Day'): 
 
         ### BLC 
         set_special(config, "1017", "150")
+        ## WR - OFF
+        set_special(config, "1037", "1")
 
         #Add to parameters string
         parameters+= "&InfraredLamp=low"
