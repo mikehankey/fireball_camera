@@ -23,7 +23,7 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
-* * * * * cd /home/pi/fireball_camera; ./capture-status.sh > /home/pi/fireball_camera/status.txt
+* * * * * cd /home/pi/fireball_camera; ./capture-status.sh > /dev/null
 
 # sync the device code with the repo once a day. 
 

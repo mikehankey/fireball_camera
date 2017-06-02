@@ -28,7 +28,7 @@ def read_config():
 
     try:
        #config['az_left'] = float(config['heading']) - (int(config['cam_fov_x'])/2)
-       print ("YO")
+       #print ("YO")
        #print (config['heading'], config['cam_fov_x'])
        #config['az_right'] = float(config['heading']) + (int(config['cam_fov_x'])/2)
        if (config['az_right'] > 360):
