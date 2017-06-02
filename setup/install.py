@@ -8,7 +8,7 @@ def installIfNeeded(nameOnPip, notes="", log=print):
     # Check if the module is installed
     if nameOnPip not in [tuple_[1] for tuple_ in iter_modules()]:
         log("Installing " + nameOnPip + notes + " Library for Python")
-        call(["pip", "install", nameOnPip])
+        call(["sudo", "pip", "install", nameOnPip])
         
 def log(message):
     print(datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message))        
