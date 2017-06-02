@@ -98,7 +98,7 @@ try:
          config[key]=operator_data[key]
 
    for key in dev_data:
-      if type(dev_data[key]) is str:
+      if type(dev_data[key]) is str and key != 'cam_ip':
          print (key, dev_data[key])
          config[key]=dev_data[key]
    write_config(config)
