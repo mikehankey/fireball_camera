@@ -68,7 +68,7 @@ print ("ID: ", hostname)
 out = open("/home/pi/fireball_camera/host", "w") 
 out.write(hostname)
 out.close()
-#os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
+os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
 
 #exit()
 
@@ -79,8 +79,13 @@ r = requests.get('http://www.amsmeteors.org/members/api/cam_api/get_device_info?
 fp = open("device_info.txt", "w")
 fp.write(r.text)
 fp.close()
+print (r.text)  
 
 data = json.loads(r.text)
+for key in data['result'][1]:
+   print (key)
+
+
 try: 
    for key in data['result'][1]:
       print (key)
@@ -99,7 +104,7 @@ try:
    write_config(config)
    put_device_info(config)
 except: 
-   print ("Device is not claimed yet.")
+   print ("Device is not claimed yet or lat long not setup.")
 
 
 

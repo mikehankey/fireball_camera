@@ -17,17 +17,28 @@ def read_config():
       data = line.rsplit("=",2)
       config[data[0]] = data[1]
       #print key, value
+    config['cam_fov_x'] = 80;
+    config['cam_fov_y'] = 40;
+    #config['az_left'] = float(config['heading']) - (int(config['cam_fov_x'])/2)
+
+    #(cam_az, cam_el) = config['center_az_el'].split("|")
+    #config['cam_el'] = cam_el
+#    print (cam_az, cam_el)
+    
+
     try:
-       config['az_left'] = int(config['cam_heading']) - (int(config['cam_fov_x'])/2)
-       config['az_right'] = int(config['cam_heading']) + (int(config['cam_fov_x'])/2)
+       #config['az_left'] = float(config['heading']) - (int(config['cam_fov_x'])/2)
+       print ("YO")
+       #print (config['heading'], config['cam_fov_x'])
+       #config['az_right'] = float(config['heading']) + (int(config['cam_fov_x'])/2)
        if (config['az_right'] > 360):
           config['az_right'] = config['az_right'] - 360
        if (config['az_left'] > 360):
           config['az_left'] = config['az_left'] - 360
        if (config['az_left'] < 0):
           config['az_left'] = config['az_left'] + 360
-       config['el_bottom'] = int(config['cam_alt']) - (int(config['cam_fov_y'])/2)
-       config['el_top'] = int(config['cam_alt']) + (int(config['cam_fov_y'])/2)
+       config['el_bottom'] = float(config['cam_el']) - (int(config['cam_fov_y'])/2)
+       config['el_top'] = float(config['cam_el']) + (int(config['cam_fov_y'])/2)
     except:
        print ("camera not yet calibrated.")
        config['az_left'] = 0

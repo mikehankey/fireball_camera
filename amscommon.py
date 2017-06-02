@@ -35,6 +35,8 @@ def read_config():
             config['cam_pwd']  = c.decrypt(config['cam_pwd'])
         except:
              config['cam_pwd'] = config['cam_pwd']
+    else: 
+       config['cam_pwd'] = 'admin';
     
     file.close()
     return(config)
