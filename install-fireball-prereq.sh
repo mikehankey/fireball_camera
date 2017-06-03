@@ -133,3 +133,7 @@ sudo mv index-4119.fits /usr/local/astrometry/data
 
 ### additions this failed.. along with PIP
 #sudo pip install netifaces
+#sudo apt-get install npm
+#npm config set prefix /usr/local
+#sudo npm install -g bower
+#sudo pip2.7 install pathlib -
