@@ -7,6 +7,15 @@ import os
 import requests
 from urllib.request import urlretrieve
 
+def custom_settings (mode, config):
+   file = open("/home/pi/fireball_camera/cam_calib/"+mode, "r")
+   for line in file:
+      line = line.strip('\n')
+      c = line.index('=')
+      config[line[0:c]] = line[c+1:]
+   return(config)
+
+
 def set_setting(config, setting, value):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
@@ -41,11 +50,11 @@ def nighttime_settings(config):
    WDR(config, 0)
    ### BLC 
    set_special(config, "1017", "150")
-   set_setting(config, "Brightness", 65)
-   set_setting(config, "Contrast", "65")
-   set_setting(config, "Gamma", "30")
-   set_setting(config, "InfraredLamp", "high")
-   set_setting(config, "TRCutLevel", "high")
+   set_setting(config, "Brightness", config['Brightness'])
+   set_setting(config, "Contrast", config['Contrast'])
+   set_setting(config, "Gamma", config['Gamma'])
+   set_setting(config, "InfraredLamp", "low")
+   set_setting(config, "TRCutLevel", "low")
    time.sleep(5)
    os.system("rm /home/pi/fireball_camera/calnow")
 
@@ -58,9 +67,9 @@ def daytime_settings(config):
    ### BLC 
    set_special(config, "1017", "75")
 
-   set_setting(config, "Brightness", "135")
-   set_setting(config, "Gamma", "50")
-   set_setting(config, "Contrast", "128")
+   set_setting(config, "Brightness", config['Brightness'])
+   set_setting(config, "Gamma", config['Gamma'])
+   set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
    os.system("rm /home/pi/fireball_camera/calnow")
@@ -73,7 +82,8 @@ settings = get_settings(config)
 sun = read_sun()
 print (sun['status'])
 if sun['status'] == 'day':
-   if settings['Brightness'] != "135":
+   config = custom_settings("Day", config)
+   if settings['Brightness'] != config['Brightness']:
       daytime_settings(config)
 else:
    if settings['Brightness'] != "65":
