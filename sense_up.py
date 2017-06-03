@@ -11,6 +11,14 @@ from collections import deque
 import iproc
 from amscommon import read_sun, read_config
 
+def custom_settings (mode, config):
+   file = open("/home/pi/fireball_camera/cam_calib/"+mode, "r")
+   for line in file:
+      line = line.strip('\n')
+      c = line.index('=')
+      config[line[0:c]] = line[c+1:]
+   return(config)
+
 def set_setting(config, setting, value):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&action=get&channel=0&" + setting + "=" + str(value)
    r = requests.get(url)
@@ -19,12 +27,16 @@ def set_setting(config, setting, value):
 
 def get_calibration_frames():
    config = read_config()
+   config = custom_settings("Calibration", config) 
    fp = open("/home/pi/fireball_camera/calnow", "w")
-   set_setting(config, "Brightness", 86)
+
+
+
+   set_setting(config, "Brightness", config['Brightness'])
 
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
 
-   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
+   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1")
 
    cv2.setUseOptimized(True)
    lock = open("/home/pi/fireball_camera/calibrate.txt", "w")
@@ -77,7 +89,8 @@ def get_calibration_frames():
 
    # sense camera down
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
-   set_setting(config, "Brightness", 65)
+   config = custom_settings("Night", config) 
+   set_setting(config, "Brightness", config['Brightness'])
    cap.release()
    time.sleep(3)
    os.system("rm /home/pi/fireball_camera/calnow")
@@ -193,7 +206,7 @@ sun_info = read_sun()
 if cmd == 'sense_up':
    if int(sun_info['dark']) != 1:
       print ("It must be dark to sense up.")
-      #exit()
+   #   exit()
    outfile = get_calibration_frames()
    print (outfile)
    #stack_calibration_video(outfile)
