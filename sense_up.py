@@ -188,8 +188,8 @@ def stack_calibration_video(outfile):
 
 cmd = sys.argv[1]
 sun_info = read_sun()
-print ("IN SENSE UP - SUN INFO")
-print (sun_info)
+#print ("IN SENSE UP - SUN INFO")
+#print (sun_info)
 if cmd == 'sense_up':
    if int(sun_info['dark']) != 1:
       print ("It must be dark to sense up.")

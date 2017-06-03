@@ -20,7 +20,9 @@ def do_it_all():
    print (cmd) 
    output = subprocess.check_output(cmd, shell=True)
    output = output.decode("utf-8")
+   print ("OUT")
    print (output)
+   print ("ENDOUT")
 
 
    # check to see if stars are present
