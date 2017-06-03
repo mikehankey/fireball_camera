@@ -2,24 +2,34 @@ import struct
 import sys
 import base64
 from Crypto.Cipher import AES
+from Crypto import Random
+ 
 
-def pad16(s):
-    t = struct.pack('>I', len(s)) + s
-    return t + '\x00' * ((16 - len(t) % 16) % 16)
+BS = 16
+pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS) 
+unpad = lambda s : s[:-ord(s[len(s)-1:])]
 
-def unpad16(s):
-    n = struct.unpack('>I', s[:4])[0]
-    return s[4:n + 4]
+class AESCipher:
+    def __init__( self, key = 'allonsEnfants2LaPatrie!!'):
+        self.key = key
+ 
+    def encrypt( self, raw ):
+        raw = pad(raw)
+        iv = Random.new().read( AES.block_size )
+        cipher = AES.new( self.key, AES.MODE_CBC, iv )
+        return base64.b64encode( iv + cipher.encrypt( raw ) ).decode('UTF-8')
+
+    def decrypt( self, enc ):
+        enc = base64.b64decode(enc)
+        iv = enc[:16]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv )
+        return unpad(cipher.decrypt( enc[16:] )).decode('UTF-8')
 
 class Crypt(object):
-    def __init__(self, password = 'allonsEnfants2LaPatrie!'):
-        password = pad16(password)
-        self.cipher = AES.new(password, AES.MODE_ECB)
-
     def encrypt(self, s):
-        s = pad16(s)
-        return base64.b64encode(self.cipher.encrypt(s))
-
+        c = AESCipher() 
+        return c.encrypt(s)
+ 
     def decrypt(self, s):
-        t = self.cipher.decrypt(base64.b64decode(s))
-        return unpad16(t)
+        c = AESCipher() 
+        return c.decrypt(s)
