@@ -44,7 +44,7 @@ def WDR(config, on):
    r = requests.get(url)
    print (r.text)
 
-def nighttime_settings(config):
+def nighttime_settings( config):
    print ("Nighttime settings...")
    fp = open("/home/pi/fireball_camera/calnow", "w")
    WDR(config, 0)
@@ -81,10 +81,11 @@ settings = get_settings(config)
 
 sun = read_sun()
 print (sun['status'])
-if sun['status'] == 'day':
+if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
    if settings['Brightness'] != config['Brightness']:
       daytime_settings(config)
 else:
-   if settings['Brightness'] != "65":
+   config = custom_settings("Night", config)
+   if settings['Brightness'] != config['Brightness']:
       nighttime_settings(config)
