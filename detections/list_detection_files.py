@@ -25,9 +25,9 @@ def read_file(file_path):
 data = {"detection":[]}
 c = 0
 
-cur_page = int(sys.argv[2])
+cur_page                = int(sys.argv[2])
 max_detections_per_page = int(sys.argv[3])
-
+ 
 #Get whole list of files
 whole_list = glob.glob(sys.argv[1]+'*.avi')
 data["total_detection"] = len(whole_list)
@@ -35,7 +35,7 @@ data["cur_page"]        = cur_page
 data["total_page"]      = int(data["total_detection"])/max_detections_per_page 
 data["max_per_page"]    = max_detections_per_page
 
-for X in range(cur_page*max_detections_per_page, cur_page*max_detections_per_page+max_detections_per_page):
+for X in range((cur_page-1)*max_detections_per_page, cur_page*max_detections_per_page+max_detections_per_page):
 
     if(X<int(data["total_detection"])):
 
