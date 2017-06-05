@@ -49,7 +49,7 @@ def set_parameters(_file,argv):
 #Set special parameters to cam
 def set_special(config, field, value):
     fname = "http://" + str(config['cam_ip']) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=" + str(field) + "&paramctrl=" + str(value) + "&paramstep=0&paramreserved=0"
-    # Call to CGI
+    # Call to CGI 
     urllib.urlopen(fname) 
 
  
