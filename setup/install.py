@@ -15,3 +15,12 @@ def log(message):
     
 # ADD LIST OF USED PACKAGE HERE
 installIfNeeded("pycrypto", "For PWD Encryption (see /pwd)", log = log)    
+
+# CREATE DEFAULT CAM_CALIB FILES
+all_calibs = ['Day','Calibration','Night']
+for cal_file in  all_calibs:
+    f= open('./cam_calib/'+cal_file,"w+")
+    f.write("Brightness=128\nContrast=128\nGamma=128")
+    log(cal_file + " created")
+    f.close() 
+    
