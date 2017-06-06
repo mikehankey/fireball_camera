@@ -1,6 +1,8 @@
 from __future__ import print_function
-from subprocess import call
 from datetime  import datetime
+from subprocess import call
+import subprocess
+import os.path
 
 def installIfNeeded(nameOnPip, notes="", log=print):
     from pkgutil import iter_modules
@@ -16,11 +18,22 @@ def log(message):
 # ADD LIST OF USED PACKAGE HERE
 installIfNeeded("pycrypto", "For PWD Encryption (see /pwd)", log = log)    
 
-# CREATE DEFAULT CAM_CALIB FILES
+# CREATE DEFAULT CAM_CALIB FILES IF THEY DON'T EXIST
 all_calibs = ['Day','Calibration','Night']
 for cal_file in  all_calibs:
-    f= open('./cam_calib/'+cal_file,"w+")
-    f.write("Brightness=128\nContrast=128\nGamma=128")
-    log(cal_file + " created")
-    f.close() 
-    
+    fname = './cam_calib/'+cal_file;
+    if(os.path.isfile(fname)):
+        log( cal_file + 'parameter file already exists (creation skipped)');
+    else:
+        f= open(fname,"w+")
+        f.write("Brightness=128\nContrast=128\nGamma=128")
+        log(cal_file + " created")
+        f.close() 
+       
+
+# Install Dependencies for the App
+subprocess.Popen(['npm', 'install'],cwd=r'/home/pi/AMSCam')
+log("Please, wait until NPM INSTALL is done")
+
+subprocess.Popen(['bower', 'install'],cwd=r'/home/pi/AMSCam')
+log("Please, wait until BOWER INSTALL is done")
