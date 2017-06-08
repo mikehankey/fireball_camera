@@ -26,17 +26,21 @@ for key in config:
     # We need to update the cam password 
     if key == 'new_cam_pwd':
         
+        
         # It is the first time
         if 'cam_pwd' in config:
         
+            
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd='+config['cam_pwd']+'&username=admin&password='+value
+            #print fname
             
             # Remove the old cam_pwd so we dont have 2 in the config file
             del tmp_config['cam_pwd']
           
         # It is not the first time
         else:
+            
             
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password='+value
