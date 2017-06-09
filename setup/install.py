@@ -32,8 +32,12 @@ for cal_file in  all_calibs:
        
 
 # Install Dependencies for the App
-subprocess.Popen(['sudo','npm', 'install','-g'],cwd=r'/home/pi/AMSCam')
-log("Please, wait until NPM INSTALL is done")
+sp = subprocess.Popen(['sudo','npm', 'install','-g'],cwd=r'/home/pi/AMSCam')
+log("NPM INSTALL is running")
+sp.wait();
+log("NPM INSTALL done")
 
-subprocess.Popen(['bower', 'install'],cwd=r'/home/pi/AMSCam')
-log("Please, wait until BOWER INSTALL is done")
+sp = subprocess.Popen(['bower', 'install'],cwd=r'/home/pi/AMSCam')
+log("BOWER INSTALL is running")
+sp.wait();
+log("BOWER INSTALL done")
