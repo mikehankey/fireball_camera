@@ -4,7 +4,9 @@ from subprocess import call
 import subprocess
 import os.path
 
-    
+# Git pull on the Python
+sp = subprocess.Popen(['git','pull'],cwd=r'/home/pi/fireball_camera')
+sp.wait();  
 
 # Git pull on the APP
 sp = subprocess.Popen(['git','pull'],cwd=r'/home/pi/AMSCam')
