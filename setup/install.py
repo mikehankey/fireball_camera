@@ -26,7 +26,10 @@ for cal_file in  all_calibs:
         log( cal_file + 'parameter file already exists (creation skipped)');
     else:
         f= open(fname,"w+")
-        f.write("Brightness=128\nContrast=128\nGamma=128")
+        if(cal_file=='Calibration'):
+            f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=50")
+        else:
+            f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=25")
         log(cal_file + " created")
         f.close() 
        
