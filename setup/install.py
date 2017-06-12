@@ -27,20 +27,16 @@ for cal_file in  all_calibs:
     else:
         f= open(fname,"w+")
         if(cal_file=='Calibration'):
-            f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=50")
-        else:
             f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=25")
+        else:
+            f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=50")
         log(cal_file + " created")
-        f.close() 
-       
-
-# Install Dependencies for the App
-sp = subprocess.Popen(['sudo','npm', 'install','-g'],cwd=r'/home/pi/AMSCam')
-log("NPM INSTALL is running")
+        f.close()
+        
+# INSTALL FOREVER GLOBALLY
+sp = subprocess.Popen(['npm', 'install','forever','-g'],cwd=r'/home/pi/AMSCam')
 sp.wait();
-log("NPM INSTALL done")
-
-sp = subprocess.Popen(['bower', 'install'],cwd=r'/home/pi/AMSCam')
-log("BOWER INSTALL is running")
-sp.wait();
-log("BOWER INSTALL done")
+log('Forever install globally')  
+    
+#UPDATE AND START
+import update
