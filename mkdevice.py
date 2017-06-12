@@ -85,8 +85,10 @@ data = json.loads(r.text)
 for key in data['result'][1]:
    print (key)
 
+  
 
-try: 
+#try:
+if 1 == 1: 
    for key in data['result'][1]:
       print (key)
 
@@ -97,14 +99,20 @@ try:
          print (key, operator_data[key])
          config[key]=operator_data[key]
 
+   try:
+      if config['cam_ip'] == '':
+         print ("Cam id is null");
+   except: 
+      config['cam_ip'] = '192.168.1.88';
+
    for key in dev_data:
       if type(dev_data[key]) is str and key != 'cam_ip':
          print (key, dev_data[key])
          config[key]=dev_data[key]
    write_config(config)
    put_device_info(config)
-except: 
-   print ("Device is not claimed yet or lat long not setup.")
+#except: 
+#   print ("Device is not claimed yet or lat long not setup.")
 
 
 
