@@ -40,15 +40,16 @@ def set_parameters(_file,argv):
              update_cam(parameters)
        
         else:
-            print 'No Parameters to Update'
+            print('No Parameters to Update')
     
     else:
-        print 'No Parameters to Update (argv)'
+        print('No Parameters to Update (argv)')
         
          
 #Set special parameters to cam
 def set_special(config, field, value):
-    fname = "http://" + str(config['cam_ip']) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=" + str(field) + "&paramctrl=" + str(value) + "&paramstep=0&paramreserved=0"
+    fname = "http://" +  config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=" + str(field) + "&paramctrl=" + str(value) + "&paramstep=0&paramreserved=0"
+  
     # Call to CGI 
     urllib.urlopen(fname) 
 
@@ -80,15 +81,13 @@ def update_specific_param(parameters,parameters_file_name):
         parameters+= "&InfraredLamp=high"
         parameters+= "&TRCutLevel=high"
 
-        ### BLC 
-        #set_special(config, "1017", "75")
+       
         ## WR - ON
         set_special(config, "1037", "0") 
 
     elif(parameters_file_name=='Day'): 
 
-        ### BLC 
-        #set_special(config, "1017", "150")
+       
         ## WR - OFF
         set_special(config, "1037", "1")
 
@@ -108,7 +107,6 @@ def upload_parameter_file(parameters_file_name):
     
     # Parse Data (URL Format)
     parameters = read_file(file,"URL") 
-
    
     # Get Specific Parameters
     parameters = update_specific_param(parameters,parameters_file_name)
@@ -123,21 +121,38 @@ def upload_parameter_file(parameters_file_name):
 # Update Parameter File 
 # and the camera live setting at the same time (used form preview)
 def update_parameters(_file,new_values):
+ 
     possible_values = ['Brightness','Contrast','Gamma','Chroma','File'] 
+    special_values  = ['Exposure']
     parameters = ''
+    special_parameters = {}
 
     # Build the parameters URL string
     for key in new_values:
+    
         if key in possible_values and key != 'file' and key != 'File':
             parameters += '&' + key + '=' +  str(new_values[key])
-     
-    if(parameters != ''):
+            
+        if key in special_values:
+            if(key=='Exposure'):
+                special_parameters['1058'] = str(new_values[key]);
+      
+    if(parameters != '' or len(special_parameters)>0):
  
-         # Get Specific Parameters
-        parameters = update_specific_param(parameters,_file)
-
-         # Update Cam Parameters
-        update_cam(parameters)
+        if(parameters != ''):
+            # Get Specific Parameters
+            parameters = update_specific_param(parameters,_file)
+    
+            # Update Cam Parameters
+            update_cam(parameters)
+            
+        if(len(special_parameters)>0):
+      
+            config = read_config_raw()
+           
+            for k in special_parameters:
+                set_special(config, str(k), str(special_parameters[k])) 
+            
         
         # Replace only the new values passed in the calib file
         log_file  = "/home/pi/fireball_camera/cam_calib/" + _file
@@ -148,10 +163,10 @@ def update_parameters(_file,new_values):
                 r = re.compile(r"("+v+")=(\d*)")
           
                 for line in fileinput.input([log_file], inplace=True):
-                    # Search the current value for  new_values[key]
+                    # Search the current value for new_values[key]
                     newV = new_values[key]
                     print r.sub(r"\1=%s"%newV,line.strip()) 
                  
   
     else:
-        print 'No Parameters to Update'
+        print ('No Parameters to Update')

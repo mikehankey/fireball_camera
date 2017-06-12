@@ -13,7 +13,7 @@ from config_func import read_config
 #python ./cam/set_parameters_to_file.py '{"Brightness": 29, "file":"Night"}' 
   
 config = read_config()
-possible_values = ['Brightness','Contrast','Gamma','Chroma','File'];
+possible_values = ['Brightness','Contrast','Gamma','Chroma','File','Exposure'];
 
 # Get Parameters passed in arg
 if(len(sys.argv)!=0):
@@ -25,4 +25,4 @@ if(len(sys.argv)!=0):
     update_parameters(file,new_values)
  
 else:
-    print 'No Parameters to Update (argv)'
+    print('No Parameters to Update (argv)')
