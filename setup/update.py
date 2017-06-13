@@ -44,7 +44,7 @@ for index,cal_file in enumerate(all_calibs):
 
 
 # Stop the APP
-sp = subprocess.Popen(['sudo','forever','app.js'],cwd=r'/home/pi/AMSCam', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+sp = subprocess.Popen(['sudo','forever','app.js'],cwd=r'/home/pi/AMSCam')
 sp = subprocess.Popen(['killall','forever'])
 sp.wait();
 
