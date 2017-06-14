@@ -5,22 +5,30 @@ import subprocess
 import os.path
 import json
 
+
+def log(message):
+    print(datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message))        
+
 # Git pull on the Python
 sp = subprocess.Popen(['git','pull'],cwd=r'/home/pi/fireball_camera')
 sp.wait();  
+log('fireball_camera updated');
 
 # Git pull on the APP
 sp = subprocess.Popen(['git','pull'],cwd=r'/home/pi/AMSCam')
 sp.wait();
+log('AMSCam updated');
 
 # Install Dependencies for the App
 sp = subprocess.Popen(['sudo','npm', 'install','-g'],cwd=r'/home/pi/AMSCam')
 sp.wait();
+log('NPM modules OK');
  
-sp = subprocess.Popen(['bower', 'install'],cwd=r'/home/pi/AMSCam')
+sp = subprocess.Popen(['sudo', 'bower', 'install','--allow-root'],cwd=r'/home/pi/AMSCam')
 sp.wait();
+log('BOWER modules OK');
 
-# Update the Calib Files
+# Update the Calib Files (ADD EXPOSURE FOR THE FILES THAT DON'T HAVE IT YET)
 all_calibs = ['Day','Calibration','Night']
 for index,cal_file in enumerate(all_calibs):
     
@@ -43,9 +51,19 @@ for index,cal_file in enumerate(all_calibs):
     file.close()    
 
 
-# Stop the APP
+
+log('Calibration files ok.');
+
+
+# Stop & Restart the APP
+sp = subprocess.Popen(['sudo','killall','node'])
+log('Node killed');
+sp.wait();
+sp = subprocess.Popen(['sudo','killall','forever'])
+log('Forever killed');
+sp.wait();
 sp = subprocess.Popen(['sudo','forever','app.js'],cwd=r'/home/pi/AMSCam')
-sp = subprocess.Popen(['killall','forever'])
+log('AMSCam Launched');
 sp.wait();
 
-print("Restarting")
+log("Restarting")

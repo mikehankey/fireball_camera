@@ -15,17 +15,26 @@ def installIfNeeded(nameOnPip, notes="", log=print):
 def log(message):
     print(datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message))        
     
+
+# STOP THE APP
+sp = subprocess.Popen(['sudo', 'killall','node'])
+sp.wait(); 
+sp = subprocess.Popen(['sudo', 'killall','forever'])
+sp.wait(); 
+log("APP IS CLOSED")
+
+    
 # ADD LIST OF USED PACKAGE HERE
 installIfNeeded("pycrypto", "For PWD Encryption (see /pwd)", log = log)    
 
 # CREATE DEFAULT CAM_CALIB FILES IF THEY DON'T EXIST
 all_calibs = ['Day','Calibration','Night']
 for cal_file in  all_calibs:
-    fname = './cam_calib/'+cal_file;
+    fname = '/home/pi/fireball_camera/cam_calib/'+cal_file;
     if(os.path.isfile(fname)):
-        log( cal_file + 'parameter file already exists (creation skipped)');
+        log( cal_file + ' parameter file already exists (creation skipped)');
     else:
-        f= open(fname,"w+")
+        f = open(fname,"w+")
         if(cal_file=='Calibration'):
             f.write("Brightness=128\nContrast=128\nGamma=128\nExposure=25")
         else:
@@ -33,6 +42,17 @@ for cal_file in  all_calibs:
         log(cal_file + " created")
         f.close()
         
+    # CHANGE CALIB FILE to pi:pi IF IT HAS BEEN CREATED AS ROOT
+    sp = subprocess.Popen(['sudo', 'chown','pi:pi','/home/pi/fireball_camera/cam_calib/'+cal_file])
+    sp.wait(); 
+    log(cal_file + ' parameters file ownership fixed.')     
+    
+
+# CHANGE Config ownership to pi:pi IF IT HAS BEEN CREATED AS ROOT
+sp = subprocess.Popen(['sudo', 'chown','pi:pi','/home/pi/fireball_camera/config.txt'])
+sp.wait(); 
+log('Config File ownership fixed.')     
+
 # INSTALL FOREVER GLOBALLY
 sp = subprocess.Popen(['npm', 'install','forever','-g'],cwd=r'/home/pi/AMSCam')
 sp.wait();
