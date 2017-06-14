@@ -6,8 +6,10 @@ import os.path
 import json
 
 
+ 
+
 def log(message):
-    print(datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message))        
+    print( datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message)   )      
 
 # Git pull on the Python
 sp = subprocess.Popen(['git','pull'],cwd=r'/home/pi/fireball_camera')
@@ -55,15 +57,9 @@ for index,cal_file in enumerate(all_calibs):
 log('Calibration files ok.');
 
 
-# Stop & Restart the APP
-sp = subprocess.Popen(['sudo','killall','node'])
-log('Node killed');
+# Restart the APP
+sp = subprocess.Popen(['sudo','forever','restartall'])
 sp.wait();
-sp = subprocess.Popen(['sudo','killall','forever'])
-log('Forever killed');
-sp.wait();
-sp = subprocess.Popen(['sudo','forever','app.js'],cwd=r'/home/pi/AMSCam')
-log('AMSCam Launched');
-sp.wait();
+print('AMSCam Launched');
 
-log("Restarting")
+log('RESTARTING') 
