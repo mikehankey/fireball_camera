@@ -55,7 +55,7 @@ def nighttime_settings( config):
    set_setting(config, "Gamma", config['Gamma'])
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
-   time.sleep(5)
+   time.sleep(15)
    os.system("rm /home/pi/fireball_camera/calnow")
 
 def daytime_settings(config):
