@@ -88,7 +88,7 @@ sun = read_sun()
 print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
-   if int(settings['Brightness']) != int(config['Brightness']) + 1:
+   if int(settings['Brightness']) != int(config['Brightness']):
       daytime_settings(config)
 else:
    config = custom_settings("Night", config)
