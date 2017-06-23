@@ -62,6 +62,11 @@ def daytime_settings(config):
    fp = open("/home/pi/fireball_camera/calnow", "w")
    ### 
    WDR(config, 1)
+   time.sleep(2)
+   WDR(config, 0)
+   time.sleep(2)
+   WDR(config, 1)
+   time.sleep(2)
    ### IR mode
    set_special(config, "1064", "2")
    ### BLC 
@@ -83,7 +88,7 @@ sun = read_sun()
 print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
-   if settings['Brightness'] != config['Brightness']:
+   if int(settings['Brightness']) != int(config['Brightness']) + 1:
       daytime_settings(config)
 else:
    config = custom_settings("Night", config)
