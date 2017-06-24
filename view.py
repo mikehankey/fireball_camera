@@ -1,4 +1,5 @@
 #!/usr/bin/python3 
+import subprocess
 import requests
 import pytesseract
 from io import BytesIO
@@ -551,6 +552,16 @@ def view(file, show):
         count = count + 1
         #print (count)
         #cv2.waitKey(1)
+
+# Check to make sure view is not already running.
+cmd = "ps -aux | grep view "
+print (cmd)
+output = subprocess.check_output(cmd, shell=True)
+output = output.decode("utf-8")
+running = output.splitlines()
+if len(running) > 3:
+   print ("Already running")
+   exit()
 
 try: 
    file = sys.argv[1]
