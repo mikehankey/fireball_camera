@@ -47,8 +47,13 @@ def write_config(config):
        exit()
     file = open("/home/pi/fireball_camera/config.txt", "w")
     for key in config:
-      line = key + "=" + str(config[key]) + "\n"
-      file.write(line)
+      if key != 'IP':
+         if key == 'cam_ip' and config[key] == '192.168.1.88':
+            print ("skip.");
+         else:
+            line = key + "=" + str(config[key]) + "\n"
+            file.write(line)
+         
     file.close()
     print ("Config written.")
 
