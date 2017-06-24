@@ -106,7 +106,7 @@ if 1 == 1:
       config['cam_ip'] = '192.168.1.88';
 
    for key in dev_data:
-      if type(dev_data[key]) is str and key != 'cam_ip':
+      if type(dev_data[key]) is str and key != 'cam_ip' and key != 'IP':
          print (key, dev_data[key])
          config[key]=dev_data[key]
    write_config(config)
