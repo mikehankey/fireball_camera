@@ -33,4 +33,5 @@ except:
 
 msg = "reboot " + eth0_ip + "/" + wlan0_ip
 os.system("cd /home/pi/fireball_camera; ./logger.py '" + msg + "'")
+time.sleep(30)
 os.system("sudo /usr/local/bin/forever /home/pi/AMSCam/app.js &")
