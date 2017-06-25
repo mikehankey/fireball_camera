@@ -8,4 +8,7 @@ except:
    du = 0 
    print ("No dateutl!" )
 
-os.system("sudo pip install python-dateutil")
+if du == 0:
+   os.system("sudo pip install python-dateutil")
+else:
+   print ("date util already installed")
