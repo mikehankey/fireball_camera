@@ -4,6 +4,7 @@ import os
 
 try:
    from dateutil import parser
+   du = 1
 except:
    du = 0 
    print ("No dateutl!" )
