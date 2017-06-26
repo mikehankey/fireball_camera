@@ -14,8 +14,9 @@ def read_config():
       line = line.strip('\n')
       
       #Find first index of =
-      c = line.index('=')
-      config[line[0:c]] = line[c+1:]
+      if('=' in line):
+          c = line.index('=')
+          config[line[0:c]] = line[c+1:]
     
     config['hd'] = 0
     
