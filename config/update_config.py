@@ -26,10 +26,8 @@ for key in config:
     # We need to update the cam password 
     if key == 'new_cam_pwd':
         
-        
         # It is the first time
         if 'cam_pwd' in config:
-        
             
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd='+config['cam_pwd']+'&username=admin&password='+value
@@ -40,8 +38,7 @@ for key in config:
           
         # It is not the first time
         else:
-            
-            
+             
             #Update the Cam Password via the cgi
             fname = 'http://'+config['cam_ip']+'/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password='+value
             #print fname
@@ -52,6 +49,7 @@ for key in config:
         # Encrypt the Cam Password to store it in the config file
         c     = Crypt()
         value = c.encrypt(value)
+   
       
         # Write new pwd in config.txt
         line = "cam_pwd=" + str(value) + "\n"

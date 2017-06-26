@@ -8,28 +8,37 @@ from crypt import Crypt
 # Read Config File
 def read_config():
     config = {}
-    file = open("/home/pi/fireball_camera/config.txt", "r")
     
-    for line in file:
-      line = line.strip('\n')
-      
-      #Find first index of =
-      if('=' in line):
-          c = line.index('=')
-          config[line[0:c]] = line[c+1:]
+    try: 
+        file = open("/home/pi/fireball_camera/config.txt", "r")
+        
+        for line in file:
+          line = line.strip('\n')
+          
+          #Find first index of =
+          if('=' in line):
+              c = line.index('=')
+              config[line[0:c]] = line[c+1:]
+        
+        config['hd'] = 0
+        
+        if 'cam_pwd' in config:
+            try:
+                #We decrypt the cam password if it is crypted
+                c = Crypt() 
+                config['cam_pwd']  = c.decrypt(config['cam_pwd'])
+            except:
+                 config['error'] = "Impossible to decrypt the password - password must only contains characters and digits."
+        
+        file.close()
+        return(config)
+    except:
+        config['error'] = 'The config file cannot be read, please check your config.txt file.';
+         
     
-    config['hd'] = 0
+    return config;
+
     
-    if 'cam_pwd' in config:
-        try:
-            #We decrypt the cam password if it is crypted
-            c = Crypt() 
-            config['cam_pwd']  = c.decrypt(config['cam_pwd'])
-        except:
-             config['cam_pwd'] = config['cam_pwd']
-    
-    file.close()
-    return(config)
 
 # Return the config as a JSON object
 def get_config():
