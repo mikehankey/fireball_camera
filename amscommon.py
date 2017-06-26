@@ -47,6 +47,15 @@ def write_config(config):
        exit()
     file = open("/home/pi/fireball_camera/config.txt", "w")
     for key in config:
+      if key == 'cam_pwd':
+        try:
+            #We ecrypt the cam password if it is not crypted
+            c = Crypt() 
+            temp = c.decrypt(config['cam_pwd'])
+        except:
+             config['cam_pwd']  = c.encrypt(config['cam_pwd'])
+   
+
       if key != 'IP':
          if key == 'cam_ip' and config[key] == '192.168.1.88':
             print ("skip.");
