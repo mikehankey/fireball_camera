@@ -22,7 +22,6 @@ class AESCipher:
             iv = Random.new().read( AES.block_size )
             cipher = AES.new( self.key, AES.MODE_CBC, iv )
             encryptPWD =  base64.b64encode( iv + cipher.encrypt( raw ) ).decode('UTF-8')
-            print(encryptPWD)
         return encryptPWD
 
 
