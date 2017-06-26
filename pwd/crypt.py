@@ -17,7 +17,14 @@ class AESCipher:
         raw = pad(raw)
         iv = Random.new().read( AES.block_size )
         cipher = AES.new( self.key, AES.MODE_CBC, iv )
-        return base64.b64encode( iv + cipher.encrypt( raw ) ).decode('UTF-8')
+        encryptPWD =  base64.b64encode( iv + cipher.encrypt( raw ) ).decode('UTF-8')
+        while('\'' in encryptPWD or '"' in encryptPWD or '\\' in encryptPWD or '/' in encryptPWD): 
+            iv = Random.new().read( AES.block_size )
+            cipher = AES.new( self.key, AES.MODE_CBC, iv )
+            encryptPWD =  base64.b64encode( iv + cipher.encrypt( raw ) ).decode('UTF-8')
+            print(encryptPWD)
+        return encryptPWD
+
 
     def decrypt( self, enc ):
         enc = base64.b64decode(enc)
