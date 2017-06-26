@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # amsaware
 # This script checks for AMS Fireball events and reports and 
 # checks the recordings of this device to see if the event was 
@@ -170,7 +171,11 @@ def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat,
    #print my_data
 
    if "result" not in my_data.keys():
-      print ("No close events.")
+      print ("No close events for:" + check_date)
+      print ("Moving files captured on " + check_date + " to false dir")
+      file_date = check_date.replace("-", "") 
+      print("mv /var/www/html/out/" + file_date + "*" + " /var/www/html/out/false/");
+      os.system("mv /var/www/html/out/" + file_date + "*" + " /var/www/html/out/false/");
       exit()
 
    for row in my_data['result']:
@@ -185,6 +190,7 @@ def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat,
            event_dates[event_id] = utc_date 
        else: 
            print ("skip pending report")   
+  
 
    captures = read_files("/var/www/html/out")
    print ("Unique events within your area.")
@@ -200,17 +206,21 @@ def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat,
               #print (capture, avg_date)
               (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat("/var/www/html/out/" + capture)
               
-
               file_date = datetime.strptime(gtime.ctime(ctime), "%a %b %d %H:%M:%S %Y")
               time_diff = avg_date - file_date
-
-              #time_diff = dt - good_avg_date
               minutes, seconds = divmod(time_diff.total_seconds(), 60)
               if minutes > -180 and minutes < 180:
+                 print ("Possible capture " + capture);
                  print (minutes, capture, avg_date, gtime.ctime(ctime))
+                 os.system("mv /var/www/html/out/" + capture + " /var/www/html/out/maybe/" + capture);
+              else:  
+                 print ("No possible events linked to capture " + capture)
+                 os.system("mv /var/www/html/out/" + capture + " /var/www/html/out/false/" + capture);
+                 
 
 check_date = sys.argv[1]
 
+# REPLACE LINE BELOW WITH 300KM MAX/MIN based on station location
 (max_lat, max_lon, min_lat, min_lon) = read_fov()
 config = read_config()
 get_close_events(check_date + " 00:00:00", check_date + ' 23:59:59', config['device_lat'], config['device_lng'], max_lat, max_lon, min_lat, min_lon)
