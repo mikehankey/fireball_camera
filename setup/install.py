@@ -21,7 +21,28 @@ sp = subprocess.Popen(['sudo', 'killall','node'])
 sp.wait(); 
 sp = subprocess.Popen(['sudo', 'killall','forever'])
 sp.wait(); 
-log("APP IS CLOSED")
+log("The app is not running")
+
+# UPDATE NODE
+sp = subprocess.Popen(['sudo', 'npm','cache','clean','-f'])
+sp.wait(); 
+log("Npm cache cleaned")
+ 
+sp = subprocess.Popen(['sudo', 'npm','install','-g','n'])
+sp.wait(); 
+log("Npm installed") 
+
+ 
+sp = subprocess.Popen(['sudo', 'n','8.0.0'])
+sp.wait(); 
+log("Node 8.0.0. installed") 
+ 
+ 
+sp = subprocess.Popen(['sudo', 'ln','-sf','/usr/local/n/versions/node/7.8.0/bin/node','/usr/bin/node'])
+sp.wait(); 
+log("n stabled") 
+ 
+ 
 
     
 # ADD LIST OF USED PACKAGE HERE

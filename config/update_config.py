@@ -71,6 +71,7 @@ for key in config:
             file.write(line)   
         except:
             logging.error('IMPOSSIBLE to encrypted the following cam_pwd ' + str(value))
+            logging.debug('Config (ERROR) ' + str(config))
         
         del tmp_config['new_cam_pwd']
 

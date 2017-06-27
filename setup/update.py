@@ -22,7 +22,7 @@ sp.wait();
 log('AMSCam updated');
 
 # Install Dependencies for the App
-sp = subprocess.Popen(['sudo','npm', 'install','-g'],cwd=r'/home/pi/AMSCam')
+sp = subprocess.Popen(['sudo','npm', 'install'],cwd=r'/home/pi/AMSCam')
 sp.wait();
 log('NPM modules OK');
  
