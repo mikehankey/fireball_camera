@@ -38,6 +38,7 @@ def read_config():
             except:
                 config['error'] = "Impossible to decrypt the password - password must only contains characters and digits"
                 logging.error('Impossible to decrypt ' +  str(config['cam_pwd']))
+                logging.debug('Config (ERROR) ' + str(config))
                 
         file.close()
         logging.debug('Result ' + str(config) )
@@ -46,7 +47,7 @@ def read_config():
     except:
         config['error'] = 'The config file cannot be read, please check your config.txt file';
         logging.error('Error in config.txt')
-        logging.debug( str(config))
+        logging.debug('Config (ERROR) ' + str(config))
     return config;
 
     

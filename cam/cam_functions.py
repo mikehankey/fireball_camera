@@ -10,6 +10,10 @@ from config_func import read_config_raw, add_to_config
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../file_management')))
 from read_param_file import read_file
+
+import logging
+logging.basicConfig(filename='/home/pi/fireball_camera/log_files/app.log',format='%(asctime)s -- %(levelname)s: --  %(message)s', datefmt='%m/%d/%Y %H:%M:%S',level=logging.DEBUG)
+
  
 # Update (live) Camera config
 # FROM A JSON Object passed in agrv
@@ -20,6 +24,9 @@ def set_parameters(_file,argv):
       
     config = read_config_raw()
     possible_values = ['Brightness','Contrast','Gamma'];
+
+    logging.debug('Set parameters for ' + _file)
+    logging.debug('Parameters ' + str(argv))
 
     # Get Parameters passed in arg
     if(len(argv)!=0):
@@ -53,6 +60,7 @@ def set_special(config, field, value):
     # Call to CGI 
     urllib.urlopen(fname) 
 
+    logging.debug('Set Special Cam Parameter ' + fname)
  
 # Update Camera parameters
 # With parameters passed as URL string (&[key]=[val]&...)
@@ -66,6 +74,7 @@ def update_cam(parameters):
     # Call to CGI
     urllib.urlopen(fname)
  
+    logging.debug('Set Cam Parameter ' + fname)
  
 
 # Update specific parameters depending on the param file select (Night/Day/Calibration)
@@ -80,8 +89,7 @@ def update_specific_param(parameters,parameters_file_name):
         #Add to parameters string
         parameters+= "&InfraredLamp=high"
         parameters+= "&TRCutLevel=high"
-
-       
+        
         ## WR - ON
         set_special(config, "1037", "0") 
 
