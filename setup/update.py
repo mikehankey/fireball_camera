@@ -5,9 +5,6 @@ import subprocess
 import os.path
 import json
 
-
- 
-
 def log(message):
     print( datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message)   )      
 
@@ -22,7 +19,7 @@ sp.wait();
 log('AMSCam updated');
 
 # Install Dependencies for the App
-sp = subprocess.Popen(['sudo','npm', 'install'],cwd=r'/home/pi/AMSCam')
+sp = subprocess.Popen(['sudo','npm','install'],cwd=r'/home/pi/AMSCam')
 sp.wait();
 log('NPM modules OK');
  
@@ -51,15 +48,11 @@ for index,cal_file in enumerate(all_calibs):
       else:
         file.write('Exposure=50\n')   
     file.close()    
-
-
+ 
 
 log('Calibration files ok.');
-
-
+ 
 # Restart the APP
-sp = subprocess.Popen(['sudo','forever','restartall'])
+sp = subprocess.Popen(['sudo','forever','start','app.js'],cwd=r'/home/pi/AMSCam')
 sp.wait();
-print('AMSCam Launched');
-
-log('RESTARTING') 
+log('App started'); 
