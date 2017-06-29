@@ -65,6 +65,13 @@ for cal_file in  all_calibs:
     sp.wait(); 
     log(cal_file + ' parameters file ownership fixed.')     
     
+    
+#CREATE cam_log file under /home/pi/fireball_camera/log_files
+sp = subprocess.Popen(['touch', '/home/pi/fireball_camera/log_files/cam_log'])
+sp.wait(); 
+sp = subprocess.Popen(['sudo', 'chown','pi:pi','/home/pi/fireball_camera/log_files/cam_log'])
+sp.wait(); 
+log('Cam Log File ownership fixed.')     
 
 # CHANGE Config ownership to pi:pi IF IT HAS BEEN CREATED AS ROOT
 sp = subprocess.Popen(['sudo', 'chown','pi:pi','/home/pi/fireball_camera/config.txt'])

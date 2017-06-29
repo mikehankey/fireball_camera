@@ -1,14 +1,21 @@
 import sys
 import json
 import os
+import subprocess
 
 log_file  = "/home/pi/fireball_camera/log_files/" + sys.argv[1]
 res = {}
 
+#try:
+#    sp = subprocess.Popen(['sudo', 'chown','pi:pi',log_file])
+#    sp.wait();  
+#except e:
+#    #Nothing
+
 if os.path.exists(log_file):
-    file = file(log_file, "r+")
+    file = open(log_file, "r+")
 else:
-    file = file(log_file, "w+")
+    file = open(log_file, "w+")
 
 line_n = 0
 for line in file:
@@ -27,4 +34,4 @@ for line in file:
   
     
 file.close()
-print json.dumps(res, ensure_ascii=False, encoding="utf-8")
+print (json.dumps(res))
