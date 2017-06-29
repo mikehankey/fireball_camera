@@ -31,15 +31,24 @@ def read_config():
 def read_fov():
     lats = []
     lons = []
-    file = open("fov.txt")
-    for line in file:
-       (lon,lat,alt) = line.split(",")
-       lats.append(float(lat))
-       lons.append(float(lon))
-    max_lat = max(lats)
-    max_lon = max(lons)
-    min_lat = min(lats)
-    min_lon = min(lons)
+    try:
+       file = open("fov.txt")  
+       for line in file:
+          (lon,lat,alt) = line.split(",")
+          lats.append(float(lat))
+          lons.append(float(lon))
+       max_lat = max(lats)
+       max_lon = max(lons)
+       min_lat = min(lats)
+       min_lon = min(lons)
+    except:
+       config = read_config()
+       lat = float(config['device_lat'])
+       lon = float(config['device_lng'])
+       max_lat = lat + 1
+       max_lon = lon + 1
+       min_lat = lat - 1
+       min_lon = lon - 1
     return(max_lat, max_lon, min_lat, min_lon)
 
 def get_ams_reports(ams_year, ams_event_id,type, ratings):
