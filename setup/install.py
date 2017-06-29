@@ -16,7 +16,7 @@ def log(message):
     print(datetime.now().strftime("%a %b %d %H:%M:%S") + " - " + str(message))        
     
 
-# STOP THE APP
+# STOP THE APP IF IT'S RUNNING
 sp = subprocess.Popen(['sudo', 'killall','node'])
 sp.wait(); 
 sp = subprocess.Popen(['sudo', 'killall','forever'])
@@ -42,9 +42,6 @@ sp = subprocess.Popen(['sudo', 'ln','-sf','/usr/local/n/versions/node/7.8.0/bin/
 sp.wait(); 
 log("n stabled") 
  
- 
-
-    
 # ADD LIST OF USED PACKAGE HERE
 installIfNeeded("pycrypto", "For PWD Encryption (see /pwd)", log = log)    
 
