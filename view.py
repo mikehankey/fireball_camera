@@ -317,6 +317,14 @@ def analyze(file):
        print (cmd)
        os.system(cmd)
 
+       try: 
+          if (config['best_caldate'] == '2017-01-01'):
+             print ("ok")
+       except: 
+             config['best_caldate'] = '0000-00-00 00:00:00';
+
+
+
 
        el = maybe_object_file.split("/")
        motion_date = caldate(el[-1])
