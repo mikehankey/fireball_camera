@@ -24,3 +24,10 @@ if [[ $defunct -eq 1 ]]; then
      /home/pi/fireball_camera/capture-start.sh
 fi
 
+echo "check latest"
+if test "`find /var/www/html/out/latest.jpg -mmin +30`"; then
+     echo "latest file is stale restarting..."
+     /home/pi/fireball_camera/capture-stop.sh
+     sleep 5
+     /home/pi/fireball_camera/capture-start.sh
+fi
