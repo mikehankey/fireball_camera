@@ -41,8 +41,9 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
 
 
    summary = maybe_summary_file.replace("-summary", "")
-   os.system("mv " + maybe_summary_file + " " + summary)
-   print("mv " + maybe_summary_file + " " + summary)
+   if os.path.isfile(maybe_summary_file):
+      os.system("mv " + maybe_summary_file + " " + summary)
+      print("mv " + maybe_summary_file + " " + summary)
 
    event_stack = maybe_object_file.replace("-objects", "")
    event = maybe_file
@@ -277,16 +278,20 @@ def analyze(file):
        false_summary_file= summary_file.replace("out/", "out/false/")
        false_object_file = object_file.replace("out/", "out/false/")
        cmd = "mv " + file + " " + false_file 
-       os.system(cmd)
-       cmd = "mv " + data_file + " " + false_data_file
-       os.system(cmd)
+
+       
+       if os.path.isfile(file):
+          cmd = "mv " + data_file + " " + false_data_file
+          os.system(cmd)
 
        cmd = "mv " + summary_file + " " + false_summary_file
-       print ("SUMMARY FILE CMD", cmd)
-       os.system(cmd)
+       if os.path.isfile(summary_file):
+          print ("SUMMARY FILE CMD", cmd)
+          os.system(cmd)
 
        cmd = "mv " + object_file + " " + false_object_file
-       os.system(cmd)
+       if os.path.isfile(object_file):
+          os.system(cmd)
        el = false_object_file.split("/")
        motion_date = caldate(el[-1])
        values = {
@@ -305,14 +310,18 @@ def analyze(file):
        maybe_summary_file= summary_file.replace("out/", "out/maybe/")
        cmd = "mv " + file + " " + maybe_file 
        maybe_object_file = object_file.replace("out/", "out/maybe/")
-       os.system(cmd)
+       if os.path.isfile(file):
+          os.system(cmd)
        cmd = "mv " + data_file + " " + maybe_data_file
-       os.system(cmd)
+       if os.path.isfile(data_file):
+          os.system(cmd)
        cmd = "mv " + summary_file + " " + maybe_summary_file
+       if os.path.isfile(summary_file):
+          os.system(cmd)
        print (cmd)
-       os.system(cmd)
        cmd = "mv " + object_file + " " + maybe_object_file
-       os.system(cmd)
+       if os.path.isfile(object_file):
+          os.system(cmd)
        cmd = "./astr-stack.py " + maybe_file
        print (cmd)
        os.system(cmd)
