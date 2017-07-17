@@ -277,21 +277,8 @@ def analyze(file):
        false_data_file= data_file.replace("out/", "out/false/")
        false_summary_file= summary_file.replace("out/", "out/false/")
        false_object_file = object_file.replace("out/", "out/false/")
-       cmd = "mv " + file + " " + false_file 
 
-       
-       if os.path.isfile(file):
-          cmd = "mv " + data_file + " " + false_data_file
-          os.system(cmd)
 
-       cmd = "mv " + summary_file + " " + false_summary_file
-       if os.path.isfile(summary_file):
-          print ("SUMMARY FILE CMD", cmd)
-          os.system(cmd)
-
-       cmd = "mv " + object_file + " " + false_object_file
-       if os.path.isfile(object_file):
-          os.system(cmd)
        el = false_object_file.split("/")
        motion_date = caldate(el[-1])
        values = {
@@ -304,12 +291,44 @@ def analyze(file):
           'meteor_yn': meteor
        }
        log_motion_capture(config, false_object_file, values) 
+       cmd = "mv " + file + " " + false_file 
+       if os.path.isfile(file):
+          cmd = "mv " + data_file + " " + false_data_file
+          os.system(cmd)
+       cmd = "mv " + summary_file + " " + false_summary_file
+       if os.path.isfile(summary_file):
+          print ("SUMMARY FILE CMD", cmd)
+          os.system(cmd)
+       cmd = "mv " + object_file + " " + false_object_file
+       if os.path.isfile(object_file):
+          os.system(cmd)
     else:  
        maybe_file= file.replace("out/", "out/maybe/")
        maybe_data_file= data_file.replace("out/", "out/maybe/")
        maybe_summary_file= summary_file.replace("out/", "out/maybe/")
        cmd = "mv " + file + " " + maybe_file 
        maybe_object_file = object_file.replace("out/", "out/maybe/")
+
+       try: 
+          if (config['best_caldate'] == '2017-01-01'):
+             print ("ok")
+       except: 
+             config['best_caldate'] = '0000-00-00 00:00:00';
+
+       el = maybe_object_file.split("/")
+       motion_date = caldate(el[-1])
+       values = {
+          'datetime': motion_date,
+          'best_calibration' : config['best_caldate'],
+          'motion_frames' : elapsed_frames,
+          'cons_motion': max_cons_motion,
+          'color' : avg_center_pixel,
+          'straight_line' : straight_line,
+          'bp_frames' : bright_pixel_count,
+          'meteor_yn': meteor
+       }
+
+       log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
        if os.path.isfile(file):
           os.system(cmd)
        cmd = "mv " + data_file + " " + maybe_data_file
@@ -325,31 +344,6 @@ def analyze(file):
        cmd = "./astr-stack.py " + maybe_file
        print (cmd)
        os.system(cmd)
-
-       try: 
-          if (config['best_caldate'] == '2017-01-01'):
-             print ("ok")
-       except: 
-             config['best_caldate'] = '0000-00-00 00:00:00';
-
-
-
-
-       el = maybe_object_file.split("/")
-       motion_date = caldate(el[-1])
-       values = {
-          'datetime': motion_date,
-          'best_calibration' : config['best_caldate'],
-          'motion_frames' : elapsed_frames,
-          'cons_motion': max_cons_motion,
-          'color' : avg_center_pixel,
-          'straight_line' : straight_line,
-          'bp_frames' : bright_pixel_count,
-          'meteor_yn': meteor
-       }
-       
-
-       log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
 
   
 def view(file, show):
