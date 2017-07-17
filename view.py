@@ -47,7 +47,7 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
    event_stack = maybe_object_file.replace("-objects", "")
    event = maybe_file
    #time.sleep(1)
-   os.system("cat " + summary + "> /tmp/sum.txt")
+   #os.system("cat " + summary + "> /tmp/sum.txt")
  
    _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'r') }
 
