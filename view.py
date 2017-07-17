@@ -592,5 +592,6 @@ else:
       print (file)  
       view("/var/www/html/out/" + file, 0)
       analyze("/var/www/html/out/" + file)
+      print("Finished: " + file)
 
 
