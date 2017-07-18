@@ -415,7 +415,7 @@ def check_file(file):
 
       # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
       #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
-      if os.path.isfile(jpg_file) is None:
+      if os.path.isfile(jpg_file) is None or os.path.isfile(obj_file) is None:
          os.system("mv " + dir_name + "/false/" + file_name + "* " + dir_name + "/")
          return(0)
 
@@ -463,7 +463,7 @@ def check_file(file):
 
       # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
       #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
-      if os.path.isfile(jpg_file) is None:
+      if os.path.isfile(jpg_file) is None or os.path.isfile(obj_file) is None:
          os.system("mv " + dir_name + "/maybe/" + file_name + "* " + dir_name + "/")
          return(0)
       print ("Maybe files exist");
@@ -734,7 +734,7 @@ def view(file, show):
            print ("JPG EXISTS GREAT.")
         else:
            cv2.imwrite(object_file, last_frame)
-
+        cap.close()
 
         return(1)
 
