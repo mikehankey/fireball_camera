@@ -64,8 +64,10 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
    response.raw.close()
 
 def log_motion_capture(config, file, values):
+   print ("log motion capture");
    stack_file = file.replace("-objects", "")
    os.system("cp " + file + " " + stack_file)
+
    url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
    _files = {'event_stack': open(stack_file, 'rb')}
    _data = {
@@ -290,7 +292,6 @@ def analyze(file):
           'bp_frames' : bright_pixel_count,
           'meteor_yn': meteor
        }
-       log_motion_capture(config, false_object_file, values) 
        cmd = "mv " + file + " " + false_file 
        if os.path.isfile(file):
           cmd = "mv " + data_file + " " + false_data_file
@@ -302,6 +303,12 @@ def analyze(file):
        cmd = "mv " + object_file + " " + false_object_file
        if os.path.isfile(object_file):
           os.system(cmd)
+        
+       try: 
+          log_motion_capture(config, false_object_file, values) 
+       except:
+          # log entry to re upload file
+          print ("Failed to upload!")
     else:  
        maybe_file= file.replace("out/", "out/maybe/")
        maybe_data_file= data_file.replace("out/", "out/maybe/")
@@ -328,7 +335,6 @@ def analyze(file):
           'meteor_yn': meteor
        }
 
-       log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
        if os.path.isfile(file):
           os.system(cmd)
        cmd = "mv " + data_file + " " + maybe_data_file
@@ -344,9 +350,162 @@ def analyze(file):
        cmd = "./astr-stack.py " + maybe_file
        print (cmd)
        os.system(cmd)
+       try:
+          log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
+       except:
+          #write entry to re-upload file
+          print ("Failed to upload!")
+
+
+def read_summary_file(summary_file):
+   sfile = open(summary_file, "r")
+
+   sum_values  = {}
+
+   for line in sfile:
+      line = line.strip('\n')
+
+      #Find first index of =
+      try: 
+         c = line.index(':')
+         sum_values[line[0:c]] = line[c+1:].replace("\t", "")
+         sum_values[line[0:c]] = sum_values[line[0:c]].replace(" ", "");
+      except: 
+         print ("Skipping line...")
+
+
+
+   sfile.close()
+   print(sum_values)
+
+   return(sum_values)
+
+
+def make_stack_file (file) :
+   cmd = "./astr-stack.py " + maybe_file
+   print (cmd)
+   os.system(cmd)
+
+
+def check_file(file):
+   values  = {}
+   dir_name = os.path.dirname(file)
+   file_name = file
+   file_name = file_name.replace(dir_name + "/", "");
+   file_name = file_name.replace(".avi", "");
+   print (dir_name) 
+   print (file_name) 
+   
+   year = file_name[0:4]
+   month = file_name[4:6]
+   day = file_name[6:8]
+   hour = file_name[8:10]
+   min = file_name[10:12]
+   sec = file_name[12:14]
+   date_str = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
+   config = read_config()
+
+
+   print ("Checking file...")
+
+   match_false_files = glob.glob(dir_name + "/false/" + file_name + "*") 
+   if len(match_false_files) > 0:
+      obj_file = dir_name + "/false/" + file_name + "-objects.jpg"
+      jpg_file = dir_name + "/false/" + file_name + ".jpg"
+
+      # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
+      #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
+      if os.path.isfile(jpg_file) is None:
+         os.system("mv " + dir_name + "/false/" + file_name + "* " + dir_name + "/")
+         return(0)
+
+      print ("False files exist");
+      print (match_false_files);
+      sum_values = read_summary_file(dir_name + "/false/" + file_name + "-summary.txt")
+
+      values['datetime'] = date_str
+      values['motion_frames'] = sum_values['Consectutive Motion Frames']
+      values['cons_motion'] = sum_values['Consectutive Motion Frames']
+      values['color'] = float(sum_values['Average Center Pixel Color'])
+      trash, values['straight_line'] = sum_values['Straight Line'].split(",")
+      values['meteor_yn'] = sum_values['Likely Meteor']
+      try: 
+         values['bp_frames'] = sum_values['Bright Frames']
+      except: 
+         values['bp_frames'] = 0
+      
+      print ("logging capture")
+      if os.path.isfile(file):
+         print ("mv " + file + " " + dir_name + "/false/" + file_name + ".avi")
+         os.system("mv " + file + " " + dir_name + "/false/" + file_name + ".avi")
+     
+      #if os.path.isfile(obj_file) is None:
+      #   print ("No -obj file exists! make stack please. ")
+      #   make_stack_file(dir_name + "/false/" + file_name + ".avi" )
+      log_motion_capture(config, obj_file, values)
+
+      try:
+         print("yo");
+         #log_motion_capture(config, obj_file, values)
+      except:
+         print ("failed to upload capture file.")
+         exit()
+      return(0)
+   else :
+      print ("no false matches")
+
+
+
+   match_maybe_files = glob.glob(dir_name + "/maybe/" + file_name + "*") 
+   if len(match_maybe_files) > 0:
+      obj_file = dir_name + "/maybe/" + file_name + "-objects.jpg"
+      jpg_file = dir_name + "/maybe/" + file_name + ".jpg"
+
+      # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
+      #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
+      if os.path.isfile(jpg_file) is None:
+         os.system("mv " + dir_name + "/maybe/" + file_name + "* " + dir_name + "/")
+         return(0)
+      print ("Maybe files exist");
+      print (match_maybe_files);
+      sum_values = read_summary_file(dir_name + "/false/" + file_name + "-summary.txt")
+
+      values['datetime'] = date_str
+      values['motion_frames'] = sum_values['Consectutive Motion Frames']
+      values['cons_motion'] = sum_values['Consectutive Motion Frames']
+      values['color'] = float(sum_values['Average Center Pixel Color'])
+      trash, values['straight_line'] = sum_values['Straight Line'].split(",")
+      values['meteor_yn'] = sum_values['Likely Meteor']
+      values['bp_frames'] = sum_values['Bright Frames']
+
+      if os.path.isfile(file):
+         print ("mv " + file + " " + dir_name + "/maybe/" + file_name + ".avi")
+         os.system("mv " + file + " " + dir_name + "/maybe/" + file_name + ".avi")
+
+      maybe_file = dir_name + "/maybe/" + file_name + ".avi"
+      maybe_summary_file = dir_name + "/maybe/" + file_name + "-summary.txt"
+      maybe_object_file = dir_name + "/maybe/" + file_name + "-objects.jpg"
+      if os.path.isfile(maybe_object_file) is None:
+         print ("no obj file exists make stack please.")
+         make_stack_file(dir_name + "/maybe/" + file_name + ".avi" )
+
+      print ("logging event")
+
+      try:
+         log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
+      except:
+         print ("failed to upload event file.")
+         exit()
+      return(0)
+   else:
+      print ("No event matches.")
+    
 
   
 def view(file, show):
+ 
+    if check_file(file) == 0:
+       return(0)
     stk_img = None
     jpg = file
     data_file = file
@@ -387,7 +546,8 @@ def view(file, show):
                print ("bad file!")
                return()
            #print (jpg)
-           #cv2.imwrite(jpg, final_cv_image)
+           cv2.imwrite(jpg, final_cv_image)
+           cv2.imwrite(object_file, stack_frame)
            if max_h <= 500:
               out_jpg_final = out_jpg[0:max_h,0:500]
            else: 
@@ -564,6 +724,20 @@ def view(file, show):
         #print (count)
         #cv2.waitKey(1)
 
+        # if the jpg and/or object file was not created, create it now. 
+
+        if os.path.isfile(jpg):
+           print ("JPG EXISTS GREAT.")
+        else:
+           cv2.imwrite(jpg, last_frame)
+        if os.path.isfile(object_file):
+           print ("JPG EXISTS GREAT.")
+        else:
+           cv2.imwrite(object_file, last_frame)
+
+
+        return(1)
+
 # Check to make sure view is not already running.
 cmd = "ps -aux | grep view "
 print (cmd)
@@ -590,8 +764,8 @@ else:
    for file in files:
       file = file.replace("/var/www/html/out/", "")
       print (file)  
-      view("/var/www/html/out/" + file, 0)
-      analyze("/var/www/html/out/" + file)
+      if view("/var/www/html/out/" + file, 0) != 0:
+         analyze("/var/www/html/out/" + file)
       print("Finished: " + file)
 
 
