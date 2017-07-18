@@ -292,16 +292,22 @@ def analyze(file):
           'bp_frames' : bright_pixel_count,
           'meteor_yn': meteor
        }
-       cmd = "mv " + file + " " + false_file 
        if os.path.isfile(file):
+          cmd = "mv " + file + " " + false_file 
+          print (cmd)
+          os.system(cmd)
+       if os.path.isfile(data_file):
           cmd = "mv " + data_file + " " + false_data_file
+          print (cmd)
           os.system(cmd)
        cmd = "mv " + summary_file + " " + false_summary_file
        if os.path.isfile(summary_file):
           print ("SUMMARY FILE CMD", cmd)
+          print (cmd)
           os.system(cmd)
        cmd = "mv " + object_file + " " + false_object_file
        if os.path.isfile(object_file):
+          print (cmd)
           os.system(cmd)
         
        try: 
@@ -334,27 +340,32 @@ def analyze(file):
           'bp_frames' : bright_pixel_count,
           'meteor_yn': meteor
        }
-
        if os.path.isfile(file):
+          cmd = "mv " + file + " " + maybe_file
           os.system(cmd)
-       cmd = "mv " + data_file + " " + maybe_data_file
+
        if os.path.isfile(data_file):
+          cmd = "mv " + data_file + " " + maybe_data_file
           os.system(cmd)
-       cmd = "mv " + summary_file + " " + maybe_summary_file
+       if os.path.isfile(data_file):
+          cmd = "mv " + summary_file + " " + maybe_summary_file
+          os.system(cmd)
        if os.path.isfile(summary_file):
+          cmd = "mv " + object_file + " " + maybe_object_file
           os.system(cmd)
-       print (cmd)
-       cmd = "mv " + object_file + " " + maybe_object_file
        if os.path.isfile(object_file):
           os.system(cmd)
+
        cmd = "./astr-stack.py " + maybe_file
        print (cmd)
        os.system(cmd)
+
        try:
           log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
        except:
           #write entry to re-upload file
-          print ("Failed to upload!")
+          print ("Failed to upload fireball event video!")
+          exit()
 
 
 def read_summary_file(summary_file):
@@ -734,7 +745,7 @@ def view(file, show):
            print ("JPG EXISTS GREAT.")
         else:
            cv2.imwrite(object_file, last_frame)
-        cap.close()
+        cap.release()
 
         return(1)
 
