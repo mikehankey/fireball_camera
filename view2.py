@@ -170,6 +170,7 @@ def view(file, show):
                      config['best_caldate'] = '0000-00-00 00:00:00';
                except:
                   values['best_caldate'] = config['best_caldate']
+               log_fireball_event(config, file, dir_name + "/" + summary_file_name, dir_name + "/" + object_file_name, values)
                try:
                   log_fireball_event(config, file, summary_file_name, object_file_name, values)
                except:
@@ -191,12 +192,12 @@ def view(file, show):
 
 
             return(1)
-      gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       nice_frame = frame
 
       alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
       frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      gray_frame = frame
       frame = cv2.GaussianBlur(frame, (21, 21), 0)
       if last_frame is None:
          last_frame = nice_frame
