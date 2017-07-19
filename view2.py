@@ -35,11 +35,16 @@ def main():
 
    if batch == 0:
       view(file, show)
+   else: 
+      for file in files:
+         view(file) 
 
 
 
 def view(file, show):
 
+   config = read_config()
+   values = {}
    dir_name = os.path.dirname(file)
    file_name = file.replace(dir_name + "/", "")
    summary_file_name = file_name.replace(".avi", "-summary.txt")
@@ -48,6 +53,8 @@ def view(file, show):
    object_file_name = file_name.replace(".avi", "-objects.jpg")
    capture_date = parse_file_date(file_name)
    #last_cal_date = # Get last / closest calibration date
+   file_base_name = file_name.replace(".avi", "") 
+
 
    print ("Viewing file: " + file)
    print ("Directory: " + dir_name)
@@ -61,7 +68,7 @@ def view(file, show):
    # make sure the file exists
    if os.path.isfile(file) is False:
       print("This file does not exist. Exiting.")
-      exit()
+      return(0)
    else:
       print ("The file is ok.")
 
@@ -76,8 +83,10 @@ def view(file, show):
    frame_count = 0
 
    # open data log file
-   fp = open(data_file_name, "w")
-   fp.write("frame|contours|x|y|w|h|color|\n")
+   fp = open(dir_name + "/" + data_file_name, "w")
+   fp2 = open(dir_name + "/" + summary_file_name, "w")
+   fp.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
+   fp2.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
 
 
    #if show == 1:
@@ -90,6 +99,7 @@ def view(file, show):
    ys = []
    motion_frames = []
    frames = []
+   colors = []
 
    while True:
       _ , frame = cap.read()
@@ -98,7 +108,7 @@ def view(file, show):
       if frame is None:
          if frame_count <= 1:
             print("Bad file.")
-            exit()
+            return(0)
          else:
             print("Processed ", frame_count, "frames.")
             # finish processing file and write output files
@@ -108,9 +118,13 @@ def view(file, show):
             print ("key frame #1 : ", 1) 
             print ("key frame #2 : ", half_motion) 
             print ("key frame #3 : ", total_motion -1) 
-            print (xs)
-            print (ys)
-            print (motion_frames)
+            print ("Xs", xs)
+            print ("Ys", ys)
+            print ("MF", motion_frames)
+            avg_color = sum(colors) / float(len(colors))
+     
+            print ("CL", colors)
+            print ("Avg Color: ", avg_color)
             object_file_image = (frames[motion_frames[1]] * .33) + (frames[motion_frames[half_motion]] * .33) + (frames[motion_frames[total_motion-1]] * .33) 
            
             x1 = xs[1]
@@ -120,16 +134,63 @@ def view(file, show):
             x3 = xs[total_motion-1]
             y3 = xs[total_motion-1]
             straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
+            if (straight_line < 1 and straight_line > 0) or avg_color > 190:
+               meteor_yn = "Y"
+            else:
+               meteor_yn = "N"
+
+
             print ("Straight Line:", straight_line)
+            print ("Likely Meteor:", meteor_yn)
+
+
             obj_outfile = dir_name + "/" + object_file_name
             sc_outfile = dir_name + "/" + screen_cap_file_name 
             cv2.imwrite(obj_outfile, object_file_image)
-            #cv2.imwrite(sc_outfile, object_file_image)
+            cv2.imwrite(sc_outfile, object_file_image)
+
 
             #write summary & data files
 
             fp.close()
-            exit()
+            fp2.close()
+
+            # prep event or capture for upload to AMS
+            values['datetime'] = capture_date 
+            values['motion_frames'] = total_motion 
+            values['cons_motion'] = total_motion
+            values['color'] = avg_color
+            values['straight_line'] = straight_line
+            values['meteor_yn'] = meteor_yn
+            values['bp_frames'] = total_motion
+
+            if meteor_yn == 'Y':
+               try:
+                  if (config['best_caldate'] == '2017-01-01'):
+                     config['best_caldate'] = '0000-00-00 00:00:00';
+               except:
+                  values['best_caldate'] = config['best_caldate']
+               try:
+                  log_fireball_event(config, file, summary_file_name, object_file_name, values)
+               except:
+                  print ("failed to upload event file.")
+                  return(0)
+               #move files to maybe dir
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/maybe/") 
+            else:
+               try:
+                   log_motion_capture(config, dir_name + "/" + object_file_name, values)
+               except:
+                  print ("failed to upload capture file.")
+                  return(0)
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
+               #move files to false dir
+
+
+
+
+
+            return(1)
       gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       nice_frame = frame
 
@@ -148,19 +209,27 @@ def view(file, show):
       (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
       data = str(frame_count) + "|"
 
+      color = 0
       contours = len(cnts)
       x,y,w,h = 0,0,0,0
+
       if contours > 0:
           x,y,w,h = cv2.boundingRect(cnts[0])
+          mx = x + w
+          my = y + h
+          cx = int(x + (w/2))
+          cy = int(y + (h/2))
+          color = gray_frame[cy,cx]
           xs.extend([x])
           ys.extend([y])
+          colors.extend([color])
           motion_frames.extend([frame_count])
          
-      color = 0
       line_data = str(frame_count) + "|" + str(contours) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(color) + "|\n"
 
       fp.write(line_data)
-      print (frame_count, contours, x,y,w,h)
+      fp2.write(line_data)
+      print (frame_count, contours, x,y,w,h,color)
 
       #if frame_count % 2 == 0:
       #  cv2.imshow('pepe', frame)
@@ -172,14 +241,22 @@ def view(file, show):
 def compute_straight_line(x1,y1,x2,y2,x3,y3):
    if x2 - x1 != 0:
       a = (y2 - y1) / (x2 - x1)
+   else: 
+      a = 0
    if x3 - x1 != 0:
       b = (y3 - y1) / (x3 - x1)
+   else: 
+      b = 0
    straight_line = a - b
    if (straight_line < 1):
       straight = "Y"
    else:
       straight = "N"
-   return(straight)
+   return(straight_line)
+
+def read_time_offset_file(file):
+   print("Checking if time offset file exists.")
+
 
 def parse_file_date(file_name):
    year = file_name[0:4]
@@ -190,6 +267,76 @@ def parse_file_date(file_name):
    sec = file_name[12:14]
    date_str = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
    return(date_str)
+
+def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) :
+   url = "http://www.amsmeteors.org/members/api/cam_api/log_fireball_event"
+   _data = {
+    'api_key': config['api_key'],
+    'device_id': config['device_id'],
+    'datetime': values['datetime'],
+    'motion_frames' : values['motion_frames'],
+    'cons_motion': values['cons_motion'],
+    'color' : int(values['color']),
+    'straight_line' : values['straight_line'],
+    'bp_frames' : values['bp_frames'],
+    'format': 'json',
+    'meteor_yn': values['meteor_yn']
+   }
+
+
+   summary = maybe_summary_file.replace("-summary", "")
+   if os.path.isfile(maybe_summary_file):
+      os.system("mv " + maybe_summary_file + " " + summary)
+      print("mv " + maybe_summary_file + " " + summary)
+
+   event_stack = maybe_object_file.replace("-objects", "")
+   event = maybe_file
+   #time.sleep(1)
+   #os.system("cat " + summary + "> /tmp/sum.txt")
+
+   _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'r') }
+
+   print ("Summary TXT: ", summary)
+   session = requests.Session()
+   del session.headers['User-Agent']
+   del session.headers['Accept-Encoding']
+
+   with requests.Session() as session:
+      response = session.post(url, data= _data, files=_files)
+
+   print (response.text)
+   response.raw.close()
+
+def log_motion_capture(config, file, values):
+   print ("log motion capture");
+   stack_file = file.replace("-objects", "")
+   os.system("cp " + file + " " + stack_file)
+
+   url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
+   _files = {'event_stack': open(stack_file, 'rb')}
+   _data = {
+    'api_key': config['api_key'],
+    'device_id': config['device_id'],
+    'datetime': values['datetime'],
+    'motion_frames' : values['motion_frames'],
+    'cons_motion': values['cons_motion'],
+    'color' : int(values['color']),
+    'straight_line' : values['straight_line'],
+    'bp_frames' : values['bp_frames'],
+    'format': 'json',
+    'meteor_yn': values['meteor_yn']
+   }
+   session = requests.Session()
+   del session.headers['User-Agent']
+   del session.headers['Accept-Encoding']
+
+   with requests.Session() as session:
+      response = session.post(url, data= _data, files=_files)
+
+   print (response.text)
+   response.raw.close()
+
+
 
 if __name__ == '__main__':
    main()
