@@ -206,9 +206,9 @@ def view(file, show = 0):
 
             if meteor_yn == 'Y':
                try:
-                  if (config['best_caldate'] == '2017-01-01'):
-                     config['best_caldate'] = '0000-00-00 00:00:00';
+                  values['best_caldate'] = config['best_caldate']
                except:
+                  config['best_caldate'] = '0000-00-00 00:00:00';
                   values['best_caldate'] = config['best_caldate']
                try:
                   log_fireball_event(config, file, dir_name + "/" + summary_file_name, dir_name + "/" + object_file_name, values)
