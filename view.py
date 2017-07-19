@@ -1,4 +1,4 @@
-#!/usr/bin/python3 
+#!/usr/bin/python3
 import subprocess
 import requests
 import pytesseract
@@ -13,16 +13,270 @@ import multiprocessing
 import datetime
 import cv2
 import numpy as np
-import iproc 
+import iproc
 import time
 import ephem
 import sys
 import os
 from amscommon import read_config, caldate
-#from wand.image import Image
-#from wand.display import display
 
-MORPH_KERNEL       = np.ones((10, 10), np.uint8)
+
+def main():
+   try:
+      file = sys.argv[1]
+      batch = 0
+   except:
+      files = glob.glob("/var/www/html/out/*.avi")
+      batch = 1
+   try:
+      show = sys.argv[2]
+   except:
+      show = 0
+
+   if batch == 0:
+      view(file, show)
+   else: 
+      for file in files:
+         view(file) 
+
+
+
+def view(file, show = 0):
+
+   config = read_config()
+   values = {}
+   dir_name = os.path.dirname(file)
+   file_name = file.replace(dir_name + "/", "")
+   summary_file_name = file_name.replace(".avi", "-summary.txt")
+   data_file_name = file_name.replace(".avi", ".txt")
+   screen_cap_file_name = file_name.replace(".avi", ".jpg")
+   object_file_name = file_name.replace(".avi", "-objects.jpg")
+   capture_date = parse_file_date(file_name)
+   #last_cal_date = # Get last / closest calibration date
+   file_base_name = file_name.replace(".avi", "") 
+
+
+   print ("Viewing file: " + file)
+   print ("Directory: " + dir_name)
+   print ("File Name: " + file_name)
+   print ("Summary File Name: " + summary_file_name)
+   print ("Data File Name: " + data_file_name)
+   print ("Screen Cap File Name: " + screen_cap_file_name)
+   print ("Object File Name: " + object_file_name)
+   print ("Capture Date: " + capture_date)
+
+   # make sure the file exists
+   if os.path.isfile(file) is False:
+      print("This file does not exist. Exiting.")
+      return(0)
+   else:
+      print ("The file is ok.")
+
+   #process video
+
+   tstamp_prev = None
+   image_acc = None
+   last_frame = None
+   nice_image_acc = None
+   final_image = None
+   cur_image = None
+   frame_count = 0
+
+   # open data log file
+   fp = open(dir_name + "/" + data_file_name, "w")
+   fp2 = open(dir_name + "/" + summary_file_name, "w")
+   fp.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
+   fp2.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
+
+
+   #if show == 1:
+   #   cv2.namedWindow('pepe') 
+
+
+   cap = cv2.VideoCapture(file)
+   time.sleep(2)
+   xs = []
+   ys = []
+   motion_frames = []
+   frames = []
+   colors = []
+
+   while True:
+      _ , frame = cap.read()
+      frame_count = frame_count + 1
+      frames.extend([frame])
+      if frame is None:
+         if frame_count <= 1:
+            print("Bad file.")
+            return(0)
+         else:
+            print("Processed ", frame_count, "frames.")
+            # finish processing file and write output files
+
+            total_motion = len(motion_frames)
+            half_motion = int(round(total_motion/2,0))
+            print ("key frame #1 : ", 1) 
+            print ("key frame #2 : ", half_motion) 
+            print ("key frame #3 : ", total_motion -1) 
+            print ("Xs", xs)
+            print ("Ys", ys)
+            print ("MF", motion_frames)
+            avg_color = sum(colors) / float(len(colors))
+     
+            print ("CL", colors)
+            print ("Avg Color: ", avg_color)
+
+            #print (motion_frames[1])
+            #print (motion_frames[half_motion])
+            #print (motion_frames[total_motion -1])
+
+            #print(frames[motion_frames[1]])
+            #print(frames[motion_frames[half_motion]])
+            #print(frames[motion_frames[total_motion - 1]])
+
+            object_file_image = (frames[motion_frames[1]] * .33) + (frames[motion_frames[half_motion]] * .33) + (frames[motion_frames[total_motion-1]] * .33) 
+           
+            x1 = xs[1]
+            y1 = xs[1]
+            x2 = xs[half_motion]
+            y2 = xs[half_motion]
+            x3 = xs[total_motion-1]
+            y3 = xs[total_motion-1]
+            straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
+            if (straight_line < 1 and straight_line > 0) or avg_color > 190:
+               meteor_yn = "Y"
+            else:
+               meteor_yn = "N"
+
+
+            print ("Straight Line:", straight_line)
+            print ("Likely Meteor:", meteor_yn)
+
+
+            obj_outfile = dir_name + "/" + object_file_name
+            sc_outfile = dir_name + "/" + screen_cap_file_name 
+            cv2.imwrite(obj_outfile, object_file_image)
+            cv2.imwrite(sc_outfile, object_file_image)
+
+
+            #write summary & data files
+
+            fp.close()
+            fp2.close()
+
+            # prep event or capture for upload to AMS
+            values['datetime'] = capture_date 
+            values['motion_frames'] = total_motion 
+            values['cons_motion'] = total_motion
+            values['color'] = avg_color
+            values['straight_line'] = straight_line
+            values['meteor_yn'] = meteor_yn
+            values['bp_frames'] = total_motion
+
+            if meteor_yn == 'Y':
+               try:
+                  if (config['best_caldate'] == '2017-01-01'):
+                     config['best_caldate'] = '0000-00-00 00:00:00';
+               except:
+                  values['best_caldate'] = config['best_caldate']
+               log_fireball_event(config, file, dir_name + "/" + summary_file_name, dir_name + "/" + object_file_name, values)
+               try:
+                  log_fireball_event(config, file, summary_file_name, object_file_name, values)
+               except:
+                  print ("failed to upload event file.")
+                  return(0)
+               #move files to maybe dir
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/maybe/") 
+            else:
+               try:
+                   log_motion_capture(config, dir_name + "/" + object_file_name, values)
+               except:
+                  print ("failed to upload capture file.")
+                  return(0)
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
+               #move files to false dir
+
+
+
+
+
+            return(1)
+      nice_frame = frame
+
+      alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
+      frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      gray_frame = frame
+      frame = cv2.GaussianBlur(frame, (21, 21), 0)
+      if last_frame is None:
+         last_frame = nice_frame
+      if image_acc is None:
+         image_acc = np.empty(np.shape(frame))
+      image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
+      hello = cv2.accumulateWeighted(frame, image_acc, alpha)
+      _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
+      thresh= cv2.dilate(threshold, None , iterations=2)
+      (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      data = str(frame_count) + "|"
+
+      color = 0
+      contours = len(cnts)
+      x,y,w,h = 0,0,0,0
+
+      if contours > 0:
+          x,y,w,h = cv2.boundingRect(cnts[0])
+          mx = x + w
+          my = y + h
+          cx = int(x + (w/2))
+          cy = int(y + (h/2))
+          color = gray_frame[cy,cx]
+          xs.extend([x])
+          ys.extend([y])
+          colors.extend([color])
+          motion_frames.extend([frame_count])
+         
+      line_data = str(frame_count) + "|" + str(contours) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(color) + "|\n"
+
+      fp.write(line_data)
+      fp2.write(line_data)
+      print (frame_count, contours, x,y,w,h,color)
+
+      #if frame_count % 2 == 0:
+      #  cv2.imshow('pepe', frame)
+      #   cv2.waitKey(1) 
+
+   # we will never make it to here cause the program ends when the loop ends. look up.  
+
+
+def compute_straight_line(x1,y1,x2,y2,x3,y3):
+   if x2 - x1 != 0:
+      a = (y2 - y1) / (x2 - x1)
+   else: 
+      a = 0
+   if x3 - x1 != 0:
+      b = (y3 - y1) / (x3 - x1)
+   else: 
+      b = 0
+   straight_line = a - b
+   if (straight_line < 1):
+      straight = "Y"
+   else:
+      straight = "N"
+   return(straight_line)
+
+def read_time_offset_file(file):
+   print("Checking if time offset file exists.")
+
+
+def parse_file_date(file_name):
+   year = file_name[0:4]
+   month = file_name[4:6]
+   day = file_name[6:8]
+   hour = file_name[8:10]
+   min = file_name[10:12]
+   sec = file_name[12:14]
+   date_str = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
+   return(date_str)
 
 def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) :
    url = "http://www.amsmeteors.org/members/api/cam_api/log_fireball_event"
@@ -36,7 +290,7 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
     'straight_line' : values['straight_line'],
     'bp_frames' : values['bp_frames'],
     'format': 'json',
-    'meteor_yn': values['meteor_yn'] 
+    'meteor_yn': values['meteor_yn']
    }
 
 
@@ -49,7 +303,7 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
    event = maybe_file
    #time.sleep(1)
    #os.system("cat " + summary + "> /tmp/sum.txt")
- 
+
    _files = {'event_stack': open(event_stack, 'rb'), 'event':open(event, 'rb'), 'summary':open(summary, 'r') }
 
    print ("Summary TXT: ", summary)
@@ -80,7 +334,7 @@ def log_motion_capture(config, file, values):
     'straight_line' : values['straight_line'],
     'bp_frames' : values['bp_frames'],
     'format': 'json',
-    'meteor_yn': values['meteor_yn'] 
+    'meteor_yn': values['meteor_yn']
    }
    session = requests.Session()
    del session.headers['User-Agent']
@@ -90,693 +344,9 @@ def log_motion_capture(config, file, values):
       response = session.post(url, data= _data, files=_files)
 
    print (response.text)
-   response.raw.close() 
+   response.raw.close()
 
-def day_or_night(file):
 
-   year = file[0:4]
-   month = file[4:6]
-   day = file[6:8]
-   hour = file[8:10]
-   min = file[10:12]
-   sec = file[12:14]
-   date_str = year + "/" + month + "/" + day + " " + hour + ":" + min
-   print("File:", file)
-   print(year,month,day,hour,min,sec)
-   config = read_config()
-   obs = ephem.Observer()
-   obs.pressure = 0
-   obs.horizon = '-0:34'
-   obs.lat = config['device_lat']
-   obs.lon = config['device_lng']
-   #cur_date = time.strftime("%Y/%m/%d %H:%M")
-   cur_date = datetime.datetime.strptime(date_str, "%Y/%m/%d %H:%M")
-   obs.date = cur_date
-   print ("FILE DATE: ", cur_date)
-   sun = ephem.Sun()
-   sun.compute(obs)
-   if sun.alt > -10:
-      status = "day"
-   else:
-      status = "night"
 
-   #print (obs.lat, obs.lon, obs.date)
-   #print ("Sun Alt: %s, Sun AZ: %s" % (sun.alt, sun.az))
-   (sun_alt, x,y) = str(sun.alt).split(":")
-   (sun_az, x,y) = str(sun.az).split(":")
-   print ("Sun Alt: %s" % (sun_alt))
-   if int(sun_alt) < -10:
-      status = "dark";
-   if int(sun_alt) >- 10 and int(sun_alt) < 5:
-      if int(sun_az) > 0 and int(sun_az) < 180:
-         status = "dawn"
-      else:
-         status = "dusk"
-   if int(sun_alt) >= 5:
-      status = "day";
-
-   return(status)
-
-
-def analyze(file):
-    config = read_config()
-    a = 0
-    b = 0
-    bright_pixel_count = 0
-    bright_pixel_total = 0
-    elapsed_frames = 0
-    cons_motion = 0
-    straight_line = 100
-    straight = 'N'
-    motion = 0
-    motion_off = 0
-    frame_data = {}
-    data_file = file.replace(".avi", ".txt");
-    summary_file = data_file.replace(".txt", "-summary.txt")
-    object_file = data_file.replace(".txt", "-objects.jpg")
-    fp = open(data_file, "r")
-    sfp = open(summary_file, "w")
-    event_start_frame = 0
-    event_end_frame = 0
-    sum_color = 0
-    cons_motion = 1 
-    max_cons_motion = 0
-    cons_motion_events = 0
-    last_motion = 0
-    mid_pix_count = 0
-    for line in fp:
-       (frame,contours,area,perimeter,convex,x,y,w,h,middle_pixel,n) = line.split("|")
-       if (middle_pixel== ""):
-          middle_pixel= 0
-       if frame != 'frame':
-          if contours != "":
-             motion = motion + 1
-             motion_off = 0
-             if last_motion > 0:
-                cons_motion = cons_motion + 1
-             if cons_motion > max_cons_motion:
-                max_cons_motion = cons_motion
-          if motion < 5  and contours == "":
-             motion = 0
-             last_motion = 0
-             cons_motion = 0
-          if motion == 5 and event_start_frame == 0:
-             event_start_frame = int(frame) 
-          if motion >= 1 and contours == "":
-             motion_off = motion_off + 1
-          if motion > 5 and motion_off > 5 and event_end_frame == 0:
-             event_end_frame = int(frame) - 5 
-          if int(middle_pixel) > 0:
-             sum_color = sum_color + int(middle_pixel)
-             mid_pix_count = mid_pix_count + 1
-             if int(middle_pixel) >= 180:
-                print ("Bright Pixel Count/Mid Pix Total", bright_pixel_count, middle_pixel)
-                bright_pixel_count = bright_pixel_count + 1
-                bright_pixel_total = bright_pixel_total + int(middle_pixel)
-
-
-          out = str(frame)+","+str(contours)+","+str(area)+","+str(perimeter)+","+str(convex)+","+str(x) + "," + str(y) + "," + str(w) + "," + str(h) + "," + str(middle_pixel) + "," + str(n) + ",\n"
-          frame_data.update({int(frame) : {'x': x, 'y': y}})
-          sfp.write(out)
-          cons_motion = motion
-          print(out)
-          if (event_start_frame != 0 and event_end_frame == 0 and middle_pixel != ""):
-             #print ("COLOR:", color)
-             last_frame_motion = motion
-             last_frame_cnts = contours 
-    out = "Event Start Frame : " + str(event_start_frame) + "\n"
-    sfp.write(out)
-    print (out)
-    out = "Event End Frame : " + str(event_end_frame) + "\n"
-    sfp.write(out)
-    print (out)
-    if (bright_pixel_count > 0):
-       out = "Bright Frames: " + str(bright_pixel_count) + "\n"
-       sfp.write(out)
-       print (out)
-       out = "Bright Frame Avg: " + str(bright_pixel_total/bright_pixel_count) + "\n"
-       sfp.write(out)
-       print (out)
-    sfp.write(out)
-    print (out)
-
-    key_frame1 = int(event_start_frame)
-    key_frame2 = int(event_start_frame + ((int(event_end_frame - event_start_frame) / 2)))
-    key_frame3 = int(event_end_frame - 3)
-    ofr = collections.OrderedDict(sorted(frame_data.items()))
-
-    out = "Key Frames: " + str(key_frame1) + "," + str(key_frame2) + "," + str(key_frame3) + "\n"
-    sfp.write(out)
-    print (out)
-    elapsed_frames = key_frame3 - key_frame1
-    if cons_motion > 0 and mid_pix_count > 0:
-       avg_center_pixel = int(sum_color) / mid_pix_count
-    else:
-       avg_center_pixel = 0
-    out = "Sum Color/Frames: " + str(sum_color) + "/" + str(mid_pix_count) + "\n"
-    sfp.write(out)
-    print (out)
-    out = "Consectutive Motion Frames: " + str(max_cons_motion) + "\n"
-    sfp.write(out)
-    print (out)
-    if max_cons_motion > 10 and event_end_frame > 0 and 'x' in frame_data[key_frame3] and 'x' in frame_data[key_frame2] and 'x' in frame_data[key_frame1]:
-       if ( frame_data[key_frame1]['x'] != '' and frame_data[key_frame2]['x'] != '' and frame_data[key_frame3]['x'] != '' ):
-          x1 = int(frame_data[key_frame1]['x'])
-          y1 = int(frame_data[key_frame1]['y'])
-          #print("X2: ", frame_data[key_frame2]['x'])
-          x2 = int(frame_data[key_frame2]['x'])
-          y2 = int(frame_data[key_frame2]['y'])
-          x3 = int(frame_data[key_frame3]['x'])
-          y3 = int(frame_data[key_frame3]['y'])
-
-          if x2 - x1 != 0:
-             a = (y2 - y1) / (x2 - x1)
-          if x3 - x1 != 0:
-             b = (y3 - y1) / (x3 - x1)
-          straight_line = a - b
-          if (straight_line < 1):
-             straight = "Y" 
-    else: 
-       out = "Not enough consecutive motion."
-       sfp.write(out)
-       print (out)
-       
-    meteor = "N"
-    if (straight_line < 1 and avg_center_pixel > 40 or (bright_pixel_count > 10 )):
-       meteor = "Y"
-    sfp.write("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
-    print("Elapsed Frames:\t" + str(elapsed_frames)+ "\n")
-    sfp.write("Straight Line:\t" + str(straight) + "," + str(straight_line)+"\n")
-    print("Straight Line:\t" + str(straight) + "," + str(straight_line)+"\n")
-    sfp.write("Average Center Pixel Color:\t" + str(avg_center_pixel) + "\n")
-    print("Average Center Pixel Color:\t" + str(avg_center_pixel) + "\n")
-    sfp.write("Likely Meteor:\t"+ str(meteor)+"\n")
-    print("Likely Meteor:\t"+ str(meteor)+"\n")
-    fp.close()
-    sfp.close()
-    if meteor == "N":
-       false_file= file.replace("out/", "out/false/")
-       false_data_file= data_file.replace("out/", "out/false/")
-       false_summary_file= summary_file.replace("out/", "out/false/")
-       false_object_file = object_file.replace("out/", "out/false/")
-
-
-       el = false_object_file.split("/")
-       motion_date = caldate(el[-1])
-       values = {
-          'datetime': motion_date,
-          'motion_frames' : elapsed_frames,
-          'cons_motion': max_cons_motion,
-          'color' : avg_center_pixel,
-          'straight_line' : straight_line,
-          'bp_frames' : bright_pixel_count,
-          'meteor_yn': meteor
-       }
-       if os.path.isfile(file):
-          cmd = "mv " + file + " " + false_file 
-          print (cmd)
-          os.system(cmd)
-       if os.path.isfile(data_file):
-          cmd = "mv " + data_file + " " + false_data_file
-          print (cmd)
-          os.system(cmd)
-       cmd = "mv " + summary_file + " " + false_summary_file
-       if os.path.isfile(summary_file):
-          print ("SUMMARY FILE CMD", cmd)
-          print (cmd)
-          os.system(cmd)
-       cmd = "mv " + object_file + " " + false_object_file
-       if os.path.isfile(object_file):
-          print (cmd)
-          os.system(cmd)
-        
-       try: 
-          log_motion_capture(config, false_object_file, values) 
-       except:
-          # log entry to re upload file
-          print ("Failed to upload!")
-    else:  
-       maybe_file= file.replace("out/", "out/maybe/")
-       maybe_data_file= data_file.replace("out/", "out/maybe/")
-       maybe_summary_file= summary_file.replace("out/", "out/maybe/")
-       cmd = "mv " + file + " " + maybe_file 
-       maybe_object_file = object_file.replace("out/", "out/maybe/")
-
-       try: 
-          if (config['best_caldate'] == '2017-01-01'):
-             print ("ok")
-       except: 
-             config['best_caldate'] = '0000-00-00 00:00:00';
-
-       el = maybe_object_file.split("/")
-       motion_date = caldate(el[-1])
-       values = {
-          'datetime': motion_date,
-          'best_calibration' : config['best_caldate'],
-          'motion_frames' : elapsed_frames,
-          'cons_motion': max_cons_motion,
-          'color' : avg_center_pixel,
-          'straight_line' : straight_line,
-          'bp_frames' : bright_pixel_count,
-          'meteor_yn': meteor
-       }
-       if os.path.isfile(file):
-          cmd = "mv " + file + " " + maybe_file
-          os.system(cmd)
-
-       if os.path.isfile(data_file):
-          cmd = "mv " + data_file + " " + maybe_data_file
-          os.system(cmd)
-       if os.path.isfile(data_file):
-          cmd = "mv " + summary_file + " " + maybe_summary_file
-          os.system(cmd)
-       if os.path.isfile(summary_file):
-          cmd = "mv " + object_file + " " + maybe_object_file
-          os.system(cmd)
-       if os.path.isfile(object_file):
-          os.system(cmd)
-
-       cmd = "./astr-stack.py " + maybe_file
-       print (cmd)
-       os.system(cmd)
-
-       try:
-          log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
-       except:
-          #write entry to re-upload file
-          print ("Failed to upload fireball event video!")
-          exit()
-
-
-def read_summary_file(summary_file):
-   sfile = open(summary_file, "r")
-
-   sum_values  = {}
-
-   for line in sfile:
-      line = line.strip('\n')
-
-      #Find first index of =
-      try: 
-         c = line.index(':')
-         sum_values[line[0:c]] = line[c+1:].replace("\t", "")
-         sum_values[line[0:c]] = sum_values[line[0:c]].replace(" ", "");
-      except: 
-         print ("Skipping line...")
-
-
-
-   sfile.close()
-   print(sum_values)
-
-   return(sum_values)
-
-
-def make_stack_file (file) :
-   cmd = "./astr-stack.py " + maybe_file
-   print (cmd)
-   os.system(cmd)
-
-
-def check_file(file):
-   values  = {}
-   dir_name = os.path.dirname(file)
-   file_name = file
-   file_name = file_name.replace(dir_name + "/", "");
-   file_name = file_name.replace(".avi", "");
-   print (dir_name) 
-   print (file_name) 
-   
-   year = file_name[0:4]
-   month = file_name[4:6]
-   day = file_name[6:8]
-   hour = file_name[8:10]
-   min = file_name[10:12]
-   sec = file_name[12:14]
-   date_str = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
-   config = read_config()
-
-
-   print ("Checking file...")
-
-   match_false_files = glob.glob(dir_name + "/false/" + file_name + "*") 
-   if len(match_false_files) > 0:
-      obj_file = dir_name + "/false/" + file_name + "-objects.jpg"
-      jpg_file = dir_name + "/false/" + file_name + ".jpg"
-
-      # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
-      #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
-      if os.path.isfile(jpg_file) is None or os.path.isfile(obj_file) is None:
-         os.system("mv " + dir_name + "/false/" + file_name + "* " + dir_name + "/")
-         return(0)
-
-      print ("False files exist");
-      print (match_false_files);
-      sum_values = read_summary_file(dir_name + "/false/" + file_name + "-summary.txt")
-
-      values['datetime'] = date_str
-      values['motion_frames'] = sum_values['Consectutive Motion Frames']
-      values['cons_motion'] = sum_values['Consectutive Motion Frames']
-      values['color'] = float(sum_values['Average Center Pixel Color'])
-      trash, values['straight_line'] = sum_values['Straight Line'].split(",")
-      values['meteor_yn'] = sum_values['Likely Meteor']
-      try: 
-         values['bp_frames'] = sum_values['Bright Frames']
-      except: 
-         values['bp_frames'] = 0
-      
-      print ("logging capture")
-      if os.path.isfile(file):
-         print ("mv " + file + " " + dir_name + "/false/" + file_name + ".avi")
-         os.system("mv " + file + " " + dir_name + "/false/" + file_name + ".avi")
-     
-      #if os.path.isfile(obj_file) is None:
-      #   print ("No -obj file exists! make stack please. ")
-      #   make_stack_file(dir_name + "/false/" + file_name + ".avi" )
-      log_motion_capture(config, obj_file, values)
-
-      try:
-         print("yo");
-         #log_motion_capture(config, obj_file, values)
-      except:
-         print ("failed to upload capture file.")
-         exit()
-      return(0)
-   else :
-      print ("no false matches")
-
-
-
-   match_maybe_files = glob.glob(dir_name + "/maybe/" + file_name + "*") 
-   if len(match_maybe_files) > 0:
-      obj_file = dir_name + "/maybe/" + file_name + "-objects.jpg"
-      jpg_file = dir_name + "/maybe/" + file_name + ".jpg"
-
-      # return all files to out dir if the .jpg or -objects.jpg file doesn't exist
-      #if os.path.isfile(obj_file) is None or os.path.isfile(jpg_file) is None:
-      if os.path.isfile(jpg_file) is None or os.path.isfile(obj_file) is None:
-         os.system("mv " + dir_name + "/maybe/" + file_name + "* " + dir_name + "/")
-         return(0)
-      print ("Maybe files exist");
-      print (match_maybe_files);
-      sum_values = read_summary_file(dir_name + "/false/" + file_name + "-summary.txt")
-
-      values['datetime'] = date_str
-      values['motion_frames'] = sum_values['Consectutive Motion Frames']
-      values['cons_motion'] = sum_values['Consectutive Motion Frames']
-      values['color'] = float(sum_values['Average Center Pixel Color'])
-      trash, values['straight_line'] = sum_values['Straight Line'].split(",")
-      values['meteor_yn'] = sum_values['Likely Meteor']
-      values['bp_frames'] = sum_values['Bright Frames']
-
-      if os.path.isfile(file):
-         print ("mv " + file + " " + dir_name + "/maybe/" + file_name + ".avi")
-         os.system("mv " + file + " " + dir_name + "/maybe/" + file_name + ".avi")
-
-      maybe_file = dir_name + "/maybe/" + file_name + ".avi"
-      maybe_summary_file = dir_name + "/maybe/" + file_name + "-summary.txt"
-      maybe_object_file = dir_name + "/maybe/" + file_name + "-objects.jpg"
-      if os.path.isfile(maybe_object_file) is None:
-         print ("no obj file exists make stack please.")
-         make_stack_file(dir_name + "/maybe/" + file_name + ".avi" )
-
-      print ("logging event")
-
-      try:
-         log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) 
-      except:
-         print ("failed to upload event file.")
-         exit()
-      return(0)
-   else:
-      print ("No event matches.")
-    
-
-  
-def view(file, show):
- 
-    if check_file(file) == 0:
-       return(0)
-    stk_img = None
-    jpg = file
-    data_file = file
-    jpg = jpg.replace(".avi", ".jpg");
-    jpg = jpg.replace("out", "jpgs");
-    data_file = data_file.replace(".avi", ".txt");
-    object_file = data_file.replace(".txt", "-objects.jpg")
-
-    cap = cv2.VideoCapture(file)
-    final_cv_image = None
-    time.sleep(2)
-
-    tstamp_prev = None
-    image_acc = None
-    last_frame = None
-    nice_image_acc = None
-    final_image = None
-    cur_image = None
-    if show == 1:
-       cv2.namedWindow('pepe')
-    count = 0
-    frames = deque(maxlen=256)
-    out_jpg = np.zeros((500,500,3))
-    out_jpg_final = np.zeros((500,500,3))
-    oy = 0
-    ox = 0
-    max_h = 0
-    fp = open(data_file, "w")
-    fp.write("frame|contours|area|perimeter|convex|x|y|w|h|color|\n")
-    mid_pix_total = 0
-    mid_pix_count = 0
-    while True:
-        frame_file = jpg.replace(".jpg", "-" + str(count) + ".jpg");
-        _ , frame = cap.read()
-        #cv2.imwrite(frame_file, frame)
-        if frame is None:
-           if count == 0:
-               print ("bad file!")
-               return()
-           #print (jpg)
-           cv2.imwrite(jpg, final_cv_image)
-           cv2.imwrite(object_file, stack_frame)
-           if max_h <= 500:
-              out_jpg_final = out_jpg[0:max_h,0:500]
-           else: 
-              out_jpg_final = out_jpg[0:500,0:500]
-           if max_h > 0:
-              #stack_frame /= count * .25
-              print ("Writing Object File", object_file)
-              cv2.imwrite(object_file, stack_frame)
-              #cv2.imwrite(object_file, out_jpg_final)
-           else: 
-              #stack_frame /= count * .25
-              #cv2.imwrite(object_file, out_jpg)
-              cv2.imwrite(object_file, stack_frame)
-              print ("Writing Object File", object_file)
-           return()
-           #exit()
-
-#        frames.appendleft(frame)
-
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        nice_frame = frame
-        if count == 0:
-           stack_frame = gray_frame 
-
-        alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
-        #print ("ALPHA: ", alpha)
-        #frame = cv2.resize(frame, (0,0), fx=0.8, fy=0.8)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = cv2.GaussianBlur(frame, (21, 21), 0)
-        if last_frame is None:
-            last_frame = nice_frame 
-        if image_acc is None:
-            image_acc = np.empty(np.shape(frame))
-        image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
-        hello = cv2.accumulateWeighted(frame, image_acc, alpha)
-        _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
-        thresh= cv2.dilate(threshold, None , iterations=2)
-        (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        data = str(count) + "|" 
-        if len(cnts) > 0:
-
-            image_diff_nice = cv2.absdiff(last_frame.astype(last_frame.dtype), nice_frame,)
-            _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
-            thresh= cv2.dilate(threshold, None , iterations=2)
-            (_, alt_cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if len(alt_cnts) != 0:
-               cnts = alt_cnts
-
-            area = cv2.contourArea(cnts[0])
-            perim = cv2.arcLength(cnts[0], True)
-            #print ("Perim:", perim)
-            #for cnt in cnts:
-            x,y,w,h = cv2.boundingRect(cnts[0])
-               
-
-            #ellipse = cv2.fitEllipse(cnts[0])
-            #print ("Ellipse:", len(ellipse), ellipse)
-            #if len(ellipse) == 5:
-            #   cv2.ellipse(frame,ellipse,(0,255,0),2)
-
-
-            #if count % 20 == 0:
-            #   for cnt in cnts:
-                  # crop out
-            x,y,w,h = cv2.boundingRect(cnts[0])
-            x2 = x+w
-            y2 = y+h
-            mx = int(x + (w/2))
-            my = int(y + (h/2))
-            crop_frame = gray_frame[y:y2,x:x2]
-            stack_frame[y:y2,x:x2] = crop_frame 
-                  #   stack_frame[...,0] = np.clip(stack_frame[...,0], 0, 255)
-                  #   print (stack_frame[y:y2,x:x2])
- 
-            #print ("XY:", x,x2,y,y2)
-
-            middle_pixel = gray_frame[my,mx]
-            middle_sum = np.sum(middle_pixel)
-            #print("MID PIX:", middle_pixel, middle_sum)
-            mid_pix_total = mid_pix_total + middle_pixel
-            mid_pix_count = mid_pix_count + 1
-            #cv2.circle(nice_frame,(mx,my),5,(255,0,0))
-            cy = (y + y2) / 2
-            cx = (x + x2) / 2 
-            #stack_frame[y:y2,x:x2] = crop_frame 
-            #if stk_img is None :
-            #   stk_img = Image.fromarray(stack_frame)
-            #   last_stk_img = Image.fromarray(stack_frame)
-            #else:
-            #   stk_img = Image.fromarray(nice_frame)
-            #   stk_img = Image.blend(stk_img, last_stk_img, .95) 
-            #   last_stk_img = stk_img 
-            #stack_frame += image_diff_nice
-            #display(stk_img)
-            #if count % 10 == 0:
-            #   stk_img.show()
-            text = (pytesseract.image_to_string(Image.fromarray(crop_frame)))
-            print (text)
-            if h > max_h and h < 300:
-               max_h = h
-               print ("MAX Height Hit", max_h)
-
-            if (ox + w) < 500 and (oy + h) < 500 and len(text) == 0:
-               print ("OY,OY+H,OX,OX+W,color,cnts: ", oy, oy+h, ox, ox+w, middle_pixel, len(cnts))
-               try: 
-                  out_jpg[oy:oy+h,ox:ox+w] = crop_frame
-               except:
-                  print("crop too big for summary!")
-               #if show == 1:
-                  #cv2.imshow('pepe', cv2.convertScaleAbs(stack_frame))
-                  #cv2.imshow('pepe', stack_frame)
-                  #cv2.waitKey(1) 
-               ox = ox +w
-            else: 
-               print("Crop to big for summary pic!", oy,oy+h,ox,ox+w,h,w)
-               time.sleep(5)
-            if (ox + w ) >= 500 and (w < 400):
-               oy += max_h
-               ox = 0  
-
-
-            avg_color_per_row = np.average(crop_frame, axis=0)
-            avg_color = np.average(avg_color_per_row, axis=0)
-            #print ("AVG COLOR: " , avg_color, np.sum(avg_color))
-            tjpg = jpg
-            tjpg = tjpg.replace(".jpg", "-" + str(count) + ".jpg")
-           # print ("TJPG", tjpg)
-            #cv2.imwrite(tjpg, crop_frame)
-            #cv2.imwrite(tjpg, stack_frame)
-
-
-            cv2.rectangle(frame,(x,y),(x+w,y+h),(255,255,255),1)
-
-            poly = cv2.approxPolyDP(cnts[0], 0.02*perim, True)
-
-            #print ("Poly: ", poly)
-            #print ("Convex?: ", cv2.isContourConvex(cnts[0]))
-            convex = cv2.isContourConvex(cnts[0])
-            #data = "frame|contours|area|perimeter|poly|convex|x|y|w|h|color|\n" 
-            data = data + str(len(cnts)) + "|" + str(area) + "|" + str(perim) + "|"
-            #data = data + str(poly) + "|"
-            data = data + str(convex) + "|"
-            data = data + str(x) + "|"
-            data = data + str(y) + "|"
-            data = data + str(w) + "|"
-            data = data + str(h) + "|"
-            data = data + str(middle_pixel) + "|"
-        else:
-            data = data + "|||||||||"
-        fp.write(data + "\n")
-    
-        last_frame = nice_frame 
-
-
-
-        #nice_avg = cv2.convertScaleAbs(nice_image_acc)
-
-        #print (cnts)
-
-
-        #if cur_image is None:
-        #    cur_image = Image.fromarray(frame)
-
-            #temp = cv2.convertScaleAbs(nice_image_acc)
-            #nice_image_acc_pil = Image.fromarray(temp)
-            #cur_image = ImageChops.lighter(cur_image, nice_image_acc_pil)
-
-        #final_cv_image = np.array(cur_image)
-        #cv2.imshow('pepe', final_cv_image)
-        #if count % 1 == 0:
-        #    cv2.imshow('pepe', frame)
-        count = count + 1
-        #print (count)
-        #cv2.waitKey(1)
-
-        # if the jpg and/or object file was not created, create it now. 
-
-        if os.path.isfile(jpg):
-           print ("JPG EXISTS GREAT.")
-        else:
-           cv2.imwrite(jpg, last_frame)
-        if os.path.isfile(object_file):
-           print ("JPG EXISTS GREAT.")
-        else:
-           cv2.imwrite(object_file, last_frame)
-        cap.release()
-
-        return(1)
-
-# Check to make sure view is not already running.
-cmd = "ps -aux | grep view "
-print (cmd)
-output = subprocess.check_output(cmd, shell=True)
-output = output.decode("utf-8")
-running = output.splitlines()
-if len(running) > 3:
-   print ("Already running")
-   exit()
-
-try: 
-   file = sys.argv[1]
-   batch = 0
-except:
-   files = glob.glob("/var/www/html/out/*.avi") 
-   batch = 1
-
-if batch == 0:
-   status = day_or_night(file)
-   print ("This video was taken during: ", status)
-   view("/var/www/html/out/" + file, 1)
-   analyze("/var/www/html/out/" + file)
-else:
-   for file in files:
-      file = file.replace("/var/www/html/out/", "")
-      print (file)  
-      if view("/var/www/html/out/" + file, 0) != 0:
-         analyze("/var/www/html/out/" + file)
-      print("Finished: " + file)
-
-
+if __name__ == '__main__':
+   main()
