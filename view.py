@@ -210,9 +210,8 @@ def view(file, show = 0):
                      config['best_caldate'] = '0000-00-00 00:00:00';
                except:
                   values['best_caldate'] = config['best_caldate']
-               log_fireball_event(config, file, dir_name + "/" + summary_file_name, dir_name + "/" + object_file_name, values)
                try:
-                  log_fireball_event(config, file, summary_file_name, object_file_name, values)
+                  log_fireball_event(config, file, dir_name + "/" + summary_file_name, dir_name + "/" + object_file_name, values)
                except:
                   print ("failed to upload event file.")
                   return(0)
@@ -326,9 +325,9 @@ def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file
 
 
    summary = maybe_summary_file.replace("-summary", "")
-   if os.path.isfile(maybe_summary_file):
-      os.system("mv " + maybe_summary_file + " " + summary)
-      print("mv " + maybe_summary_file + " " + summary)
+   #if os.path.isfile(maybe_summary_file):
+   #   os.system("mv " + maybe_summary_file + " " + summary)
+   #   print("mv " + maybe_summary_file + " " + summary)
 
    event_stack = maybe_object_file.replace("-objects", "")
    event = maybe_file
