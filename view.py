@@ -56,6 +56,7 @@ def read_time_file(file):
 def view(file, show = 0):
 
    config = read_config()
+   frame_time_data = []
    values = {}
    dir_name = os.path.dirname(file)
    file_name = file.replace(dir_name + "/", "")
@@ -76,7 +77,8 @@ def view(file, show = 0):
       time.sleep(1)
    else: 
       print ("no frame time data! " + dir_name + "/" + time_file_name ) 
-      exit()
+      for x in range(0, 225): 
+         frame_time_data.append("||||")
    
 
    print ("Viewing file: " + file)
