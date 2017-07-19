@@ -114,6 +114,11 @@ def view(file, show = 0):
             # finish processing file and write output files
 
             total_motion = len(motion_frames)
+            if total_motion < 3:
+               #this a BS capture. abort
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
+               return(0)
+ 
             half_motion = int(round(total_motion/2,0))
             print ("key frame #1 : ", 1) 
             print ("key frame #2 : ", half_motion) 
@@ -134,14 +139,15 @@ def view(file, show = 0):
             #print(frames[motion_frames[half_motion]])
             #print(frames[motion_frames[total_motion - 1]])
 
-            object_file_image = (frames[motion_frames[1]] * .33) + (frames[motion_frames[half_motion]] * .33) + (frames[motion_frames[total_motion-1]] * .33) 
-           
+            object_file_image = (frames[motion_frames[1]] * .33) + (frames[motion_frames[half_motion]] * .33) + (frames[motion_frames[total_motion-2]] * .33) 
+          
+     
             x1 = xs[1]
             y1 = xs[1]
             x2 = xs[half_motion]
             y2 = xs[half_motion]
-            x3 = xs[total_motion-1]
-            y3 = xs[total_motion-1]
+            x3 = xs[total_motion-2]
+            y3 = xs[total_motion-2]
             straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
             if (straight_line < 1 and straight_line > 0) or avg_color > 190:
                meteor_yn = "Y"
