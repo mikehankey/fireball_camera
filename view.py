@@ -39,6 +39,18 @@ def main():
       for file in files:
          view(file) 
 
+def read_time_file(file):
+   frame_data = []
+   print ("Reading time file: ", file)
+
+   file = open(file, "r")
+   for line in file:
+      line = line.strip('\n')
+      data = line.split("|")
+      extra_data = data[2] + "|" + data[3] + "|" + data[4] + "|" + data[5] 
+      frame_data.append(extra_data);
+
+   return(frame_data)
 
 
 def view(file, show = 0):
@@ -51,10 +63,21 @@ def view(file, show = 0):
    data_file_name = file_name.replace(".avi", ".txt")
    screen_cap_file_name = file_name.replace(".avi", ".jpg")
    object_file_name = file_name.replace(".avi", "-objects.jpg")
+   time_file_name = file_name.replace(".avi", "-time.txt")
    capture_date = parse_file_date(file_name)
    #last_cal_date = # Get last / closest calibration date
    file_base_name = file_name.replace(".avi", "") 
 
+   # read in time file if it exists
+   
+   if os.path.isfile(dir_name + "/" + time_file_name):
+      frame_time_data = read_time_file(dir_name + "/" + time_file_name)
+      print ("FRAME TIME DATA LENGTH:", len(frame_time_data))
+      time.sleep(1)
+   else: 
+      print ("no frame time data! " + dir_name + "/" + time_file_name ) 
+      exit()
+   
 
    print ("Viewing file: " + file)
    print ("Directory: " + dir_name)
@@ -85,8 +108,8 @@ def view(file, show = 0):
    # open data log file
    fp = open(dir_name + "/" + data_file_name, "w")
    fp2 = open(dir_name + "/" + summary_file_name, "w")
-   fp.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
-   fp2.write("frame|contours|x|y|w|h|color|unixtime|cam_offset|adjusted_unixtime\n")
+   fp.write("frame|contours|x|y|w|h|color|fps|adjusted_unixtime|unixtime|time_offset\n")
+   fp2.write("frame|contours|x|y|w|h|color|fps|adjusted_unixtime|unixtime|time_offset\n")
 
 
    #if show == 1:
@@ -241,7 +264,7 @@ def view(file, show = 0):
           colors.extend([color])
           motion_frames.extend([frame_count])
          
-      line_data = str(frame_count) + "|" + str(contours) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(color) + "|\n"
+      line_data = str(frame_count) + "|" + str(contours) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(color) + "|" + frame_time_data[frame_count-1] + "\n"
 
       fp.write(line_data)
       fp2.write(line_data)
