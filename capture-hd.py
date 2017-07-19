@@ -48,7 +48,7 @@ def cam_loop(pipe_parent, shared_dict):
     time.sleep(7)
     frames = deque(maxlen=200)
     frame_times = deque(maxlen=200)
-    #frame_data = deque(maxlen=200)
+    frame_data = deque(maxlen=200)
     count = 0
     shared_dict['motion_on'] = 0
     shared_dict['motion_off'] = 0
@@ -126,8 +126,9 @@ def cam_loop(pipe_parent, shared_dict):
         #print("MMO:", shared_dict['cnts'], shared_dict['motion_on'], shared_dict['motion_off'], x,y,w,h,shared_dict['area'],shared_dict['perim'])
  
         #fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" + str(x) + "|" + str(y) + "|" + str(w) + "|" + str(h) + "|" + str(shared_dict['area']) + "|" + str(shared_dict['perim']) + "|" + str(shared_dict['avg_color']) + "|" + str(shared_dict['middle_pixel'])
-        fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" 
-        #frame_data.append(fds)
+        #fds = str(shared_dict['cnts']) + "|" + str(shared_dict['motion_on']) + "|" + str(shared_dict['motion_off']) + "|" 
+        fds = str(this_time) + "|" +  str(cap_unix_time) + "|" + str(latency) + "|"
+        frame_data.append(fds)
 
         if (shared_dict['motion_on'] >= 3 and shared_dict['motion_off'] >= 7 and lc > 4):
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
@@ -142,7 +143,7 @@ def cam_loop(pipe_parent, shared_dict):
             lc = 0
             format_time = frame_time.strftime("%Y%m%d%H%M%S")
             outfile = "{}/{}.avi".format("/var/www/html/out", format_time)
-            outfile_text = "{}/{}.txt".format("/var/www/html/out", format_time) 
+            outfile_text = "{}/{}-time.txt".format("/var/www/html/out", format_time) 
 
             df = open(outfile_text, 'w', 1)
             dql = len(frame_times) - 2
@@ -164,11 +165,11 @@ def cam_loop(pipe_parent, shared_dict):
                 img = frames.pop()
                 img = cv2.resize(img, (0,0), fx=1, fy=.75)
                 ft = frame_times.pop()
-                #fd = frame_data.pop()
+                fd = frame_data.pop()
                 format_time = ft.strftime("%Y-%m-%d %H:%M:%S.")
                 dec_sec = ft.strftime("%f")
                 format_time = format_time + dec_sec
-                df.write(format_time + "|" + "|" + str(fps) + "|\n")
+                df.write(format_time + "|" + "|" + str(fps) + "|" + fd + "\n")
                 writer.write(img)
                    #i = i + 1
             writer.release()
