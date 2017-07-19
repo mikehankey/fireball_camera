@@ -41,7 +41,7 @@ def main():
 
 
 
-def view(file, show):
+def view(file, show = 0):
 
    config = read_config()
    values = {}
