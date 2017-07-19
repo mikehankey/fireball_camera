@@ -125,6 +125,15 @@ def view(file, show = 0):
      
             print ("CL", colors)
             print ("Avg Color: ", avg_color)
+
+            #print (motion_frames[1])
+            #print (motion_frames[half_motion])
+            #print (motion_frames[total_motion -1])
+
+            #print(frames[motion_frames[1]])
+            #print(frames[motion_frames[half_motion]])
+            #print(frames[motion_frames[total_motion - 1]])
+
             object_file_image = (frames[motion_frames[1]] * .33) + (frames[motion_frames[half_motion]] * .33) + (frames[motion_frames[total_motion-1]] * .33) 
            
             x1 = xs[1]
