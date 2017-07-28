@@ -6,11 +6,17 @@
 
 
 import requests
+import sys
 from amscommon import read_config
 
 config = read_config()
 
-cam_ip = config['cam_ip']
+try: 
+   cam_ip = sys.argv[1] 
+except: 
+   cam_ip = config['cam_ip']
+
+
 #device_id = config['device_id']
 
 print ("Setting up defaults for camera on IP address:", cam_ip)
@@ -90,7 +96,7 @@ print (r.text)
 
 # default shutter speed of 50
 
-r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
+r = requests.get("http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
 
 
 print ("Set the video encoding params.")
