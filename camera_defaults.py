@@ -7,6 +7,7 @@
 
 import requests
 import sys
+import os 
 from amscommon import read_config
 
 config = read_config()
@@ -98,7 +99,7 @@ print (r.text)
 
 r = requests.get("http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
 
-
+os.system("./camera-settings.py " )
 print ("Set the video encoding params.")
 url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=512&FrameRate1=5&Profile1=Main Profile&PicLevel1=1"
 

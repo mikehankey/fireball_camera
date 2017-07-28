@@ -32,26 +32,31 @@ cooler[2] = 15
 
 def all_on(delay = 5):
    for x in range (1,len(cams)+1):
-      print ("setting up: ", x)
+      #print ("setting up: ", x)
       GPIO.setup(cams[x], GPIO.OUT)
 
-   print ("ON", cams[1])
+   print ("Turning on cam 1")
    cam_on_off(1, "ON")
    time.sleep(delay)
+   print ("Turning on cam 2")
    cam_on_off(2, "ON")
    time.sleep(delay)
+   print ("Turning on cam 3")
    cam_on_off(3, "ON")
    time.sleep(delay)
+   print ("Turning on cam 4")
    cam_on_off(4, "ON")
    time.sleep(delay)
+   print ("Turning on cam 5")
    cam_on_off(5, "ON")
    time.sleep(delay)
+   print ("Turning on cam 6")
    cam_on_off(6, "ON")
    time.sleep(delay)
-   cooler_on_off(1, "ON")
-   time.sleep(delay)
-   cooler_on_off(2, "ON")
-   time.sleep(delay)
+   #cooler_on_off(1, "ON")
+   #time.sleep(delay)
+   #cooler_on_off(2, "ON")
+   #time.sleep(delay)
 
 def all_off():
    cam_on_off(1, "OFF")

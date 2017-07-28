@@ -18,7 +18,9 @@ def setup_cam(cam):
    else:
       print ("Turning on cam# ", cam)
       os.system("./pizero-relay.py cam_on " + str(cam))
-   time.sleep(35)
+   time.sleep(15)
+   cont = input("Now is your time to focus. Press enter once done. ")
+
   
    config = read_config()
    cam_ip = "192.168.1.88"
