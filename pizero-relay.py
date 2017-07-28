@@ -71,6 +71,9 @@ def cam_on_off(cam, signal):
       GPIO.output(cams[cam], GPIO.HIGH)
 
 def cooler_on_off(cool, signal):
+   print ("Cooler on off:", signal)
+   print (cool)
+   print (cooler[cool])
    GPIO.setup(cooler[cool], GPIO.OUT)
    if signal == 'ON':
       GPIO.output(cooler[cool], GPIO.LOW)
@@ -80,7 +83,7 @@ def cooler_on_off(cool, signal):
    
 
 GPIO.setmode(GPIO.BOARD)
-#GPIO.setwarnings(False)
+GPIO.setwarnings(False)
 
 cmd = sys.argv[1]
 
@@ -100,8 +103,12 @@ if cmd == 'cam_off':
 
 if cmd == 'cooler_on':
    cool = int(sys.argv[2])
-   cam_on_off(cool, "ON")
+   cooler_on_off(cool, "ON")
 if cmd == 'cooler_off':
    cool = int(sys.argv[2])
-   cam_on_off(cool, "OFF")
+   cooler_on_off(cool, "OFF")
+if cmd == 'boot':
+   all_on(10)
+   cooler_on_off(1, "OFF")
+   cooler_on_off(2, "OFF")
 
