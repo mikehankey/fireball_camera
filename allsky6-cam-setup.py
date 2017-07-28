@@ -18,18 +18,19 @@ def setup_cam(cam):
    else:
       print ("Turning on cam# ", cam)
       os.system("./pizero-relay.py cam_on " + str(cam))
+   time.sleep(35)
   
    config = read_config()
    cam_ip = "192.168.1.88"
 
    # set the camera defaults, wait for reboot, then do it again
    os.system("./camera_defaults.py " + cam_ip)
-   time.sleep(60)
+   time.sleep(35)
    os.system("./camera_defaults.py " + cam_ip)
-   time.sleep(60)
+   os.system("./camera-settings.py " )
 
    # get the mac address
-   file = open("caminfo/" + cam + ".txt", "w")
+   file = open("caminfo/" + str(cam) + ".txt", "w")
    url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd="+ config['cam_pwd'] 
    print (url)
    r = requests.get(url)
@@ -59,17 +60,17 @@ if cmd == "setup":
 
 if cmd == "setup_all":
    setup_cam(1)
-   time.sleep(60)
+   time.sleep(45)
    setup_cam(2)
-   time.sleep(60)
+   time.sleep(45)
    setup_cam(3)
-   time.sleep(60)
+   time.sleep(45)
    setup_cam(4)
-   time.sleep(60)
+   time.sleep(45)
    setup_cam(5)
-   time.sleep(60)
+   time.sleep(45)
    setup_cam(6)
-   time.sleep(60)
+   time.sleep(45)
 
 
 
