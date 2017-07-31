@@ -285,7 +285,10 @@ if __name__ == '__main__':
     config = read_config()
     print (config['cam_ip'])
  
-    os.system("./logger.py 'capture program started.'")
+    #os.system("./logger.py 'capture program started.'")
+    # put IP check here!
+    # sync camera time
+    os.system("/home/pi/fireball_camera/camera_time.py")
 
     try:
        if (config['device_lat'] != ''):
