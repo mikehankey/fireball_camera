@@ -2,6 +2,7 @@
 import requests
 import mimetypes
 import sys
+import settings
 from pathlib import Path
 from amscommon import read_config, write_config
 
@@ -32,7 +33,7 @@ caldate = y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + s
 
 api_key = config['api_key'] 
 device_id  = config['device_id']
-url = "http://www.amsmeteors.org/members/api/cam_api/log_calibration_files"
+url = settings.API_SERVER + "/members/api/cam_api/log_calibration_files"
 
 # usage: python upload.py type misc_info datetime filename 
 # ex: python log_calibration_files.py  

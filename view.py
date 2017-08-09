@@ -18,6 +18,7 @@ import time
 import ephem
 import sys
 import os
+import settings
 from amscommon import read_config, caldate
 
 
@@ -309,7 +310,7 @@ def parse_file_date(file_name):
    return(date_str)
 
 def log_fireball_event(config, maybe_file, maybe_summary_file, maybe_object_file, values) :
-   url = "http://www.amsmeteors.org/members/api/cam_api/log_fireball_event"
+   url = settings.API_SERVER + "members/api/cam_api/log_fireball_event"
    _data = {
     'api_key': config['api_key'],
     'device_id': config['device_id'],
@@ -352,7 +353,7 @@ def log_motion_capture(config, file, values):
    stack_file = file.replace("-objects", "")
    os.system("cp " + file + " " + stack_file)
 
-   url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
+   url = settings.API_SERVER + "/members/api/cam_api/log_motion_capture"
    _files = {'event_stack': open(stack_file, 'rb')}
    _data = {
     'api_key': config['api_key'],

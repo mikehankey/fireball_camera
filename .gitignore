@@ -15,4 +15,5 @@ cam_calib/Calibration
 median-stack.py
 test-astro.py
 log_files/
+log_files/*
 calnow

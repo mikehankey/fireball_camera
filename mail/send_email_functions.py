@@ -2,7 +2,7 @@ import sys
 import smtplib
  
 # to: array of @
-def send_email(to,subject,message,sent_from='Your AMSCam <noreply@castlecomm.com>'): 
+def sendEmail(to,subject,message,sent_from='Your AMSCam <noreply@castlecomm.com>'): 
 
     email_text = """From: %s  
 To: %s
@@ -11,9 +11,7 @@ Content-type: text/html
 Subject: %s
 
 %s
-""" % (sent_from, ", ".join(to), subject, message)
-    
-    print(email_text)
+""" % (sent_from, ", ".join(to), subject, message) 
  
     try: 
         server = smtplib.SMTP('smtp.gmail.com', 587)

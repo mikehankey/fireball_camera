@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
-# Add ../ for amscommon
+# Add ../ for amscommon & settings
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from pathlib import Path
@@ -15,6 +15,7 @@ import datetime
 import time
 import json
 import syslog
+import settings
 
 
 config = read_config()
@@ -38,7 +39,7 @@ while cap.isOpened():
 
 api_key = config['api_key']
 device_id  = config['device_id']
-url = "http://www.amsmeteors.org/members/api/cam_api/upload_latest"
+url  = settings.API_SERVER + "members/api/cam_api/upload_latest"
 file = "/var/www/html/out/latest.jpg"
 stat = os.stat(file)
 #print (stat)

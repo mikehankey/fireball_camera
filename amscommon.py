@@ -80,10 +80,11 @@ def put_device_info(conf):
    import mimetypes
    import sys
    import netifaces 
+   import setttings
 
    # PUT DEVICE INFO
    #device_id  = 1
-   url = "http://www.amsmeteors.org/members/api/cam_api/put_device_info"
+   url = settings.API_SERVER + "members/api/cam_api/put_device_info"
 
    try:
       eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']

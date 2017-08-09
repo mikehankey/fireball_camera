@@ -4,7 +4,7 @@
 # checks the recordings of this device to see if the event was 
 # capture. If video files exist around the time of the event
 # the files will be uploaded to the AMS for further analysis. 
-
+import settings
 import sys
 import os
 import time as gtime
@@ -53,7 +53,7 @@ def read_fov():
 
 def get_ams_reports(ams_year, ams_event_id,type, ratings):
    api_key = "QwCsPJKr87y15Sy"
-   url = "http://www.amsmeteors.org/members/api/open_api/get_reports_for_event"
+   url = settings.API_SERVER + "members/api/open_api/get_reports_for_event"
    data = {'api_key' : api_key, 'year' : ams_year, 'event_id' : ams_event_id, 'format' : 'json', 'override' : 0, 'ratings' : ratings}
    r = requests.get(url, params=data)
    dates = []
@@ -101,7 +101,7 @@ def avg_dates (avg_date_utc, datetimes):
 def get_ams_event(year, event_id, ratings):
    num_reports = 0
    api_key = "QwCsPJKr87y15Sy"
-   url = "http://www.amsmeteors.org/members/api/open_api/get_event"
+   url = settings.API_SERVER + "/members/api/open_api/get_event"
    data = {'api_key' : api_key, 'year' : year, 'event_id' : event_id, 'format' : 'json', 'ratings': ratings, 'override': 0}
    r = requests.get(url, params=data)
    my_data = r.json()
@@ -172,7 +172,7 @@ def get_close_events(start_date, end_date, lat, lon,  max_lat, max_lon, min_lat,
    events = set() 
    event_dates = {} 
    api_key = "QwCsPJKr87y15Sy"
-   url = "http://www.amsmeteors.org/members/api/open_api/get_close_reports"
+   url = settings.API_SERVER + "members/api/open_api/get_close_reports"
    data = {'api_key' : api_key, 'start_date' : start_date, 'end_date' : end_date, 'lat': lat, 'lng': lon, 'format' : 'json'}
    print (data)
    r = requests.get(url, params=data)

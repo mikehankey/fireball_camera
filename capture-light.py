@@ -11,7 +11,7 @@ import numpy as np
 import iproc 
 import time
 import syslog
-import sys
+import sys 
 MORPH_KERNEL = np.ones((10, 10), np.uint8)
 record = 1
 

@@ -5,6 +5,7 @@ import mimetypes
 import sys
 import datetime
 import time
+import settings
 
 from amscommon import read_config
 
@@ -20,14 +21,14 @@ meteor_yn = sys.argv[7]
 
 api_key = config['api_key']
 device_id  = config['device_id']
-url = "http://www.amsmeteors.org/members/api/cam_api/log_motion_capture"
+url = settings.API_SERVER + "members/api/cam_api/log_motion_capture"
 stat = os.stat(file)
 #print (stat)
 #datetime = stat.st_birthtime
 dt = datetime.datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
  
 # usage: python upload.py type misc_info datetime filename 
-# ex: python uploadLatest.py 2016-09-09%2020:03:02 some_info test.jpg
+# ex: python upload_motion.py ./test_data/20170622132712.jpg 0 1 2 3 4 0
 
   
 #datetime = sys.argv[1]
@@ -40,8 +41,8 @@ _file = {'file_data': open(file, 'rb')}
 _data= { 
    'api_key': api_key, 
    'device_id': device_id, 
-   'event_datetime': dt, 
-   'format' : 'json'
+   'datetime': dt, 
+   'format' : 'json',
    'motion_frames': motion_frames,
    'cons_motion':  cons_motion,
    'color':  color,
@@ -54,9 +55,14 @@ session = requests.Session()
 del session.headers['User-Agent']
 del session.headers['Accept-Encoding'] 
 
+print(url)
+print(_data)
+print(_file)
+
+
 with requests.Session() as session:
-    response = session.post(url, data= _data, files=_file)
+   response = session.post(url, data= _data, files=_file)
 
 
 print (response.text)
-response.raw.close() 
+response.raw.close()

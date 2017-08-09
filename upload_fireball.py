@@ -5,6 +5,7 @@ import mimetypes
 import sys
 import datetime
 import time
+import settings
 
 from amscommon import read_config
 
@@ -25,7 +26,7 @@ config = read_config()
 
 api_key = config['api_key']
 device_id  = config['device_id']
-url = "http://www.amsmeteors.org/members/api/cam_api/log_fireball_event"
+url = settings.API_SERVER + "members/api/cam_api/log_fireball_event"
 stat = os.stat(file)
 #print (stat)
 #datetime = stat.st_birthtime

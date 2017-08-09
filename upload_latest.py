@@ -5,6 +5,7 @@ import mimetypes
 import sys
 import datetime
 import time
+import settings
 
 from amscommon import read_config
 
@@ -14,7 +15,7 @@ config = read_config()
 
 api_key = config['api_key']
 device_id  = config['device_id']
-url = "http://www.amsmeteors.org/members/api/cam_api/upload_latest"
+url = settings.API_SERVER + "/members/api/cam_api/upload_latest"
 file = "/var/www/html/out/latest.jpg"
 stat = os.stat(file)
 #print (stat)

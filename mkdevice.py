@@ -3,6 +3,7 @@ import requests, json
 import sys
 import netifaces
 import os
+import settings
 from amscommon import read_config, write_config, put_device_info
 config = read_config()
 
@@ -39,7 +40,7 @@ print ("ETH0 IP: ", eth0_ip)
 print ("WLAN IP: ", wlan0_ip)
 
 try:
-   r = requests.get('http://www.amsmeteors.org/members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + wlan0_ip)
+   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + wlan0_ip)
    fp = open("register.txt", "w")
    fp.write(r.text)
    fp.close()
@@ -57,7 +58,7 @@ except:
   
 #LOG IP OF DEVICE. 
 msg = "lan_ip=" + eth0_ip + ":wlan_ip=" + wlan0_ip
-r = requests.post('http://www.amsmeteors.org/members/api/cam_api/addLog', data={'LAN_MAC': eth0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
+r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': eth0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
 
 res = r.text
 
@@ -74,7 +75,7 @@ os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
 
 # GET THE DEVICE INFO
 
-r = requests.get('http://www.amsmeteors.org/members/api/cam_api/get_device_info?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
+r = requests.get(settings.API_SERVER + 'members/api/cam_api/get_device_info?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
 #print (r.text)
 fp = open("device_info.txt", "w")
 fp.write(r.text)
