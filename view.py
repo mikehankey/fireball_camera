@@ -41,14 +41,18 @@ def main():
          view(file) 
 
 def read_time_file(file):
+   extra_data = "";
    frame_data = []
    print ("Reading time file: ", file)
 
    file = open(file, "r")
    for line in file:
-      line = line.strip('\n')
-      data = line.split("|")
-      extra_data = data[2] + "|" + data[3] + "|" + data[4] + "|" + data[5] 
+      try:
+         line = line.strip('\n')
+         data = line.split("|")
+         extra_data = data[2] + "|" + data[3] + "|" + data[4] + "|" + data[5] 
+      except:
+         print ("Empty lines in time data");
       frame_data.append(extra_data);
 
    return(frame_data)
