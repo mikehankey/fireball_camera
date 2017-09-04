@@ -40,7 +40,7 @@ def get_device_info_and_config():
     
         update_API_with_config() 
         config = read_config_raw() 
-        return json.dumps(config, ensure_ascii=False, encoding="utf-8")
+        return json.dumps(config, ensure_ascii=False)
     
     else:
         config = read_config_raw() 
@@ -50,7 +50,7 @@ def get_device_info_and_config():
         # since the camera isnot claimed
         remove_from_config(['user_id','api_key','first_name','last_name','email']) 
  
-        return json.dumps(config, ensure_ascii=False, encoding="utf-8") 
+        return json.dumps(config, ensure_ascii=False) 
 
 
 # Read Config File (Read the API first to get the latest updates from the API)
@@ -99,7 +99,7 @@ def read_config():
 # Return the config as a JSON object
 def get_config():
     config = read_config_raw();
-    return json.dumps(config, ensure_ascii=False, encoding="utf-8")
+    return json.dumps(config, ensure_ascii=False)
 
 # Read the config file and parse FOV & EL
 # And returns array
