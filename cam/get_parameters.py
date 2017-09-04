@@ -23,4 +23,4 @@ for line in file:
     
  
 file.close()
-print json.dumps(param, ensure_ascii=False, encoding="utf-8")
+print json.dumps(param, ensure_ascii=False)

@@ -30,7 +30,7 @@ def read_file(file, _format):
     file.close()
     
     if(_format=='JSON'):
-        return json.dumps(data, ensure_ascii=False, encoding="utf-8")    
+        return json.dumps(data, ensure_ascii=False)    
     else:
         return data
         

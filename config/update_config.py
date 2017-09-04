@@ -88,4 +88,4 @@ logging.debug('config.txt updated')
 
 #Read again before sending  
 configN = read_config_raw();
-print json.dumps(configN, ensure_ascii=False, encoding="utf-8")
+print json.dumps(configN, ensure_ascii=False)
