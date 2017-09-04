@@ -81,7 +81,7 @@ def put_device_info(conf):
    import mimetypes
    import sys
    import netifaces 
-   import setttings
+   import settings
 
    # PUT DEVICE INFO
    #device_id  = 1
