@@ -44,6 +44,7 @@ log("n stabled")
  
 # ADD LIST OF USED PACKAGE HERE
 installIfNeeded("pycrypto", "For PWD Encryption (see /pwd)", log = log)    
+installIfNeeded("netifaces", "Netifaces", log = log) 
 
 # CREATE DEFAULT CAM_CALIB FILES IF THEY DON'T EXIST
 all_calibs = ['Day','Calibration','Night']
