@@ -35,7 +35,7 @@ def get_device_info_and_config():
                 for kk in k[0]:
     
                     # WE DONT PUT THE INFO THAT ARE JUST STRING (like geoloc_src for instance)
-                    if(type(k[0][kk]) is  unicode ):
+                    if(isinstance(type(k[0][kk]), basestring)): 
                         add_to_config(kk,k[0][kk])
     
         update_API_with_config() 
