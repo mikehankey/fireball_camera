@@ -1,6 +1,7 @@
 # Add ../pw for crypt
 import sys
 import os
+import settings
  
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './pwd')))
 from crypt import Crypt
