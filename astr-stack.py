@@ -45,6 +45,12 @@ def view(file, show):
             print (str(count) + " frames processed.")
             break
         else:
+
+            save_image = Image.fromarray(nice_frame)
+            save_file = "-" + str(count) + ".jpg"
+            save_file = file.replace(".avi", str(count) + ".jpg")
+            save_image.save(save_file, "JPEG")
+
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
             frame_img = Image.fromarray(frame)
             final_image=ImageChops.lighter(final_image,frame_img)
@@ -66,7 +72,7 @@ def view(file, show):
                cnts is None
                hierarchy is None
             data = str(count) + "|"
-            if len(cnts) > 0:
+            if len(cnts) > 0 :
                hierarchy = hierarchy[0]
                for comp in zip(cnts,hierarchy):
                    cnt = comp[0]
