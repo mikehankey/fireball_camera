@@ -100,7 +100,7 @@ if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
       daytime_settings(config)
 else:
    config = custom_settings("Night", config)
-   if settings['Brightness'] > max_nighttime_brightness:
+   if int(settings['Brightness']) > max_nighttime_brightness:
       nighttime_settings(config)
       os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
 
