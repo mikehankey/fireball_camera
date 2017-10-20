@@ -47,8 +47,13 @@ def view(file, show):
         else:
 
             save_image = Image.fromarray(nice_frame)
-            save_file = "-" + str(count) + ".jpg"
-            save_file = file.replace(".avi", str(count) + ".jpg")
+            #save_file = "-" + str(count) + ".jpg"
+            #save_file = file.replace(".avi", str(count) + ".jpg")
+            el = file.split("/")
+            temp = el[-1]
+            temp2 = str(1000+count) + "-" + temp.replace(".avi", ".jpg")
+            save_file = file.replace(temp, temp2)
+            print (save_file)
             save_image.save(save_file, "JPEG")
 
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
