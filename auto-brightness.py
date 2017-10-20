@@ -67,16 +67,16 @@ while not_ok == 1:
       else: 
          not_ok = 0
    else:
-      if magic > 3000:
+      if magic > 5000:
          print ("image is too bright, lower brightness")
-         new_brightness = int(settings['Brightness']) - 5
+         new_brightness = int(settings['Brightness']) - 3
          set_setting(config, "Brightness", new_brightness)
-      elif magic < 1500:
+      elif magic < 4500:
          print ("Image is too dark for daytime.")
-         new_brightness = int(settings['Brightness']) + 5
+         new_brightness = int(settings['Brightness']) + 3 
          set_setting(config, "Brightness", new_brightness)
       else: 
          not_ok = 0
          print ("Brightness is fine.")
-
+   time.sleep(2)
 
