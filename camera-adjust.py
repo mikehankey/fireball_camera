@@ -90,6 +90,8 @@ sun_info = read_sun()
 cam_settings = get_settings(config)
 
 #set_setting(config, "Brightness", "1")
+blow = 30
+bhigh = 128
 loop = 0
 c = 0
 while (c < 10):
