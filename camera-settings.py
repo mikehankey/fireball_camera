@@ -49,7 +49,7 @@ def nighttime_settings( config):
    print ("Nighttime settings...")
    WDR(config, 0)
    ### BLC 
-   set_special(config, "1017", "150")
+   set_special(config, "1017", "30")
    set_setting(config, "Brightness", config['Brightness'])
    set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])
