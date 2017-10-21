@@ -15,6 +15,35 @@ def custom_settings (mode, config):
       config[line[0:c]] = line[c+1:]
    return(config)
 
+def fix_ir(config ):
+   # IR CONTROL TO TIME UTC 5pm to 7am open it up
+   cam_ip = config['cam_ip']
+
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1063&paramctrl=0&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
+
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1047&paramctrl=0&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
+
+
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1066&paramctrl=0&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
+
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1081&paramctrl=1&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
+
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1067&paramctrl=0&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
 
 def set_setting(config, setting, value):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0&" + setting + "=" + str(value)
@@ -70,7 +99,7 @@ def daytime_settings(config):
    ### IR mode
    set_special(config, "1064", "2")
    ### BLC 
-   set_special(config, "1017", "75")
+   set_special(config, "1017", "30")
 
    set_setting(config, "Brightness", config['Brightness'])
    set_setting(config, "Gamma", config['Gamma'])
@@ -91,6 +120,7 @@ max_nighttime_brightness = 60
 
 
 sun = read_sun()
+fix_ir(config)
 
 print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
