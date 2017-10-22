@@ -29,8 +29,8 @@ def fix_ir(config ):
    r = requests.get(url)
    print (r.text)
 
-
-   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1066&paramctrl=0&paramstep=0&paramreserved=0"
+   # open or close
+   url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1066&paramctrl=2&paramstep=0&paramreserved=0"
    print (url)
    r = requests.get(url)
    print (r.text)
@@ -97,7 +97,7 @@ def daytime_settings(config):
    WDR(config, 1)
    time.sleep(2)
    ### IR mode
-   set_special(config, "1064", "2")
+   #set_special(config, "1064", "2")
    ### BLC 
    set_special(config, "1017", "30")
 
