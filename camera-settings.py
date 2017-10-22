@@ -77,6 +77,7 @@ def nighttime_settings( config):
    fp = open("/home/pi/fireball_camera/calnow", "w")
    print ("Nighttime settings...")
    WDR(config, 0)
+   time.sleep(2)
    ### BLC 
    set_special(config, "1017", "30")
    set_setting(config, "Brightness", config['Brightness'])
