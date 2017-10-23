@@ -118,7 +118,7 @@ settings = get_settings(config)
 #print (settings)
 
 min_daytime_brightness = 100
-max_nighttime_brightness = 60
+max_nighttime_brightness = 100
 
 sun = read_sun()
 fix_ir(config)
