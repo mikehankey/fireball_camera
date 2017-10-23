@@ -16,38 +16,34 @@ def custom_settings (mode, config):
    return(config)
 
 def fix_ir(config ):
-   # IR CONTROL TO TIME UTC 5pm to 7am open it up
+   print ("Fixing IR settings.")
    cam_ip = config['cam_ip']
 
    url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1063&paramctrl=0&paramstep=0&paramreserved=0"
-   print (url)
    r = requests.get(url)
-   print (r.text)
+   #print (r.text)
 
    time.sleep(1)
    url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1047&paramctrl=0&paramstep=0&paramreserved=0"
-   print (url)
    r = requests.get(url)
-   print (r.text)
+   #print (r.text)
 
 
    # open or close
    url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1081&paramctrl=1&paramstep=0&paramreserved=0"
-   print (url)
    r = requests.get(url)
-   print (r.text)
+   #print (r.text)
+
    #ir direction
    url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1067&paramctrl=1&paramstep=0&paramreserved=0"
-   print (url)
    r = requests.get(url)
-   print (r.text)
+   #print (r.text)
 
    time.sleep(1)
    # high low ICR
    url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1066&paramctrl=0&paramstep=0&paramreserved=0"
-   print (url)
    r = requests.get(url)
-   print (r.text)
+   #print (r.text)
 
 def set_setting(config, setting, value):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=set&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0&" + setting + "=" + str(value)
@@ -56,7 +52,7 @@ def set_setting(config, setting, value):
 
 def get_settings(config):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0"
-   print (url)
+   #print (url)
    settings = defaultdict()
    r = requests.get(url)
    resp = r.text
@@ -119,11 +115,10 @@ config = read_config()
 
 settings = get_settings(config)
 
-print (settings)
+#print (settings)
 
 min_daytime_brightness = 100
 max_nighttime_brightness = 60
-
 
 sun = read_sun()
 fix_ir(config)
@@ -132,12 +127,18 @@ print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
    if int(settings['Brightness']) < min_daytime_brightness:
+      print ("Daytime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
       daytime_settings(config)
+   else:
+      print ("Daytime Brightness of " + settings['Brightness'] + " is fine.")
 else:
    config = custom_settings("Night", config)
    if int(settings['Brightness']) > max_nighttime_brightness:
+      print ("Nighttime Brightness is too high , need to set daytime settings.")
       nighttime_settings(config)
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
+   else:
+      print ("Daytime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
 
 os.system("./auto-brightness.py")
