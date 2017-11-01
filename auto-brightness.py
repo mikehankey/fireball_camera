@@ -36,6 +36,12 @@ def get_cap(config):
    cv2.imwrite("test.jpg", frame)
    cap.release()
 
+try:
+   cal_on = int(sys.argv[1]);
+   print ("Autobrightness Calibration")
+except:
+   print ("Autobrightness")
+   cal_on = 0
 
 config = read_config()
 
@@ -55,25 +61,47 @@ while not_ok == 1:
    print ("Mean Image Brightness:", magic)
 
    sun_info = read_sun()
+
+   magic_dark_max = 5800
+   magic_dark_min = 5000
+   if cal_on == 1: 
+      print ("Cal ON!")
+      magic_dark_max = 6800
+      magic_dark_min = 5800
+   magic_day_max = 40000
+   magic_day_min = 37000
+   if sun_info['status'] == 'dusk' or sun_info['status'] == 'dawn': 
+      magic_day_max = 20000 
+      magic_day_max = 10000 
+
+ 
+   diff = magic_day_max - magic
+   if diff >= 1500 or diff <= -1500:
+      factor = 10 
+   else:
+      factor = 5;
+   if diff <= 800 and diff >= -800: 
+      factor = 2;
+   
    if int(sun_info['dark']) != 1:
-      if magic > 40000:
+      if magic > magic_day_max:
          print ("image is too bright, lower brightness")
-         new_brightness = int(settings['Brightness']) - 5
+         new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
-      elif magic < 37000:
+      elif magic < magic_day_min:
          print ("Image is too dark for daytime.")
-         new_brightness = int(settings['Brightness']) + 5
+         new_brightness = int(settings['Brightness']) + factor
          set_setting(config, "Brightness", new_brightness)
       else: 
          not_ok = 0
    else:
-      if magic > 5800:
+      if magic > magic_dark_max:
          print ("image is too bright, lower brightness")
-         new_brightness = int(settings['Brightness']) - 2 
+         new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
-      elif magic < 5000:
+      elif magic < magic_dark_min:
          print ("Image is too dark for nighttime.")
-         new_brightness = int(settings['Brightness']) + 2 
+         new_brightness = int(settings['Brightness']) + factor
          set_setting(config, "Brightness", new_brightness)
       else: 
          not_ok = 0
