@@ -69,7 +69,7 @@ while not_ok == 1:
       magic_dark_max = 6800
       magic_dark_min = 5800
    magic_day_max = 40000
-   magic_day_min = 37000
+   magic_day_min = 30000
    if sun_info['status'] == 'dusk' or sun_info['status'] == 'dawn': 
       magic_day_max = 20000 
       magic_day_max = 10000 
