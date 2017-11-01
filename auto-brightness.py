@@ -85,22 +85,22 @@ while not_ok == 1:
    
    if int(sun_info['dark']) != 1:
       if magic > magic_day_max:
-         print ("image is too bright, lower brightness")
+         print ("image is too bright for ", sun_info['status'], ", lower brightness")
          new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
       elif magic < magic_day_min:
-         print ("Image is too dark for daytime.")
+         print ("image is too dark for ", sun_info['status'], ", increase brightness")
          new_brightness = int(settings['Brightness']) + factor
          set_setting(config, "Brightness", new_brightness)
       else: 
          not_ok = 0
    else:
       if magic > magic_dark_max:
-         print ("image is too bright, lower brightness")
+         print ("image is too bright for ", sun_info['status'], ", lower brightness")
          new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
       elif magic < magic_dark_min:
-         print ("Image is too dark for nighttime.")
+         print ("image is too dark for ", sun_info['status'], ", increase brightness")
          new_brightness = int(settings['Brightness']) + factor
          set_setting(config, "Brightness", new_brightness)
       else: 
