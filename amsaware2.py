@@ -13,6 +13,24 @@ from dateutil import parser
 from amscommon import read_config
 #from math import radians, cos, sin, asin, sqrt
 from math import * 
+
+def check_capture (cap_dir, captures, event_datetime):
+   event_datetime = parser.parse(event_datetime)
+   for capture in captures:
+      if "avi" in capture:
+         (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(cap_dir + capture)
+         file_date = datetime.strptime(gtime.ctime(ctime), "%a %b %d %H:%M:%S %Y")
+         time_diff = event_datetime - file_date
+         minutes, seconds = divmod(time_diff.total_seconds(), 60)
+         if minutes > -180 and minutes < 180:
+            print ("\tPossible capture " + capture);
+            print ("\t", minutes, capture, event_datetime , gtime.ctime(ctime))
+
+
+def read_files(dir):
+    captures = [f for f in listdir(dir) if isfile(join(dir, f))]
+    return(captures)
+
 def haversine(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points 
@@ -40,8 +58,8 @@ def get_ams_event(year, event_id, ratings):
    r = requests.get(url, params=data)
    my_data = r.json()
    if "result" not in my_data.keys():
-      print ("No trajectory for this event.", event_id)
-      return(0)
+      #print ("No trajectory for this event.", event_id)
+      return(0,0,0,0,0,0)
    #try:
    #   event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
    #except:
@@ -64,52 +82,13 @@ def get_ams_event(year, event_id, ratings):
    epicenter_lat = my_data['result'][event_key]['epicenter_lat']
 
    # REFINE THE DATE
-   #type = 'datetime'
-   #dates = get_ams_reports(year, event_id, type, ratings)
-   #if len(dates) > 0:
-   #   better_event_datetime =  avg_dates(event_datetime_utc, dates)
    epc_distance,epc_bearing = haversine(float(config['device_lng']), float(config['device_lat']), epicenter_lon, epicenter_lat)
    sp_distance,sp_bearing = haversine(float(config['device_lng']), float(config['device_lat']), fb_start_lon , fb_start_lat)
    ep_distance,ep_bearing = haversine(float(config['device_lng']), float(config['device_lat']), fb_end_lon , fb_end_lat)
 
-   # PRINT EVENT DETAILS
-   if (sp_distance < 200 or ep_distance < 200) and (sp_distance < 1000 and ep_distance < 1000):
-      print ("Event ID: \t" + str(event_id))
-      print ("Average Event Datetime: \t" + event_datetime_utc)
-      print ("Event Epicenter Lat/Lon:\t" + str(epicenter_lat) + "/" + str(epicenter_lon))
 
-      print ("Epicenter Distance:", epc_distance)
-      print ("Epicenter Bearing:", epc_bearing)
+   return(event_id, event_datetime_utc, int(sp_distance), int(sp_bearing), int(ep_distance), int(ep_bearing));
 
-      print ("Start Point Distance:", sp_distance)
-      print ("Start Point Bearing:", sp_bearing)
-
-      print ("End Point Distance:", ep_distance)
-      print ("End Point Bearing:", ep_bearing)
-      print ("------")
-
-
-   #if fb_start_lat >= min_lat and fb_start_lat <= max_lat:
-   #    start_lat_match = 1
-   #else:
-   #    start_lat_match = 0
-   #if fb_start_lon >= min_lon and fb_start_lon <= max_lon:
-   #    start_lon_match = 1
-   #else:
-   #    start_lon_match = 0
-
-#   if fb_end_lat >= min_lat and fb_end_lat <= max_lat:
-#       end_lat_match = 1
-#   else:
-#       end_lat_match = 0
-#   if fb_end_lon >= min_lon and fb_end_lon <= max_lon:
-#       end_lon_match = 1
-#   else:
-#       end_lon_match = 0
-
-#   print ("Start Point in FOV:\t\t", start_lat_match, start_lon_match)
-#   print ("End Point in FOV:\t\t", end_lat_match, end_lon_match)
-   #return(better_event_datetime)
 
 
 
@@ -120,6 +99,7 @@ def get_close_events(start_date, end_date, lat, lon):
    events = set()
    event_dates = {}
    event_counts = {}
+   event_data = {}
    api_key = "QwCsPJKr87y15Sy"
    url = settings.API_SERVER + "members/api/open_api/get_close_reports"
    data = {'api_key' : api_key, 'start_date' : start_date, 'end_date' : end_date, 'lat': lat, 'lng': lon, 'format' : 'json'}
@@ -152,16 +132,23 @@ def get_close_events(start_date, end_date, lat, lon):
               event_counts[event_id] = 1 
        else:
            print ("skip pending report")
+
+   false_captures = read_files("/var/www/html/out/false")
+   maybe_captures = read_files("/var/www/html/out/maybe")
    
    for event_id in events:
       if event_counts[event_id] > 1:
          #print (event_id, event_dates[event_id], event_counts[event_id])
-         get_ams_event('2017', event_id, 1)
+         event_data = get_ams_event('2017', event_id, 1)
+         if event_data[0] != 0 and ((event_data[2] <= 180 or event_data[4] <= 180) and (event_data[2] < 1000 and event_data[4] < 1000)):
+            print(event_data)
+            check_capture("/var/www/html/out/false/", false_captures, event_data[1])  
+            check_capture("/var/www/html/out/maybe/", maybe_captures, event_data[1])  
          
 
-start_date = sys.argv[1]
-end_date = start_date + " 23:59:59"
-start_date = start_date + " 00:00:00"
+#start_date = sys.argv[1]
+#end_date = start_date + " 23:59:59"
+#start_date = start_date + " 00:00:00"
 
 start_date = '2017-07-01'
 end_date = '2017-11-01'
