@@ -22,6 +22,33 @@ import settings
 from amscommon import read_config, caldate
 
 
+def day_or_night(config, video_date):
+
+
+   obs = ephem.Observer()
+   obs.pressure = 0
+   obs.horizon = '-0:34'
+   obs.lat = config['device_lat']
+   obs.lon = config['device_lng']
+   obs.date = video_date 
+
+   sun = ephem.Sun()
+   sun.compute(obs)
+
+   (sun_alt, x,y) = str(sun.alt).split(":")
+   print ("Date: %s" % (video_date))
+   print ("Sun Alt: %s" % (sun_alt))
+
+   saz = str(sun.az)
+   (sun_az, x,y) = saz.split(":")
+   print ("SUN AZ IS : %s" % sun_az)
+
+   if int(sun_alt) < -5: 
+      status = "night"
+   else: 
+      status = "day"
+   return(status)
+
 def main():
    try:
       file = sys.argv[1]
@@ -73,6 +100,7 @@ def view(file, show = 0):
    capture_date = parse_file_date(file_name)
    #last_cal_date = # Get last / closest calibration date
    file_base_name = file_name.replace(".avi", "") 
+   status = day_or_night(config, capture_date)
 
    # read in time file if it exists
    
@@ -144,7 +172,7 @@ def view(file, show = 0):
             # finish processing file and write output files
 
             total_motion = len(motion_frames)
-            if total_motion < 3:
+            if total_motion < 3 :
                #this a BS capture. abort
                os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
                return(0)
@@ -184,7 +212,13 @@ def view(file, show = 0):
             else:
                meteor_yn = "N"
 
+            if status == 'night':
+               meteor_yn = "Y"
+            else:
+               meteor_yn = "N"
 
+
+            print ("Status:", status)
             print ("Straight Line:", straight_line)
             print ("Likely Meteor:", meteor_yn)
 
