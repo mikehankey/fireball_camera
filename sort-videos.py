@@ -76,3 +76,19 @@ for file in files:
    cmd = "mv " + dir + cp_str + " " + new_dir  
    print (cmd)
    os.system(cmd)
+
+files = glob.glob("/var/www/html/out/maybe/*.avi")
+status = ""
+for file in files:
+   file_date = parse_file_date(file)
+   status = day_or_night(config, file_date)
+   el = file.split("/")
+   file_name = el[-1]
+   dir = file.replace(file_name, "")
+   new_dir = dir + "/" + status + "/"
+   cp_str = file_name.replace(".avi", "*")
+   print (file, file_date, status)
+   cmd = "mv " + dir + cp_str + " " + new_dir  
+   print (cmd)
+   os.system(cmd)
+
