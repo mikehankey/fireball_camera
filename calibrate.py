@@ -10,10 +10,10 @@ def do_it_all():
    print ("IN CALIBRATE (get senseup)")
    cmd = "./sense_up.py sense_up"
    output = subprocess.check_output(cmd, shell=True)
-   print ("IN CALIBRATE (output senseup)")
-   print (output) 
-   output = subprocess.check_output(cmd, shell=True)
    star_file = output.decode("utf-8")
+   #print ("IN CALIBRATE (output senseup)")
+   #print (output) 
+   #output = subprocess.check_output(cmd, shell=True)
 
    # stack the exposure 
    cmd = "./sense_up.py stack " + star_file 
