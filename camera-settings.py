@@ -80,7 +80,7 @@ def nighttime_settings( config):
    WDR(config, 0)
    time.sleep(2)
    ### BLC 
-   set_special(config, "1017", "30")
+   set_special(config, "1017", "10")
    set_setting(config, "Brightness", config['Brightness'])
    set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])
@@ -134,11 +134,12 @@ if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
       print ("Daytime Brightness of " + settings['Brightness'] + " is fine.")
 else:
    config = custom_settings("Night", config)
+   nighttime_settings(config)
    if int(settings['Brightness']) > max_nighttime_brightness:
       print ("Nighttime Brightness is too high , need to set daytime settings.")
-      nighttime_settings(config)
+   #   nighttime_settings(config)
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
    else:
-      print ("Daytime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
+      print ("Nighttime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
 
 os.system("./auto-brightness.py")

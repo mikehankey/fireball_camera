@@ -62,8 +62,8 @@ while not_ok == 1:
 
    sun_info = read_sun()
 
-   magic_dark_max = 5800
-   magic_dark_min = 5000
+   magic_dark_max = 5000
+   magic_dark_min = 4000
    if cal_on == 1: 
       print ("Cal ON!")
       magic_dark_max = 6800
