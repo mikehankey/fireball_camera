@@ -81,8 +81,8 @@ def nighttime_settings( config):
    time.sleep(2)
    ### BLC 
    set_special(config, "1017", "10")
-   set_setting(config, "Brightness", config['Brightness'])
-   set_setting(config, "Contrast", config['Contrast'])
+   #set_setting(config, "Brightness", config['Brightness'])
+   #set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
@@ -136,10 +136,10 @@ else:
    config = custom_settings("Night", config)
    nighttime_settings(config)
    if int(settings['Brightness']) > max_nighttime_brightness:
-      print ("Nighttime Brightness is too high , need to set daytime settings.")
+      print ("Nighttime Brightness is too high , need to set night settings.")
    #   nighttime_settings(config)
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
    else:
-      print ("Nighttime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
+      print ("Nighttime Brightness of " + settings['Brightness'] + " is too low, need to set nighttime settings.")
 
 os.system("./auto-brightness.py")
