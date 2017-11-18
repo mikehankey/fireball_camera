@@ -59,6 +59,7 @@ def get_close_events(start_date, end_date, lat, lon):
       print ("No close events for:" +  start_date)
       return(0)
 
+
    count = 0
    for row in my_data['result']:
        #print (str(row), str(my_data['result'][row]['latitude']), str(my_data['result'][row]['longitude']), str(my_data['result'][row]['report_date_utc']))
@@ -77,10 +78,15 @@ def get_close_events(start_date, end_date, lat, lon):
            #print (row)
            #print ("pending report")
            count = count + 1
-       (sd, ed) = get_ams_event_distance(year, event_id, lat, lon)
-       print ("Distance:", sd, ed)
 
-   return(count)
+   (sd, ed) = get_ams_event_distance(year, event_id, lat, lon)
+   print ("Distance:", sd, ed)
+
+   if sd < 300 or ed < 300:
+      return(1)
+   else:
+      return(0)
+ 
 
 def get_ams_event_distance(year, event_id, lat,lon):
    num_reports = 0
@@ -91,12 +97,12 @@ def get_ams_event_distance(year, event_id, lat,lon):
    my_data = r.json()
    if "result" not in my_data.keys():
       print ("No trajectory for this event.")
-      return(0)
-   #try:
-   #   event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
-   #except:
-   #   print ("No trajectory for this event.")
-   #   return(0)
+      return(1000,1000)
+   try:
+      event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
+   except:
+      print ("No trajectory for this event.")
+      return(1000,1000)
 
    event_key = "Event #" + str(event_id) + "-" + str(year)
    event_datetime_utc = my_data['result'][event_key]['avg_date_utc']
@@ -114,7 +120,6 @@ def get_ams_event_distance(year, event_id, lat,lon):
 
    distance_start = haversine(float(lat),float(lon), float(fb_start_lat), float(fb_start_lon))
    distance_end = haversine(float(lat),float(lon), float(fb_end_lat), float(fb_end_lon))
-
    return(distance_start, distance_end)
 
 
@@ -125,11 +130,18 @@ files = glob.glob("/var/www/html/out/false/night/*.avi")
 
 for file in files:
    file_date = parse_file_date(file)
+   xx = file.split("/")
+   fn = xx[-1]
+   dir = file.replace(fn, "")
    start_date = file_date - timedelta(hours=1)
    end_date = file_date + timedelta(hours=1)
-   print (file_date, start_date, end_date)
+   #print (file_date, start_date, end_date)
 
-   count = get_close_events(str(start_date), str(end_date), config['device_lat'], config['device_lng'])
-   print (count, "Close reports")
+   match = get_close_events(str(start_date), str(end_date), config['device_lat'], config['device_lng'])
    # if close reports exist, get the event detail and see if it is within acceptable distance. 
-
+   if match == 1:
+      new_dir = dir + "events"
+   else:
+      new_dir = dir + "noevents"
+   cmd = "mv " + file + " " + new_dir
+   print (cmd)
