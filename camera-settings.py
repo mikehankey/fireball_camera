@@ -77,7 +77,8 @@ def WDR(config, on):
 def nighttime_settings( config):
    print ("Nighttime settings...")
    WDR(config, 0)
-   time.sleep(2)
+   time.sleep(1)
+   fix_ir(config)
    ### BLC 
    set_special(config, "1017", "10")
    #set_setting(config, "Brightness", config['Brightness'])
@@ -116,9 +117,12 @@ config = read_config()
 
 settings = get_settings(config)
 
-file = open("/home/pi/fireball_camera/status.txt", "r")
-cam_status = file.read()
-print (cam_status)
+try:
+   file = open("/home/pi/fireball_camera/status.txt", "r")
+   cam_status = file.read()
+   print (cam_status)
+except:
+   print ("no cam status file exits.")
 
 #print (settings)
 
@@ -126,7 +130,6 @@ min_daytime_brightness = 100
 max_nighttime_brightness = 120
 
 sun = read_sun()
-fix_ir(config)
 
 print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
@@ -145,4 +148,3 @@ else:
 
 os.system("./auto-brightness.py")
 os.system("rm /home/pi/fireball_camera/calnow")
-time.sleep(5)

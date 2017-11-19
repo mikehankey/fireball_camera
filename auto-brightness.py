@@ -105,6 +105,4 @@ while not_ok == 1:
          set_setting(config, "Brightness", new_brightness)
       else: 
          not_ok = 0
-         print ("Brightness is fine.")
-   time.sleep(2)
 
