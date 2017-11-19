@@ -89,7 +89,7 @@ else:
 
 if int(sun_alt) < -3:
    status = "dark";
-if int(sun_alt) > -3 and int(sun_alt) < 5:
+if int(sun_alt) >= -3 and int(sun_alt) < 5:
       if int(sun_az) > 0 and int(sun_az) < 180:
          status = "dawn"
       else:

@@ -52,7 +52,7 @@ def set_setting(config, setting, value):
 
 def get_settings(config):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/videoparameter_cgi?action=get&user=admin&pwd=" + config['cam_pwd'] + "&action=get&channel=0"
-   #print (url)
+   print (url)
    settings = defaultdict()
    r = requests.get(url)
    resp = r.text
@@ -75,7 +75,6 @@ def WDR(config, on):
    print (r.text)
 
 def nighttime_settings( config):
-   fp = open("/home/pi/fireball_camera/calnow", "w")
    print ("Nighttime settings...")
    WDR(config, 0)
    time.sleep(2)
@@ -87,10 +86,8 @@ def nighttime_settings( config):
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
    time.sleep(15)
-   os.system("rm /home/pi/fireball_camera/calnow")
 
 def daytime_settings(config):
-   fp = open("/home/pi/fireball_camera/calnow", "w")
    ### 
    WDR(config, 1)
    time.sleep(2)
@@ -108,9 +105,8 @@ def daytime_settings(config):
    set_setting(config, "Contrast", config['Contrast'])
    #set_setting(config, "InfraredLamp", "low")
    #set_setting(config, "TRCutLevel", "low")
-   os.system("rm /home/pi/fireball_camera/calnow")
-   time.sleep(5)
 
+fp = open("/home/pi/fireball_camera/calnow", "w")
 config = read_config()
 
 settings = get_settings(config)
@@ -118,7 +114,7 @@ settings = get_settings(config)
 #print (settings)
 
 min_daytime_brightness = 100
-max_nighttime_brightness = 100
+max_nighttime_brightness = 120
 
 sun = read_sun()
 fix_ir(config)
@@ -127,7 +123,7 @@ print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
    if int(settings['Brightness']) < min_daytime_brightness:
-      print ("Daytime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
+      print ("Daytime Brightness of " + settings['Brightness'] + " is lower than recommended brightness. " + str(min_daytime_brightness))
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
       daytime_settings(config)
    else:
@@ -143,3 +139,5 @@ else:
       print ("Nighttime Brightness of " + settings['Brightness'] + " is too low, need to set daytime settings.")
 
 os.system("./auto-brightness.py")
+os.system("rm /home/pi/fireball_camera/calnow")
+time.sleep(5)
