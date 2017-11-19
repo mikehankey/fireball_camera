@@ -85,7 +85,9 @@ def nighttime_settings( config):
    set_setting(config, "Gamma", config['Gamma'])
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
-   time.sleep(15)
+   file = open("/home/pi/fireball_camera/status.txt", "w")
+   file.write("dark")
+   file.close()
 
 def daytime_settings(config):
    ### 
@@ -105,11 +107,18 @@ def daytime_settings(config):
    set_setting(config, "Contrast", config['Contrast'])
    #set_setting(config, "InfraredLamp", "low")
    #set_setting(config, "TRCutLevel", "low")
+   file = open("/home/pi/fireball_camera/status.txt", "w")
+   file.write("day")
+   file.close()
 
 fp = open("/home/pi/fireball_camera/calnow", "w")
 config = read_config()
 
 settings = get_settings(config)
+
+file = open("/home/pi/fireball_camera/status.txt", "r")
+cam_status = file.read()
+print (cam_status)
 
 #print (settings)
 
@@ -122,21 +131,17 @@ fix_ir(config)
 print (sun['status'])
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
-   if int(settings['Brightness']) < min_daytime_brightness:
-      print ("Daytime Brightness of " + settings['Brightness'] + " is lower than recommended brightness. " + str(min_daytime_brightness))
+   if cam_status != sun['status']:
+      print ("Daytime settings are not set but it is daytime!")
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
       daytime_settings(config)
    else:
       print ("Daytime Brightness of " + settings['Brightness'] + " is fine.")
 else:
    config = custom_settings("Night", config)
-   nighttime_settings(config)
-   if int(settings['Brightness']) > max_nighttime_brightness:
-      print ("Nighttime Brightness is too high , need to set night settings.")
-   #   nighttime_settings(config)
-      #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
-   else:
-      print ("Nighttime Brightness of " + settings['Brightness'] + " is too low, need to set nighttime settings.")
+   if cam_status != sun['status']:
+      print ("Nighttime settings are not set but it is nighttime!", cam_status, sun['status'])
+      nighttime_settings(config)
 
 os.system("./auto-brightness.py")
 os.system("rm /home/pi/fireball_camera/calnow")
