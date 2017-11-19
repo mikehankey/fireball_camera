@@ -78,13 +78,18 @@ def radec_to_azel(ra,dec,lat,lon,alt, caldate):
    body._dec = dec
    #body._epoch=ephem.J2000 
 
+   ep_date = ephem.Date(caldate)
+
    obs = ephem.Observer()
    obs.lat = ephem.degrees(lat)
    obs.lon = ephem.degrees(lon)
-   obs.date = caldate 
+   obs.date =ep_date 
+   print ("OBS DATE:", obs.date)
+   print ("LOCAL DATE:", ephem.localtime(ep_date))
    print ("LAT:", lat)
    print ("LON:", lon)
-
+   print ("LAT:", Decdeg2DMS(lat))
+   print ("LON:", Decdeg2DMS(lon))
    print ("CALDATE:", caldate)
    obs.elevation=float(alt)
    body.compute(obs)
@@ -145,20 +150,27 @@ if 1 == 1:
    cords = ""
 
    x = str(414)
-   y = str(360-257)
+   y = str(360-254)
+   y = str(254)
+ 
+   x = str(639)
+   y = str(0)
 
    
    # start 
    (ra, dec, radd, decdd) = find_corner(file, x, y)
   
    print ("RA/DEC of x,y:", ra,dec)
+   caldate = "2017/10/23 12:09:43"
    (az, el) = radec_to_azel(ra,dec,lat,lon,alt, caldate)
    print ("X/Y", x,y)
    print ("RA/DEC",  ra, dec)
    print ("AZ/EL", az,el)
-   
+   exit() 
+
    x = str(392)
    y = str(360-359)
+
    print("\n")   
    (ra, dec, radd, decdd) = find_corner(file, x, y)
    print ("RA/DEC of x,y:", ra,dec)
