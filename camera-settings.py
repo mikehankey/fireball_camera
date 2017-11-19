@@ -123,6 +123,7 @@ try:
    print (cam_status)
 except:
    print ("no cam status file exits.")
+   cam_status = ""
 
 #print (settings)
 
