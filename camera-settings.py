@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import time
 from collections import defaultdict
 from amscommon import read_config, read_sun
@@ -80,13 +81,13 @@ def nighttime_settings( config):
    time.sleep(1)
    fix_ir(config)
    ### BLC 
-   set_special(config, "1017", "10")
+   set_special(config, "1017", "0")
    #set_setting(config, "Brightness", config['Brightness'])
    #set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])
    set_setting(config, "InfraredLamp", "low")
    set_setting(config, "TRCutLevel", "low")
-   file = open("/home/pi/fireball_camera/status.txt", "w")
+   file = open("/home/pi/fireball_camera/status" + cam_num + ".txt", "w")
    file.write("dark")
    file.close()
 
@@ -108,19 +109,33 @@ def daytime_settings(config):
    set_setting(config, "Contrast", config['Contrast'])
    #set_setting(config, "InfraredLamp", "low")
    #set_setting(config, "TRCutLevel", "low")
-   file = open("/home/pi/fireball_camera/status.txt", "w")
+   file = open("/home/pi/fireball_camera/status" + cam_num + ".txt", "w")
    file.write("day")
    file.close()
 
-fp = open("/home/pi/fireball_camera/calnow", "w")
-config = read_config()
+
+
+config_file = ""
+
+try:
+   cam_num = sys.argv[1]
+   config_file = "conf/config-" + cam_num + ".txt"
+   config = read_config(config_file)
+except:
+   config = read_config(config_file)
+   cam_num = ""
+
+print (config['cam_ip'])
+fp = open("/home/pi/fireball_camera/calnow"+str(cam_num), "w")
+
+#config = read_config()
 
 settings = get_settings(config)
 
 try:
-   file = open("/home/pi/fireball_camera/status.txt", "r")
+   file = open("/home/pi/fireball_camera/status" + cam_num + ".txt", "r")
    cam_status = file.read()
-   print (cam_status)
+   print ("CAM STATUS: ", cam_status)
 except:
    print ("no cam status file exits.")
    cam_status = ""
@@ -147,5 +162,5 @@ else:
       print ("Nighttime settings are not set but it is nighttime!", cam_status, sun['status'])
       nighttime_settings(config)
 
-os.system("./auto-brightness.py")
-os.system("rm /home/pi/fireball_camera/calnow")
+os.system("./auto-brightness.py " + cam_num)
+os.system("rm /home/pi/fireball_camera/calnow"+str(cam_num))

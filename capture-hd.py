@@ -26,14 +26,14 @@ def cam_loop(pipe_parent, shared_dict):
     tstamp_prev = None
     motion_on = 0
     motion_off = 0
-    config = read_config()
+    #config = read_config()
     print (config['cam_ip'])
 
 
     if int(config['hd']) == 1:
         print ("capture_hd")
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0&user=admin&password=admin&tcp")
-        resize = .25
+        resize = .2
     else:
         cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin&tcp")
         resize = .5 
@@ -71,7 +71,7 @@ def cam_loop(pipe_parent, shared_dict):
             frame_time = datetime.datetime.now()
             frames.appendleft(frame)
             frame_times.appendleft(frame_time)
-        if count % 5 == 0:
+        if count % 10 == 0:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
@@ -86,9 +86,9 @@ def cam_loop(pipe_parent, shared_dict):
             time_start = frame_time
             log.write( frame_time.strftime("%Y%m%d%H%M%S") + "|FPS:" + str(fps) + "|\n")
             log.flush()
-            cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
+            cv2.imwrite("/var/www/html/out/latest" + cam_num + ".jpg", frames[0])
 
-            file_exists = Path("/home/pi/fireball_camera/calnow");
+            file_exists = Path("/home/pi/fireball_camera/calnow"+str(cam_num));
             if (file_exists.is_file()):
                 calnow = 1
             else:
@@ -142,8 +142,8 @@ def cam_loop(pipe_parent, shared_dict):
             mmof = 0
             lc = 0
             format_time = frame_time.strftime("%Y%m%d%H%M%S")
-            outfile = "{}/{}.avi".format("/var/www/html/out", format_time)
-            outfile_text = "{}/{}-time.txt".format("/var/www/html/out", format_time) 
+            outfile = "{}/{}-{}.avi".format("/var/www/html/out", format_time, cam_num)
+            outfile_text = "{}/{}-{}-time.txt".format("/var/www/html/out", format_time, cam_num) 
 
             df = open(outfile_text, 'w', 1)
             dql = len(frame_times) - 2
@@ -179,7 +179,7 @@ def cam_loop(pipe_parent, shared_dict):
  
 def show_loop(pipe_child, shared_dict):
     #cv2.namedWindow("pepe")
-    config = read_config()
+    #config = read_config()
 
 
     print (config['cam_ip'])
@@ -282,13 +282,22 @@ if __name__ == '__main__':
     #logger = multiprocessing.log_to_stderr()
     #logger.setLevel(multiprocessing.SUBDEBUG)
 
-    config = read_config()
+    config_file = ""
+    cam_num = ""
+
+    try:
+       cam_num = sys.argv[1]
+       config_file = "conf/config-" + cam_num + ".txt"
+       config = read_config(config_file)
+    except: 
+       config = read_config(config_file)
+
     print (config['cam_ip'])
  
     #os.system("./logger.py 'capture program started.'")
     # put IP check here!
     # sync camera time
-    os.system("/home/pi/fireball_camera/camera_time.py")
+    os.system("/home/pi/fireball_camera/camera_time.py " + cam_num)
 
     try:
        if (config['device_lat'] != ''):

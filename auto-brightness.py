@@ -37,19 +37,34 @@ def get_cap(config):
    cap.release()
 
 try:
-   cal_on = int(sys.argv[1]);
+   cal_on = int(sys.argv[2]);
    print ("Autobrightness Calibration")
 except:
    print ("Autobrightness")
    cal_on = 0
 
-config = read_config()
+config_file = ""
+
+try:
+   cam_num = sys.argv[1]
+   config_file = "conf/config-" + cam_num + ".txt"
+   config = read_config(config_file)
+except:
+   config = read_config(config_file)
+
+
+
+#config = read_config()
 
 not_ok = 1
 
 while not_ok == 1:
    settings = get_settings(config)
    print("Current Brightness Setting:", settings['Brightness'])
+   max_bright_dark = 120
+   if int(settings['Brightness']) >= int(max_bright_dark):
+      print ("Current brightness above max reset!")
+      set_setting(config, "Brightness", max_bright_dark)
    get_cap(config)
 
 
@@ -61,6 +76,8 @@ while not_ok == 1:
    print ("Mean Image Brightness:", magic)
 
    sun_info = read_sun()
+
+
 
    magic_dark_max = 4500
    magic_dark_min = 3500
@@ -82,16 +99,23 @@ while not_ok == 1:
       factor = 5;
    if diff <= 800 and diff >= -800: 
       factor = 2;
-   
+
+   # Daytime   
    if int(sun_info['dark']) != 1:
       if magic > magic_day_max:
          print ("image is too bright for ", sun_info['status'], ", lower brightness with factor " + str(factor))
          new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
-      elif magic < magic_day_min:
+      elif magic < magic_day_min :
          print ("image is too dark for ", sun_info['status'], ", increase brightness with factor " + str(factor))
          new_brightness = int(settings['Brightness']) + factor
-         set_setting(config, "Brightness", new_brightness)
+         if int(new_brightness) >= int(max_bright_dark):
+            print ("Setting new brightness")
+            set_setting(config, "Brightness", new_brightness)
+         else:
+            print ("Abortng")
+            set_setting(config, "Brightness", max_bright_dark)
+            not_ok = 0
       else: 
          not_ok = 0
    else:
@@ -102,7 +126,12 @@ while not_ok == 1:
       elif magic < magic_dark_min:
          print ("image is too dark for ", sun_info['status'], ", increase brightness")
          new_brightness = int(settings['Brightness']) + factor
-         set_setting(config, "Brightness", new_brightness)
+         if int(new_brightness) <= int(max_bright_dark):
+            set_setting(config, "Brightness", new_brightness)
+         else: 
+            print ("Abortng")
+            set_setting(config, "Brightness", max_bright_dark)
+            not_ok = 0
       else: 
          not_ok = 0
 

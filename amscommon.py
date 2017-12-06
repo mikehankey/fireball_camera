@@ -16,9 +16,13 @@ def caldate(caldate):
    caldate = y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + s 
    return(caldate)
 
-def read_config():
+def read_config(config_file):
+    print ("Reading: ", config_file)
     config = {}
-    file = open("/home/pi/fireball_camera/config.txt", "r")
+    if config_file == "":
+       file = open("/home/pi/fireball_camera/config.txt", "r")
+    else:
+       file = open(config_file, "r")
     
     for line in file:
       line = line.strip('\n')
@@ -26,8 +30,11 @@ def read_config():
       #Find first index of =
       c = line.index('=')
       config[line[0:c]] = line[c+1:]
-    
-    config['hd'] = 0
+   
+    try:  
+       test = config['hd'] 
+    except:
+       config['hd'] = 0
     
     if 'cam_pwd' in config:
         try:
@@ -37,16 +44,19 @@ def read_config():
         except:
              config['cam_pwd'] = config['cam_pwd']
     else: 
-       config['cam_pwd'] = 'admin';
+       config['cam_pwd'] = 'xrp23q';
     
     file.close()
     return(config)
 
-def write_config(config):
+def write_config(config, config_file = ""):
     if len(config) < 3:
        print ("Error not enough config vars passed.")
        exit()
-    file = open("/home/pi/fireball_camera/config.txt", "w")
+    if config_file == "":
+       file = open("/home/pi/fireball_camera/config.txt", "w")
+    else:
+       file = open(config_file, "w")
     for key in config:
       if key == 'cam_pwd':
         try:

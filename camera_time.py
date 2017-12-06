@@ -4,11 +4,25 @@
 # OSD - /videoosd.asp?
 # Settings - /videolens.asp
 
-
+import sys
 import requests
 from amscommon import read_config
 
-config = read_config()
+config_file = ""
+
+try:
+   cam_num = sys.argv[1]
+   config_file = "conf/config-" + cam_num + ".txt"
+   config = read_config(config_file)
+   print ("reading... ", config_file)
+except:
+   config = read_config(config_file)
+   print ("reading default... ", config_file)
+
+
+print (config)
+
+#config = read_config()
 
 cam_ip = config['cam_ip']
 

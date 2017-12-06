@@ -9,14 +9,27 @@ import settings
 
 from amscommon import read_config
 
-config = read_config()
+
+config_file = ""
+cam_num = ""
+
+try:
+   cam_num = sys.argv[1]
+   config_file = "conf/config-" + cam_num + ".txt"
+   config = read_config(config_file)
+except:
+   config = read_config(config_file)
+   print (config['cam_ip'])
+
+
+#config = read_config()
 
 # UPLOAD LATEST CAM FRAME (every hour)
 
 api_key = config['api_key']
 device_id  = config['device_id']
 url = settings.API_SERVER + "/members/api/cam_api/upload_latest"
-file = "/var/www/html/out/latest.jpg"
+file = "/var/www/html/out/latest" + cam_num + ".jpg"
 stat = os.stat(file)
 #print (stat)
 #datetime = stat.st_birthtime

@@ -5,7 +5,37 @@ import netifaces
 import os
 import settings
 from amscommon import read_config, write_config, put_device_info
-config = read_config()
+from collections import defaultdict
+
+def get_cam_mac(config):
+   url = "http://" + str(config['cam_ip']) + "/cgi-bin/sysparam_cgi?user=admin&pwd="+ config['cam_pwd']
+   print (url)
+   r = requests.get(url)
+   lines = r.text.split("\n")
+   for line in lines:
+      if "MACAddress" in line:
+         line = line.replace("<MACAddress>", "") 
+         line = line.replace("</MACAddress>", "") 
+         cam_mac = line.replace("\t", "") 
+
+   return(cam_mac)
+
+config_file = ""
+cam_num = ""
+
+try:
+   cam_num = sys.argv[1]
+   config_file = "conf/config-" + cam_num + ".txt"
+   config = read_config(config_file)
+except:
+   config = read_config(config_file)
+
+   print (config['cam_ip'])
+
+cam_mac = get_cam_mac(config)
+print (cam_mac)
+
+
 
 new_install = 0
 
@@ -29,7 +59,7 @@ try:
    wlan0_mac = netifaces.ifaddresses('wlan0')[netifaces.AF_LINK][0]['addr']
 except: 
    eth0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
-   wlan0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
+   wlan0_mac = cam_mac
 
 
 try:
@@ -47,7 +77,7 @@ print ("ETH0 IP: ", eth0_ip)
 print ("WLAN IP: ", wlan0_ip)
 
 try:
-   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + wlan0_ip)
+   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + config['cam_ip'])
    fp = open("register.txt", "w")
    fp.write(r.text)
    fp.close()
@@ -62,9 +92,11 @@ try:
       print ("Device created.")
 except:
    print ("Device Created.")
+
+print (config)
   
 #LOG IP OF DEVICE. 
-msg = "lan_ip=" + eth0_ip + ":wlan_ip=" + wlan0_ip
+msg = "lan_ip=" + eth0_ip + ":wlan_ip=" + config['cam_ip'] 
 r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': eth0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
 
 res = r.text
@@ -76,7 +108,7 @@ print ("ID: ", hostname)
 out = open("/home/pi/fireball_camera/host", "w") 
 out.write(hostname)
 out.close()
-os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
+#os.system("sudo cp /home/pi/fireball_camera/host /etc/hostname")
 
 #exit()
 
@@ -117,7 +149,7 @@ if 1 == 1:
       if type(dev_data[key]) is str and key != 'cam_ip' and key != 'IP':
          print (key, dev_data[key])
          config[key]=dev_data[key]
-   write_config(config)
+   write_config(config, config_file)
    put_device_info(config)
 #except: 
 #   print ("Device is not claimed yet or lat long not setup.")
