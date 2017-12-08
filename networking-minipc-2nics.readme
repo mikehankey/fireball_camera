@@ -1,0 +1,111 @@
+#####START/etc/network/interfaces#####
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+#primary interface enp3s0
+auto enp1s0
+#iface enp1s0 inet static
+#address 192.168.1.12
+#netmask 255.255.255.0
+#network 192.168.1.0
+#gateway 192.168.1.1
+#dns-nameservers 8.8.4.4 8.8.8.8
+
+#secondary interface enp3s0
+auto enp3s0
+iface enp3s0 inet static
+address 192.168.76.1
+netmask 255.255.255.0
+broadcast 192.168.76.255
+network 192.168.76.0
+post-up /home/ams/fireball_camera/iptables.sh
+#####END/etc/network/interfaces#####
+
+# install dhcp
+sudo apt-get install isc-dhcp-server
+sudo vi /etc/default/isc-dhcp-server
+sudo vi /etc/dhcp/dhcpd.conf
+sudo systemctl restart isc-dhcp-server
+
+
+sudo iptables --table nat --append POSTROUTING --out-interface enp1s0 -j MASQUERADE
+sudo iptables --append FORWARD --in-interface enp3s0 -j ACCEPT
+
+#sudo vi /etc/default/isc-dhcp-server
+#DHCP
+# Defaults for isc-dhcp-server initscript
+# sourced by /etc/init.d/isc-dhcp-server
+# installed at /etc/default/isc-dhcp-server by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Path to dhcpd's config file (default: /etc/dhcp/dhcpd.conf).
+DHCPD_CONF=/etc/dhcp/dhcpd.conf
+
+# Path to dhcpd's PID file (default: /var/run/dhcpd.pid).
+DHCPD_PID=/var/run/dhcpd.pid
+
+# Additional options to start dhcpd with.
+#       Don't use options -cf or -pf here; use DHCPD_CONF/ DHCPD_PID instead
+#OPTIONS=""
+
+# On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
+#       Separate multiple interfaces with spaces, e.g. "eth0 eth1".
+INTERFACES="enp3s0"
+
+
+
+
+sudo vi /etc/dhcp/dhcpd.conf
+#######################################
+# have support for DDNS.)
+ddns-update-style none;
+
+# option definitions common to all supported networks...
+option domain-name "allsky6.org";
+option domain-name-servers 8.8.8.8, 8.8.4.4;
+
+default-lease-time 600;
+max-lease-time 7200;
+
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+}
+
+# A slightly different configuration for an internal subnet.
+subnet 192.168.76.0 netmask 255.255.255.0 {
+  range 192.168.76.71 192.168.76.80;
+  option domain-name-servers 192.168.1.1;
+  option domain-name "allsky6.org";
+  option subnet-mask 255.255.255.0;
+  option routers 192.168.76.1;
+  option broadcast-address 192.168.76.255;
+  option netbios-name-servers 192.168.76.1;
+  option netbios-node-type 2;
+  default-lease-time 86400;
+  max-lease-time 86400;
+}
+
+# Hosts which require special configuration options can be listed in
+# host statements.   If no address is specified, the address will be
+# allocated dynamically (if possible), but the host-specific information
+# will still come from the host declaration.
+
+#host mrhimac {
+#  hardware ethernet 00:23:df:ff:5e:75;
+#  fixed-address 192.168.76.77;
+#}
+
+
+# enable IP forwarding
+Edit /etc/sysctl.conf and search for the following lines:
+
+# Uncomment the next line to enable packet forwarding for IPv4
+#net.ipv4.ip_forward=1
+
+to view cams on client mac/pc on different subnet add route 
+sudo route -n add 192.168.176.0/24 192.168.1.12
+
