@@ -60,7 +60,17 @@ INTERFACES="enp3s0"
 
 
 sudo vi /etc/dhcp/dhcpd.conf
-#######################################
+#
+# Sample configuration file for ISC dhcpd for Debian
+#
+# Attention: If /etc/ltsp/dhcpd.conf exists, that will be used as
+# configuration file instead of this file.
+#
+#
+
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
 # have support for DDNS.)
 ddns-update-style none;
 
@@ -76,36 +86,43 @@ subnet 192.168.1.0 netmask 255.255.255.0 {
 }
 
 # A slightly different configuration for an internal subnet.
-subnet 192.168.76.0 netmask 255.255.255.0 {
-  range 192.168.76.71 192.168.76.80;
+subnet 192.168.176.0 netmask 255.255.255.0 {
+  range 192.168.176.71 192.168.176.80;
   option domain-name-servers 192.168.1.1;
   option domain-name "allsky6.org";
   option subnet-mask 255.255.255.0;
-  option routers 192.168.76.1;
-  option broadcast-address 192.168.76.255;
-  option netbios-name-servers 192.168.76.1;
+  option routers 192.168.176.1;
+  option broadcast-address 192.168.176.255;
+  option netbios-name-servers 192.168.176.1;
   option netbios-node-type 2;
   default-lease-time 86400;
   max-lease-time 86400;
+
+host cam1 {
+  hardware ethernet 00:B9:41:79:C7:30;
+  fixed-address 192.168.176.71;
+}
+host cam2 {
+  hardware ethernet 00:b9:6d:fd:c8:43;
+  fixed-address 192.168.176.72;
+}
+host cam3 {
+  hardware ethernet 00:b9:14:79:71:c3;
+  fixed-address 192.168.176.73;
+}
+host cam4 {
+  hardware ethernet 00:b9:4c:f7:4e:b0;
+  fixed-address 192.168.176.74;
+}
+host cam5 {
+  hardware ethernet 00:b9:6a:cc:0e:bc;
+  fixed-address 192.168.176.75;
+}
+host cam6 {
+  hardware ethernet 00:b9:0c:c1:0c:f0;
+  fixed-address 192.168.176.76;
 }
 
-# Hosts which require special configuration options can be listed in
-# host statements.   If no address is specified, the address will be
-# allocated dynamically (if possible), but the host-specific information
-# will still come from the host declaration.
-
-#host mrhimac {
-#  hardware ethernet 00:23:df:ff:5e:75;
-#  fixed-address 192.168.76.77;
-#}
 
 
-# enable IP forwarding
-Edit /etc/sysctl.conf and search for the following lines:
-
-# Uncomment the next line to enable packet forwarding for IPv4
-#net.ipv4.ip_forward=1
-
-to view cams on client mac/pc on different subnet add route 
-sudo route -n add 192.168.176.0/24 192.168.1.12
-
+}
