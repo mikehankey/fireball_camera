@@ -29,8 +29,11 @@ sudo vi /etc/dhcp/dhcpd.conf
 sudo systemctl restart isc-dhcp-server
 
 
-sudo iptables --table nat --append POSTROUTING --out-interface enp1s0 -j MASQUERADE
-sudo iptables --append FORWARD --in-interface enp3s0 -j ACCEPT
+iptables --table nat --append POSTROUTING --out-interface enp1s0 -j MASQUERADE
+iptables --append FORWARD --in-interface enp3s0 -j ACCEPT
+
+iptables --table nat --append POSTROUTING --out-interface enp3s0 -j MASQUERADE
+iptables --append FORWARD --in-interface enp1s0 -j ACCEPT
 
 #sudo vi /etc/default/isc-dhcp-server
 #DHCP
