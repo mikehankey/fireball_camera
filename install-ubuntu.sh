@@ -154,4 +154,6 @@ pip install pathlib
 install pycrypto
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install isc-dhcp-server
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install xfce4 xfce4-goodies vnc4server
-apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages--yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ubuntu-gnome-desktop -y
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ubuntu-gnome-desktop -y
+
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install gnome-menu-editor -y
