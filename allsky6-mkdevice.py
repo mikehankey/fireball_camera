@@ -55,29 +55,29 @@ except:
 # enp1s0
 
 try: 
-   eth0_mac = netifaces.ifaddresses('eth0')[netifaces.AF_LINK][0]['addr']
+   enp1s0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
    wlan0_mac = netifaces.ifaddresses('wlan0')[netifaces.AF_LINK][0]['addr']
 except: 
-   eth0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
+   enp1s0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
    wlan0_mac = cam_mac
 
 
 try:
-    eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+    enp1s0_ip = netifaces.ifaddresses('enp1s0')[netifaces.AF_INET][0]['addr']
 except:
-    eth0_ip = "0.0.0.0"
+    enp1s0_ip = "0.0.0.0"
 try:
     wlan0_ip= netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
 except:
     wlan0_ip = "0.0.0.0"
 
-print ("ETH0 MAC: ", eth0_mac)
+print ("ETH0 MAC: ", enp1s0_mac)
 print ("WLAN MAC: ", wlan0_mac)
-print ("ETH0 IP: ", eth0_ip)
+print ("ETH0 IP: ", enp1s0_ip)
 print ("WLAN IP: ", wlan0_ip)
 
 try:
-   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + config['cam_ip'])
+   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + enp1s0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + enp1s0_ip + '&wlan_ip=' + config['cam_ip'])
    fp = open("register.txt", "w")
    fp.write(r.text)
    fp.close()
@@ -96,8 +96,8 @@ except:
 print (config)
   
 #LOG IP OF DEVICE. 
-msg = "lan_ip=" + eth0_ip + ":wlan_ip=" + config['cam_ip'] 
-r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': eth0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
+msg = "lan_ip=" + enp1s0_ip + ":wlan_ip=" + config['cam_ip'] 
+r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': enp1s0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
 
 res = r.text
 
@@ -114,7 +114,7 @@ out.close()
 
 # GET THE DEVICE INFO
 
-r = requests.get(settings.API_SERVER + 'members/api/cam_api/get_device_info?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
+r = requests.get(settings.API_SERVER + 'members/api/cam_api/get_device_info?format=json&LAN_MAC=' + enp1s0_mac + '&WLAN_MAC=' + wlan0_mac)
 #print (r.text)
 fp = open("device_info.txt", "w")
 fp.write(r.text)
