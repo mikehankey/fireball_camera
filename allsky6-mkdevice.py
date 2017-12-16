@@ -7,6 +7,14 @@ import settings
 from amscommon import read_config, write_config, put_device_info
 from collections import defaultdict
 
+def get_cam_mac_from_file(cam_num):
+   fp = open("camera-macs.txt", "r")
+   for line in fp:
+      (cn, mac, x) = line.split("|")
+      if (int(cam_num) == int(cn)):
+         cam_mac = mac
+   return(cam_mac)
+
 def get_cam_mac(config):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/sysparam_cgi?user=admin&pwd="+ config['cam_pwd']
    print (url)
@@ -32,7 +40,7 @@ except:
 
    print (config['cam_ip'])
 
-cam_mac = get_cam_mac(config)
+cam_mac = get_cam_mac_from_file(cam_num)
 print (cam_mac)
 
 
