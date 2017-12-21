@@ -16,7 +16,7 @@ def caldate(caldate):
    caldate = y + "-" + m + "-" + d + " " + h + ":" + mm + ":" + s 
    return(caldate)
 
-def read_config(config_file):
+def read_config(config_file = ""):
     print ("Reading: ", config_file)
     config = {}
     if config_file == "":
