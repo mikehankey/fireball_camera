@@ -33,11 +33,11 @@ except:
 
 
 try:
-    eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+    eth0_ip = netifaces.ifaddresses('enp1s0')[netifaces.AF_INET][0]['addr']
 except:
     eth0_ip = "0.0.0.0"
 try:
-    wlan0_ip= netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
+    wlan0_ip= netifaces.ifaddresses('enp3s0')[netifaces.AF_INET][0]['addr']
 except:
     wlan0_ip = "0.0.0.0"
 

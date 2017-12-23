@@ -7,6 +7,14 @@ import settings
 from amscommon import read_config, write_config, put_device_info
 from collections import defaultdict
 
+def get_cam_mac_from_file(cam_num):
+   fp = open("camera-macs.txt", "r")
+   for line in fp:
+      (cn, mac, x) = line.split("|")
+      if (int(cam_num) == int(cn)):
+         cam_mac = mac
+   return(cam_mac)
+
 def get_cam_mac(config):
    url = "http://" + str(config['cam_ip']) + "/cgi-bin/sysparam_cgi?user=admin&pwd="+ config['cam_pwd']
    print (url)
@@ -32,7 +40,7 @@ except:
 
    print (config['cam_ip'])
 
-cam_mac = get_cam_mac(config)
+cam_mac = get_cam_mac_from_file(cam_num)
 print (cam_mac)
 
 
@@ -55,29 +63,29 @@ except:
 # enp1s0
 
 try: 
-   eth0_mac = netifaces.ifaddresses('eth0')[netifaces.AF_LINK][0]['addr']
+   enp1s0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
    wlan0_mac = netifaces.ifaddresses('wlan0')[netifaces.AF_LINK][0]['addr']
 except: 
-   eth0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
+   enp1s0_mac = netifaces.ifaddresses('enp1s0')[netifaces.AF_LINK][0]['addr']
    wlan0_mac = cam_mac
 
 
 try:
-    eth0_ip = netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr']
+    enp1s0_ip = netifaces.ifaddresses('enp1s0')[netifaces.AF_INET][0]['addr']
 except:
-    eth0_ip = "0.0.0.0"
+    enp1s0_ip = "0.0.0.0"
 try:
     wlan0_ip= netifaces.ifaddresses('wlan0')[netifaces.AF_INET][0]['addr']
 except:
     wlan0_ip = "0.0.0.0"
 
-print ("ETH0 MAC: ", eth0_mac)
+print ("ETH0 MAC: ", enp1s0_mac)
 print ("WLAN MAC: ", wlan0_mac)
-print ("ETH0 IP: ", eth0_ip)
+print ("ETH0 IP: ", enp1s0_ip)
 print ("WLAN IP: ", wlan0_ip)
 
 try:
-   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + eth0_ip + '&wlan_ip=' + config['cam_ip'])
+   r = requests.get(settings.API_SERVER + 'members/api/cam_api/mkdevice?format=json&LAN_MAC=' + enp1s0_mac + '&WLAN_MAC=' + wlan0_mac + '&lan_ip=' + enp1s0_ip + '&wlan_ip=' + config['cam_ip'])
    fp = open("register.txt", "w")
    fp.write(r.text)
    fp.close()
@@ -96,8 +104,8 @@ except:
 print (config)
   
 #LOG IP OF DEVICE. 
-msg = "lan_ip=" + eth0_ip + ":wlan_ip=" + config['cam_ip'] 
-r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': eth0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
+msg = "lan_ip=" + enp1s0_ip + ":wlan_ip=" + config['cam_ip'] 
+r = requests.post(settings.API_SERVER + 'members/api/cam_api/addLog', data={'LAN_MAC': enp1s0_mac, 'WLAN_MAC': wlan0_mac, 'msg': msg})
 
 res = r.text
 
@@ -114,7 +122,7 @@ out.close()
 
 # GET THE DEVICE INFO
 
-r = requests.get(settings.API_SERVER + 'members/api/cam_api/get_device_info?format=json&LAN_MAC=' + eth0_mac + '&WLAN_MAC=' + wlan0_mac)
+r = requests.get(settings.API_SERVER + 'members/api/cam_api/get_device_info?format=json&LAN_MAC=' + enp1s0_mac + '&WLAN_MAC=' + wlan0_mac)
 #print (r.text)
 fp = open("device_info.txt", "w")
 fp.write(r.text)
