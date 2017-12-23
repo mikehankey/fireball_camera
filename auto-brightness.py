@@ -57,8 +57,9 @@ except:
 #config = read_config()
 
 not_ok = 1
-
+loop_count = 0
 while not_ok == 1:
+   loop_count = loop_count + 1
    settings = get_settings(config)
    print("Current Brightness Setting:", settings['Brightness'])
    max_bright_dark = 120
@@ -86,7 +87,7 @@ while not_ok == 1:
       magic_dark_max = 6800
       magic_dark_min = 5800
    magic_day_max = 40000
-   magic_day_min = 30000
+   magic_day_min = 20000
    if sun_info['status'] == 'dusk' or sun_info['status'] == 'dawn': 
       magic_day_max = 30000 
       magic_day_min = 20000 
@@ -134,4 +135,7 @@ while not_ok == 1:
             not_ok = 0
       else: 
          not_ok = 0
+   if loop_count > 12:
+      print ("did the best we could!")
+      not_ok = 0
 

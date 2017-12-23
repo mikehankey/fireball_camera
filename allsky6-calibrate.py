@@ -83,18 +83,21 @@ def get_calibration_frames(config_file, cam_num):
    _ , frame = cap.read()
    final_image = Image.fromarray(frame)
    frame_img = Image.fromarray(frame)
+   frame_sz = cv2.resize(frame_img, (0,0), fx=1, fy=.75)
    cv2.imwrite("/var/www/html/out/temp_upload/cal1.jpg", frame)
    final_image=ImageChops.lighter(final_image,frame_img)
    time.sleep(1)
 
    _ , frame = cap.read()
    frame_img = Image.fromarray(frame)
+   frame_sz = cv2.resize(frame_img, (0,0), fx=1, fy=.75)
    final_image=ImageChops.lighter(final_image,frame_img)
    cv2.imwrite("/var/www/html/out/temp_upload/cal2.jpg", frame)
    time.sleep(1)
 
    _ , frame = cap.read()
    frame_img = Image.fromarray(frame)
+   frame_sz = cv2.resize(frame_img, (0,0), fx=1, fy=.75)
    final_image=ImageChops.lighter(final_image,frame_img)
    cv2.imwrite("/var/www/html/out/temp_upload/cal3.jpg", frame)
 

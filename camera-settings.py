@@ -163,4 +163,5 @@ else:
       nighttime_settings(config)
 
 os.system("./auto-brightness.py " + cam_num)
+time.sleep(7)
 os.system("rm /home/pi/fireball_camera/calnow"+str(cam_num))
