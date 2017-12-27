@@ -86,9 +86,15 @@ def cam_loop(pipe_parent, shared_dict):
             time_start = frame_time
             log.write( frame_time.strftime("%Y%m%d%H%M%S") + "|FPS:" + str(fps) + "|\n")
             log.flush()
-            cv2.imwrite("/var/www/html/out/latest" + cam_num + ".jpg", frames[0])
+            if cam_num != "":
+               cv2.imwrite("/var/www/html/out/latest" + cam_num + ".jpg", frames[0])
+            else:
+               cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
 
-            file_exists = Path("/home/pi/fireball_camera/calnow"+str(cam_num));
+            if cam_num != "":
+               file_exists = Path("/home/pi/fireball_camera/calnow"+str(cam_num));
+            else:
+               file_exists = Path("/home/pi/fireball_camera/calnow");
             if (file_exists.is_file()):
                 calnow = 1
             else:
@@ -142,8 +148,12 @@ def cam_loop(pipe_parent, shared_dict):
             mmof = 0
             lc = 0
             format_time = frame_time.strftime("%Y%m%d%H%M%S")
-            outfile = "{}/{}-{}.avi".format("/var/www/html/out", format_time, cam_num)
-            outfile_text = "{}/{}-{}-time.txt".format("/var/www/html/out", format_time, cam_num) 
+            if cam_num != "":
+               outfile = "{}/{}-{}.avi".format("/var/www/html/out", format_time, cam_num)
+               outfile_text = "{}/{}-{}-time.txt".format("/var/www/html/out", format_time, cam_num) 
+            else:
+               outfile = "{}/{}.avi".format("/var/www/html/out", format_time )
+               outfile_text = "{}/{}-time.txt".format("/var/www/html/out", format_time ) 
 
             df = open(outfile_text, 'w', 1)
             dql = len(frame_times) - 2
