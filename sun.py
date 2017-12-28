@@ -91,9 +91,11 @@ if int(sun_alt) < -8:
    status = "dark";
 if int(sun_alt) >= -8 and int(sun_alt) < 3:
       if int(sun_az) > 0 and int(sun_az) < 180:
-         status = "dawn"
+         #status = "dawn"
+         status = "day"
       else:
-         status = "dusk"
+         #status = "dusk"
+         status = "day"
 if int(sun_alt) >= 5:
    status = "day"
 
