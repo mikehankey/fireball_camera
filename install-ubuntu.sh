@@ -157,3 +157,7 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ubuntu-gnome-desktop -y
 
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install gnome-menu-editor -y
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install gnome-panel -y
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install curl -y
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
+##

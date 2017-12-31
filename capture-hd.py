@@ -54,7 +54,8 @@ def cam_loop(pipe_parent, shared_dict):
     shared_dict['motion_off'] = 0
 
     cap_start_unix_time = time.time()
-    start_frame_time = cap.get(0)
+    #start_frame_time = cap.get(0)
+    start_frame_time = cap.get(cv2.CAP_PROP_POS_MSEC)
     cap_unix_time = cap_start_unix_time + (start_frame_time / 1000)
 
     while True:
