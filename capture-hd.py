@@ -244,6 +244,12 @@ def show_loop(pipe_child, shared_dict):
             #middle_pixel = 0
             #avg_color = 0
         else:
+            # if the total cnts are over 10 then cat to the log!
+            dist_time = datetime.datetime.now()
+            log_entry = str(cam_num) + "|" + str(len(cnts)) + "|" + str(dist_time)  
+            cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/distortion.log"
+            os.system(cmd)
+            
             #area = cv2.contourArea(cnts[0])
             #perim = cv2.arcLength(cnts[0], True)
             #print ("Perim:", perim)
