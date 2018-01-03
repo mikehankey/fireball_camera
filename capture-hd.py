@@ -171,7 +171,7 @@ def cam_loop(pipe_parent, shared_dict):
             else:
                 frame_sz = frames[0]
 
-            writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'X264'), fps, (frame_sz.shape[1], frame_sz.shape[0]), True)
+            writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'X265'), fps, (frame_sz.shape[1], frame_sz.shape[0]), True)
             while frames:
                 img = frames.pop()
                 img = cv2.resize(img, (0,0), fx=1, fy=.75)
