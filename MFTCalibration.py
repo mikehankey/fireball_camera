@@ -27,6 +27,7 @@ class MFTCalibration:
       #    8) WCS enabled viewing 
       #    9) List of star objects and info
       self.starlist = [] # x,y,f,name
+      self.man_sources = [] # x
       self.block_masks = []
       self.image = None
       self.marked_image = None
@@ -36,6 +37,10 @@ class MFTCalibration:
       self.wcs_file = None
       self.star_data_file = None
       self.constellation_file = None
+
+      self.star_thresh = None
+      self.odds_to_solve = None
+      self.code_tolerance = None
  
 
    def update_path(self, path):
@@ -127,24 +132,38 @@ class MFTCalibration:
       gray_flux_box = flux_box.convert('L')
 
       np_flux_box = np.asarray(gray_flux_box)
-      #np_flux_box = cv2.GaussianBlur(np_flux_box, (21, 21), 0)
+      np_flux_box = cv2.GaussianBlur(np_flux_box, (21, 21), 0)
       avg_flux = np.average(np_flux_box)
       max_flux = np.amax(np_flux_box)
 
       return (int(avg_flux), int(max_flux))
 
    def find_stars(self):
+      self.starlist = []
       self.new_image = self.image
       print ("Finding stars...")
       if self.new_image == None:
          print ("sorry no image!")
          return()
+
+
+
       gray_new_image = self.new_image.convert('L')
       np_color_image = np.asarray(self.new_image)
       np_new_image = np.asarray(gray_new_image)
       np_new_image.setflags(write=1)
       # apply masks
-      np_new_image[340:360, 0:230] = [0]
+      np_new_image[320:360, 0:640] = [0]
+
+      for x,y in self.block_masks:
+         min_x = x - 10
+         max_x = x + 10
+         min_y = y - 10
+         max_y = y + 10
+         print ("Mask around : ", min_x,max_x,min_y,max_y)
+         np_new_image.setflags(write=1)
+         np_new_image[min_y:max_y, min_x:max_x] = [0]
+
 
       avg_px = np.average(np_new_image)
       ax_pixel = np.amax(np_new_image)
@@ -152,7 +171,7 @@ class MFTCalibration:
 
       lower_thresh = ax_pixel - 10
 
-      lower_thresh = avg_px * 3
+      lower_thresh = avg_px * int(self.star_thresh) 
 
       #np_new_image = cv2.GaussianBlur(np_new_image, (1, 1), 0)
       _, nice_threshold = cv2.threshold(np_new_image, lower_thresh, 255, cv2.THRESH_BINARY)
@@ -176,7 +195,7 @@ class MFTCalibration:
             #self.starlist_value = Label(self.master, text=starlist_txt  )
             #self.starlist_value.grid(row=7+i, column=0)
             #self.starlist_value.extra="starlist"
-            draw.point((px, py), 'red')
+            #draw.point((px, py), 'red')
             self.starlist.append([x,y,w,h,avg_flux,max_flux])
       self.marked_image = Image.fromarray(np_color_image)
       print(self.starlist)
@@ -186,6 +205,7 @@ class MFTCalibration:
       dataxy = self.path.replace(".jpg", "-xy.txt")
       fitsxy = self.path.replace(".jpg", ".xy")
       star_drawing_fn = self.path.replace(".jpg", "-sd.jpg")
+      solve_out = self.path.replace(".jpg", "-solve-field.txt")
       self.wcs_file = self.path.replace(".jpg", "-sd.wcs")
       self.constellation_file = self.path.replace(".jpg", "-sd-grid.png")
       self.star_data_file = self.path.replace(".jpg", "-sd-stardata.txt")
@@ -211,15 +231,16 @@ class MFTCalibration:
          fp.write(fits_data)
       fp.close()
       self.star_drawing.save(star_drawing_fn)
-
-      cmd = "/usr/local/astrometry/bin/solve-field " + star_drawing_fn + " --overwrite --width=640 --height=360 --scale-units degwidth --scale-low 60 --scale-high 85 --no-remove-lines"
+      cmd = "/usr/local/astrometry/bin/solve-field " + star_drawing_fn + " --overwrite --width=640 --height=360 --scale-units degwidth --scale-low 60 --scale-high 85 --no-remove-lines -cpulimit=15 --odds-to-solve " + str(self.odds_to_solve) + " --code-tolerance " + str(self.code_tolerance) 
+ #2>&1 > " + solve_out
       print (cmd)
       os.system(cmd)
 
       # This one WORKS!
       #cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -N -C -G 600"
       #cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -N -B -b 60 -G 600"
-      cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -C -B -b 200 -v -f 0 -G 600"
+      #cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -C -B -b 500 -v -f 0 -G 600 2>&1 >> " + solve_out
+      cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -C -v -f 10 -G 600 2>&1 >> " + solve_out
 
       print (cmd)
       os.system(cmd)

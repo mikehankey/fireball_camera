@@ -11,9 +11,8 @@ from PIL import ImageDraw
 from PIL import ImageTk
 from PIL import ImageEnhance
 from tkinter.filedialog import askopenfilename
+import tkSimpleDialog as tks
 import cv2
-
-
 
 class calibration_page:
    def __init__(self, master):
@@ -22,12 +21,15 @@ class calibration_page:
       # IMAGE FILE PATHS AND NAMES     
       self.image_path = None
       self.wcs_path = None
-
+      self.man_sources = []
+      self.data_list = []
       self.image = None
       self.new_image = None
       self.starmap_image = None
       self.fireball_image = None
       self.active_image = None
+      self.mask_on = None
+      self.mask_image = None
 
       self.starlist_array = None
      
@@ -35,21 +37,12 @@ class calibration_page:
       self.loc_lat = None
       self.loc_lon = None
       self.loc_alt = None
-      self.fb_time = None
+      self.fb_dt = None
+
+      self.star_thresh = 5
+      self.odds_to_solve = 10
+      self.code_tolerance = 10
  
-      #self.cal_time = tk.StringVar()
-      #self.cal_time.set("YYMMDD HH:MM:SS")
-      #self.loc_lat = tk.StringVar()
-      #self.loc_lat.set("00")
-      #self.loc_lon = tk.StringVar()
-      #self.loc_lon.set("00")
-      #self.loc_alt = tk.StringVar()
-      #self.loc_alt.set("00")
-      #self.fb_time= tk.StringVar()
-      #self.fb_time.set("00")
-
-
-
       self.cal_obj = MFTC.MFTCalibration()
 
       # FRAME 1
@@ -62,17 +55,20 @@ class calibration_page:
       self.button_set_location_time = tk.Button(self.cal_frame1, text='Set Loc/Time', command=self.button_set_location_time).pack(padx=1, pady=1, side=tk.LEFT)
 
       self.filename_label_value = tk.StringVar()
-      self.filename_label_value.set("nofile")
       self.filename_label = tk.Label(self.cal_frame1, textvariable=self.filename_label_value).pack(padx=1,pady=1,side=tk.LEFT)
       self.filename_label_value.set("nofile2")
+
+      self.cal_time_label_value = tk.StringVar()
+      self.cal_time_label = tk.Label(self.cal_frame1, textvariable=self.cal_time).pack(padx=1,pady=1,side=tk.LEFT)
+      self.cal_time_label_value.set("No cal date set yet. ")
 
 
       self.cal_frame1.pack(side=tk.TOP)
 
       # FRAME 2
       # image canvas 
-      canvas_width = 645
-      canvas_height = 365
+      canvas_width = 640
+      canvas_height = 360
       self.cal_frame2 = tk.Frame(self.master, bg='white', borderwidth=1, width=canvas_width+1, height=canvas_height+1, )
       self.image_canvas = tk.Canvas(self.cal_frame2, width=canvas_width, height=canvas_height, cursor="cross")
       self.image_canvas.extra = "image_canvas"
@@ -85,20 +81,46 @@ class calibration_page:
       self.cal_frame2.pack(side=tk.TOP)
 
       # FRAME 3 - Action Buttons
-      self.cal_frame3 = tk.Frame(self.master, bg='blue', height=50, width=645)
+      self.cal_frame3 = tk.Frame(self.master, bg='blue', height=50, width=650)
       self.find_stars = tk.Button(self.cal_frame3, text='Find Stars', command=self.button_find_stars).pack(padx=1, pady=1, side=tk.LEFT)
       self.solve_field = tk.Button(self.cal_frame3, text='Solve Field', command=self.button_solve_field).pack(padx=1, pady=1, side=tk.LEFT)
       self.show_original = tk.Button(self.cal_frame3, text='Original', command=self.button_show_original).pack(padx=1, pady=1, side=tk.LEFT)
       self.show_enhanced = tk.Button(self.cal_frame3, text='Enhanced', command=self.button_show_enhanced).pack(padx=1, pady=1, side=tk.LEFT)
       self.show_starmap= tk.Button(self.cal_frame3, text='Starmap', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
-      self.show_fireball = tk.Button(self.cal_frame3, text='Add Fireball', command=self.button_show_fireball).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_fireball = tk.Button(self.cal_frame3, text='Add Mask', command=self.button_add_mask).pack(padx=1, pady=1, side=tk.LEFT)
       self.cal_frame3.pack_propagate(0)
       self.cal_frame3.pack(side=tk.TOP)
 
 
       # FRAME 4 
 
-      self.cal_frame4 = tk.Frame(self.master, bg='blue', height=250, width=400)
+      self.cal_frame4 = tk.Frame(self.master, bg='blue', height=300, width=650)
+
+      self.container_far_left = tk.Frame(self.cal_frame4)
+
+      self.fcfl = tk.Frame(self.container_far_left)
+      self.star_thresh_label = tk.Label(self.fcfl, text="Star Threshold" ).pack(padx=1,pady=1,side=tk.TOP)
+      self.e1 = tk.Entry(self.fcfl, textvariable=self.star_thresh)
+      self.e1.pack()
+      self.fcfl.pack(side=tk.TOP)
+
+      self.fcfl2 = tk.Frame(self.container_far_left)
+      self.odds_to_solve_label = tk.Label(self.fcfl2, text="Odds To Solve" ).pack(padx=1,pady=1,side=tk.TOP)
+      self.e2 = tk.Entry(self.fcfl2, textvariable=self.odds_to_solve)
+
+      self.e2.pack(side=tk.TOP)
+      self.fcfl2.pack(side=tk.TOP)
+
+      self.fcfl3 = tk.Frame(self.container_far_left)
+      self.code_tolerance = tk.Label(self.fcfl2, text="Code Tolerance" ).pack(padx=1,pady=1,side=tk.TOP)
+      self.e3 = tk.Entry(self.fcfl3, textvariable=self.code_tolerance)
+
+      self.e3.pack(side=tk.TOP)
+      self.fcfl3.pack(side=tk.TOP)
+
+
+      self.container_far_left.pack(side=tk.LEFT)
+
 
       self.container_left = tk.Frame(self.cal_frame4)
       # Sliders
@@ -164,7 +186,7 @@ class calibration_page:
          np_crop_box = cv2.GaussianBlur(np_crop_box, (21, 21), 0)
          avg_px = np.average(np_crop_box)
          ax_pixel = np.amax(np_crop_box)
-         print ("AVG PX, BRIGHT PX", avg_px, ax_pixel)
+         #print ("AVG PX, BRIGHT PX", avg_px, ax_pixel)
 
          lower_thresh = ax_pixel - 10
 
@@ -189,23 +211,30 @@ class calibration_page:
          self.xy_label_value.set(xy_val)
 
 
+   def button_add_mask(self):
+      self.image_canvas.config(cursor="circle")
+      self.mask_on = 1
+
+
    def button_set_location_time(self):
       print ("Set Location & Time")
-      d = MD.MyDialog(root, self.cal_time, self.loc_lat, self.loc_lon, self.loc_alt, self.fb_time, "Set Time and Location", "Calibration Time in UTC", "Latitude", "Longitude", "Altitude", "Fireball Time in UTC")
-      self.cal_time = d.cal_time
-      print ("CAL TIME: ", self.cal_time)
-      #self.loc_lat = d.loc_lat
-      #self.loc_lon= d.loc_lon
-      #self.loc_alt = d.loc_alt
-      #self.fb_time = d.fb_time
-
+      d = MD.MyDialog(root, self)
       root.wait_window(d.top)
+      print ("TEST:", self.cal_time)
+      self.cal_time_label_value.set(self.cal_time)
+      root.update_idletasks()
+      print ("TEST:", self.loc_lat)
+
+      #print (d.result() )
+
 
    def button_show_fireball(self):
       print ("Show Fireball")
       self.active_image = 'fireball'
    def button_solve_field(self):
       print ("solve field handler called")
+      self.cal_obj.odds_to_solve = self.e2.get()
+      self.cal_obj.code_tolerance = self.e3.get()
       self.cal_obj.update_path(self.image_path)
       self.cal_obj.solve_field()
       #self.displayImage(self.cal_obj.star_drawing)
@@ -216,6 +245,9 @@ class calibration_page:
 
    def button_find_stars(self):
       print ("find stars handler called")
+      self.cal_obj.star_thresh = self.e1.get()
+      print (self.cal_obj.star_thresh)
+
       self.cal_obj.update_image(self.new_image)
       self.cal_obj.find_stars()
       self.displayImage(self.cal_obj.marked_image)
@@ -292,12 +324,71 @@ class calibration_page:
             self.ra_label_value.set(ra_str)
             print ("ra,dec: ", ra, dec, radd, decdd)
 
+   def update_mask_image(self):
+      self.mask_image = self.image.convert('L')
+      self.mask_image = np.asarray(self.image) 
+      print ("Total masked areas: ", len(self.cal_obj.block_masks))
+      for x,y in self.cal_obj.block_masks:
+         cv2.circle(self.mask_image, (x,y), 5, (255), -1)
+         min_x = x - 10
+         max_x = x + 10
+         min_y = y - 10
+         max_y = y + 10
+         print ("Mask around : ", min_x,max_x,min_y,max_y)
+         self.mask_image.setflags(write=1)
+         self.mask_image[min_y:max_y, min_x:max_x] = [255]
+      self.mask_image= Image.fromarray(self.mask_image)
+      print ("Display the mask image.")
+      self.active_image = 'mask'
+      self.displayImage(self.mask_image)
 
    def mouseRightClick(self, event):
       print ("right")
+      x,y = event.x, event.y
+      if self.mask_on == None or self.mask_on == 0:
+         if event.widget.extra == "image_canvas":
+            # Check for a delete!
+            c = 0
+            xran = range(x-10, x+10)
+            yran = range(y-10, y+10)
+            ok_to_add = 1
+            for source in self.man_sources:
+               tx,ty = source
+               print (tx,ty,x,y)
+               if tx in xran and ty in yran:
+                  print ("This source exists, lets remove it!")
+                  self.man_sources.remove((tx,ty))
+                  print ("Source list is : ", self.man_sources)
+                  ok_to_add = 0
+               c = c + 1
+            if ok_to_add == 1:
+               self.man_sources.append((x,y))
+            print("Manual Star List Sources: ", self.man_sources)
+      if self.mask_on == 1:
+         if event.widget.extra == "image_canvas":
+            # Check for a delete!
+            c = 0
+            xran = range(x-5, x+5)
+            yran = range(y-5, y+5)
+            ok_to_add = 1
+            for source in self.cal_obj.block_masks:
+               tx,ty = source
+               print (tx,ty,x,y)
+               if tx in xran and ty in yran:
+                  print ("This block", x,y," exists, lets remove it!")
+                  self.cal_obj.block_masks.remove((tx,ty))
+                  ok_to_add = 0
+               c = c + 1
+            if ok_to_add == 1: 
+               print ("Adding to block list!")
+               self.cal_obj.block_masks.append((x,y))
+      print ("Block Mask list is : ", self.cal_obj.block_masks)
+      self.update_mask_image()
+
 
    def displayImage(self, image):
-      print (self.image_path)
+      #print (self.image_path)
+      print ("DisplayImage")
       self.tkimage = ImageTk.PhotoImage(image)
       self.image_canvas.create_image(320,180, image=self.tkimage )
       print ("EXTRA: ", self.image_canvas.extra)
@@ -312,7 +403,7 @@ class calibration_page:
 
 
    def select_image(self):
-      self.image_path = askopenfilename(title = "Open File", initialdir='/var/www/html/out/cal')
+      self.image_path = askopenfilename(title = "Open File", initialdir='/var/www/html/out/cal/')
       if len(self.image_path) > 0:
          self.image = cv2.imread(self.image_path)
          self.image = Image.fromarray(self.image)
