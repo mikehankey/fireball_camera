@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import MFTCalibration as MFTC
 import MyDialog as MD 
+from amscommon import read_config
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 import subprocess
 import os
 import numpy as np
@@ -32,18 +34,22 @@ class calibration_page:
       self.mask_image = None
 
       self.starlist_array = None
+
+      cam_num = 1 
+      config_file = "conf/config-" + str(cam_num) + ".txt"
+      config = read_config(config_file)
      
       self.cal_time = None
-      self.loc_lat = None
-      self.loc_lon = None
-      self.loc_alt = None
+      self.obs_code = None
+      self.loc_lat = config['device_lat']
+      self.loc_lon = config['device_lng'] 
+      self.loc_alt = config['device_alt'] 
       self.fb_dt = None
 
-      self.star_thresh = 5
-      self.odds_to_solve = 10
-      self.code_tolerance = 10
- 
-      self.cal_obj = MFTC.MFTCalibration()
+      self.star_thresh = 7
+      self.odds_to_solve = 10000
+      self.code_tolerance = .3
+
 
       # FRAME 1
       # Build Calibration Layout 
@@ -88,6 +94,7 @@ class calibration_page:
       self.show_enhanced = tk.Button(self.cal_frame3, text='Enhanced', command=self.button_show_enhanced).pack(padx=1, pady=1, side=tk.LEFT)
       self.show_starmap= tk.Button(self.cal_frame3, text='Starmap', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
       self.show_fireball = tk.Button(self.cal_frame3, text='Add Mask', command=self.button_add_mask).pack(padx=1, pady=1, side=tk.LEFT)
+      self.add_stars = tk.Button(self.cal_frame3, text='Add Stars', command=self.button_add_stars).pack(padx=1, pady=1, side=tk.LEFT)
       self.cal_frame3.pack_propagate(0)
       self.cal_frame3.pack(side=tk.TOP)
 
@@ -101,6 +108,7 @@ class calibration_page:
       self.fcfl = tk.Frame(self.container_far_left)
       self.star_thresh_label = tk.Label(self.fcfl, text="Star Threshold" ).pack(padx=1,pady=1,side=tk.TOP)
       self.e1 = tk.Entry(self.fcfl, textvariable=self.star_thresh)
+      self.e1.insert(0, self.star_thresh)
       self.e1.pack()
       self.fcfl.pack(side=tk.TOP)
 
@@ -108,6 +116,7 @@ class calibration_page:
       self.odds_to_solve_label = tk.Label(self.fcfl2, text="Odds To Solve" ).pack(padx=1,pady=1,side=tk.TOP)
       self.e2 = tk.Entry(self.fcfl2, textvariable=self.odds_to_solve)
 
+      self.e2.insert(0, self.odds_to_solve)
       self.e2.pack(side=tk.TOP)
       self.fcfl2.pack(side=tk.TOP)
 
@@ -115,6 +124,8 @@ class calibration_page:
       self.code_tolerance = tk.Label(self.fcfl2, text="Code Tolerance" ).pack(padx=1,pady=1,side=tk.TOP)
       self.e3 = tk.Entry(self.fcfl3, textvariable=self.code_tolerance)
 
+      self.e3.insert(0, ".3")
+      #self.e3.insert(0, self.code_tolerance)
       self.e3.pack(side=tk.TOP)
       self.fcfl3.pack(side=tk.TOP)
 
@@ -163,6 +174,7 @@ class calibration_page:
       self.container_right.pack(side=tk.LEFT)
 
 
+      self.del_button = tk.Button(self.cal_frame4, text='Delete File', command=self.button_delete).pack(padx=1, pady=1, side=tk.LEFT)
       self.exit_button = tk.Button(self.cal_frame4, text='Exit', command=root.destroy).pack(padx=1, pady=1, side=tk.BOTTOM)
 
       self.cal_frame4.pack_propagate(0)
@@ -170,7 +182,7 @@ class calibration_page:
 
    def motion(self,event):
       x,y = event.x, event.y
-      print (x,y)
+      #print (x,y)
       #if self.image != None and event.widget.extra == "image_canvas_frame":
       if self.image != None :
          box = (x-10,y-10,x+10,y+10)
@@ -210,10 +222,38 @@ class calibration_page:
          xy_val = "                 "
          self.xy_label_value.set(xy_val)
 
+   def button_delete(self):
+
+      if self.image_path is None:
+         tk.messagebox.showwarning(
+            "Nothing to do bro. ",
+            "Cannot delete file when nothing is open\n" 
+         )
+      else:
+         result = tk.messagebox.askokcancel("Delete Calibration File","Would you like to delete this file and all assocaited data?")
+         if result is True:
+            print ("Deleting files.", result)
+            clean_path = self.image_path.replace(".jpg", "*")
+            cmd = "rm " + str(clean_path)
+            print(cmd)
+            os.system(cmd)
+            orig_path = self.image_path.replace("astrometry", "good")
+            cmd = "rm " + str(orig_path)
+            print(cmd)
+            os.system(cmd)
+
+
+
+         else:
+            print ("Np man.")
 
    def button_add_mask(self):
       self.image_canvas.config(cursor="circle")
       self.mask_on = 1
+
+   def button_add_stars(self):
+      self.image_canvas.config(cursor="cross")
+      self.mask_on = 0 
 
 
    def button_set_location_time(self):
@@ -242,8 +282,17 @@ class calibration_page:
       self.starmap_image= self.cal_obj.annotated_image
       self.displayImage(self.cal_obj.annotated_image)
       self.active_image = 'starmap'
+      self.update_star_id_image()
+
 
    def button_find_stars(self):
+
+
+      if self.e1.get() is None or self.e1.get() == "":
+         tk.messagebox.showwarning(
+            "Please fix threshold. ",
+            "Find stars needs a threshold set, somewhere between 3-10 is usually good. If you have light pollution use a higher number.\n" 
+         )
       print ("find stars handler called")
       self.cal_obj.star_thresh = self.e1.get()
       print (self.cal_obj.star_thresh)
@@ -252,6 +301,7 @@ class calibration_page:
       self.cal_obj.find_stars()
       self.displayImage(self.cal_obj.marked_image)
       self.active_image = 'marked_image'
+      print(self.cal_obj.starlist)
 
    def button_show_original(self):
       self.displayImage(self.image)
@@ -324,6 +374,35 @@ class calibration_page:
             self.ra_label_value.set(ra_str)
             print ("ra,dec: ", ra, dec, radd, decdd)
 
+   def update_star_id_image(self):
+      name_star_data_file = self.image_path.replace(".jpg", "-named_star_data.txt")
+      fp = open (name_star_data_file, "w")
+      self.star_id_image = self.image
+      star_id_image_np = np.asarray(self.star_id_image) 
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.named_stars:
+         x = int(float(x))
+         y = int(float(y))
+         cx = int(float(cx))
+         cy = int(float(cy))
+         cv2.circle(star_id_image_np, (x,y), 5, (255,255,255), 1)
+         cv2.circle(star_id_image_np, (cx,cy), 5, (0,255,0), 1)
+         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
+         fp.write(named_star_data + "\n")
+      print ("Not found list is: ", len(self.cal_obj.not_found_stars))
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.not_found_stars:
+         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
+         fp.write(named_star_data + "\n")
+         print("Not found list: ", x,y, myra, mydec)
+         x = int(float(x))
+         y = int(float(y))
+         cv2.circle(star_id_image_np, (x,y), 5, (255,0,0), 1)
+
+      fp.close()
+      self.star_id_image = Image.fromarray(star_id_image_np)
+      yo = Image.fromarray(star_id_image_np)
+      self.active_image = 'star_id'
+      self.displayImage(yo)
+
    def update_mask_image(self):
       self.mask_image = self.image.convert('L')
       self.mask_image = np.asarray(self.image) 
@@ -342,6 +421,18 @@ class calibration_page:
       self.active_image = 'mask'
       self.displayImage(self.mask_image)
 
+   def update_marked_image(self):
+      self.cal_obj.marked_image = self.image
+      marked_image_np = np.asarray(self.cal_obj.marked_image) 
+      for x,y,w,h,af,mf in self.cal_obj.starlist:
+         print("Drawing circle")
+         cv2.circle(marked_image_np, (x,y), 5, (255), -1)
+      self.cal_obj.marked_image = Image.fromarray(marked_image_np)
+      yo = Image.fromarray(marked_image_np)
+      self.active_image = 'marked_image'
+      self.displayImage(yo)
+      
+
    def mouseRightClick(self, event):
       print ("right")
       x,y = event.x, event.y
@@ -352,18 +443,23 @@ class calibration_page:
             xran = range(x-10, x+10)
             yran = range(y-10, y+10)
             ok_to_add = 1
-            for source in self.man_sources:
+            for source in self.man_sources[:]:
                tx,ty = source
                print (tx,ty,x,y)
                if tx in xran and ty in yran:
-                  print ("This source exists, lets remove it!")
+                  #print ("This source exists, lets remove it!")
                   self.man_sources.remove((tx,ty))
-                  print ("Source list is : ", self.man_sources)
+                  print("Deleting From starlist!")
+                  self.cal_obj.del_from_starlist(tx,ty)
+                  #print ("Source list is : ", self.man_sources)
                   ok_to_add = 0
                c = c + 1
             if ok_to_add == 1:
                self.man_sources.append((x,y))
-            print("Manual Star List Sources: ", self.man_sources)
+               print("Adding to starlist!")
+               self.cal_obj.add_to_starlist(x,y,5,5)
+            #print("Manual Star List Sources: ", self.man_sources)
+            self.update_marked_image()
       if self.mask_on == 1:
          if event.widget.extra == "image_canvas":
             # Check for a delete!
@@ -382,28 +478,34 @@ class calibration_page:
             if ok_to_add == 1: 
                print ("Adding to block list!")
                self.cal_obj.block_masks.append((x,y))
-      print ("Block Mask list is : ", self.cal_obj.block_masks)
-      self.update_mask_image()
+         print ("Block Mask list is : ", self.cal_obj.block_masks)
+         self.update_mask_image()
 
 
    def displayImage(self, image):
       #print (self.image_path)
-      print ("DisplayImage")
+      #print ("DisplayImage")
       self.tkimage = ImageTk.PhotoImage(image)
       self.image_canvas.create_image(320,180, image=self.tkimage )
-      print ("EXTRA: ", self.image_canvas.extra)
+      #print ("EXTRA: ", self.image_canvas.extra)
       #self.cal_frame2.pack(side=tk.TOP)
 
    def displayImageCrop(self, image):
       self.tkthumb = ImageTk.PhotoImage(image)
       self.thumbnail_canvas.create_image(50,50, image=self.tkthumb)
-      print ("EXTRA: ", self.image_canvas.extra)
+      #print ("EXTRA: ", self.image_canvas.extra)
       #self.cal_frame2.pack(side=tk.TOP)
       
 
 
    def select_image(self):
-      self.image_path = askopenfilename(title = "Open File", initialdir='/var/www/html/out/cal/')
+      self.image_path = askopenfilename(title = "Open File", initialdir='/var/www/html/out/cal/', filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+      felm = self.image_path.split("/")
+      file_name = felm[-1]
+      cmd = "cp " + self.image_path + " /var/www/html/out/cal/astrometry/" + file_name
+      os.system(cmd)
+      self.image_path = "/var/www/html/out/cal/astrometry/" + file_name
+      print (cmd)
       if len(self.image_path) > 0:
          self.image = cv2.imread(self.image_path)
          self.image = Image.fromarray(self.image)
@@ -413,6 +515,18 @@ class calibration_page:
    def OpenImage(self):
       self.image = self.select_image()
       self.new_image = self.image
+      self.cal_obj = MFTC.MFTCalibration()
+      self.cal_obj.new_image = self.image
+      self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+      print ("Cal Date: ", self.cal_time)
+
+      #ALTAZ
+      self.cal_obj.loc_lat = self.loc_lat 
+      self.cal_obj.loc_lon = self.loc_lon 
+      self.cal_obj.loc_alt = self.loc_alt 
+      self.cal_obj.cal_time = self.cal_time 
+
+
       self.filename_label_value.set( self.image_path)
       self.active_image = "original"
       print ("PATH:", self.image_path)

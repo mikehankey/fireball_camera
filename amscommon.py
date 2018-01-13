@@ -30,7 +30,6 @@ def read_config(config_file = ""):
       #Find first index of =
       c = line.index('=')
       config[line[0:c]] = line[c+1:]
-   
     try:  
        test = config['hd'] 
     except:

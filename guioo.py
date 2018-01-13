@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import subprocess
 import os
 import numpy as np
 from tkinter import *
@@ -8,20 +9,28 @@ from PIL import ImageDraw
 from PIL import ImageTk
 from PIL import ImageEnhance
 from tkinter.filedialog import askopenfilename
+from tkinter.ttk import *
 import cv2
 
 # OOO 
 # 
 # Break down the problem into fundemental groups (classes) 
 # 
-# Main Interface
+# Main GUI Interface : Class = FireballGUI
+# Settings / Config
+#  - Locations, Devices (lat/long/alt/center FOV)
 # Calibration Image Handling
 #   finding stars
 #   solving the plate
+#   ra/dec => az/mapping (and time variable / tie in location)
 # Video Handling
 #   extracting all frames
 #   making stack of frames
 #   reducing stack with calibration
+#   calibrate seconds / select event second frame
+#   determine first frame
+#   determine last frame
+#   count total frames and event duration
 
 class Calibration:
    def __init__(self):
@@ -66,6 +75,69 @@ class Calibration:
 
    def update_star_drawing(self, image):
       self.star_drawing = image
+
+   def find_radec_from_xy (self, x, y):
+      cmd = "/usr/local/astrometry/bin/wcs-xy2rd -w " + self.wcs_file + " -x " + str(x) + " -y " + str(y)
+      output = subprocess.check_output(cmd, shell=True)
+      (t, radec) = output.decode("utf-8").split("RA,Dec")
+      radec = radec.replace('(', '')
+      radec = radec.replace(')', '')
+      radec = radec.replace('\n', '')
+      radec = radec.replace(' ', '')
+      ra, dec = radec.split(",")
+      print ("ASTR RA/DEC: ", ra,dec)
+      radd = float(ra)
+      decdd = float(dec)
+      ra= self.RAdeg2HMS(ra)
+      #(h,m,s) = ra.split(":")
+      #ra = h + " h " + m + " min"
+      dec = self.Decdeg2DMS(dec)
+      return(ra, dec, radd, decdd)
+
+   def Decdeg2DMS(self, Decin ):
+      Decin = float(Decin)
+      if(Decin<0):
+         sign = -1
+         dec  = -Decin
+      else:
+         sign = 1
+         dec  = Decin
+
+      d = int( dec )
+      dec -= d
+      dec *= 100.
+      m = int( dec*3./5. )
+      dec -= m*5./3.
+      s = dec*180./5.
+
+      if(sign == -1):
+         out = '-%02d:%02d:%06.3f'%(d,m,s)
+      else: 
+         out = '+%02d:%02d:%06.3f'%(d,m,s)
+      return out
+
+   def RAdeg2HMS(self, RAin ):
+      RAin = float(RAin)
+      if(RAin<0):
+         sign = -1
+         ra   = -RAin
+      else:
+         sign = 1
+         ra   = RAin
+
+      h = int( ra/15. )
+      ra -= h*15.
+      m = int( ra*4.)
+      ra -= m/4.
+      s = ra*240.
+
+      if(sign == -1):
+         out = '-%02d:%02d:%06.3f'%(h,m,s)
+      else: 
+         out = '+%02d:%02d:%06.3f'%(h,m,s)
+
+      return out
+
 
    def find_flux(self, x,y,size):
       box = (x-size,y-size,x+size,y+size)
@@ -120,8 +192,8 @@ class Calibration:
             avg_flux, max_flux = self.find_flux(int(px), int(py), 10)
             cv2.rectangle(np_color_image, (x,y), (x+w, y+h), (0,0,255),2)
             starlist_txt = str(px) + "," + str(py)
-            #self.starlist_value = Label(self.master, text=starlist_txt , bg="gray80")
-            #self.starlist_value.grid(row=6+i, column=0)
+            #self.starlist_value = Label(self.master, text=starlist_txt  )
+            #self.starlist_value.grid(row=7+i, column=0)
             #self.starlist_value.extra="starlist"
             draw.point((px, py), 'red')
             self.starlist.append([x,y,w,h,avg_flux,max_flux])
@@ -166,7 +238,7 @@ class Calibration:
       # This one WORKS!
       #cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -N -C -G 600"
       #cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -N -B -b 60 -G 600"
-      cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -C -G 600"
+      cmd = "/usr/bin/jpegtopnm " + self.path + "|/usr/local/astrometry/bin/plot-constellations -w " + self.wcs_file + " -o " + self.constellation_file + " -i - -C -B -b 200 -v -f 0 -G 600"
 
       print (cmd)
       os.system(cmd)
@@ -187,14 +259,18 @@ class FireballGUI:
    def __init__(self, master):
       self.master = master
       master.title("Mike's Fireball Tools")
+      nb = Notebook(master)
+
+      master_frame = Frame (nb, name='master frame')
+      Label(master_frame, text='master frame').pack(side=LEFT)
 
       self.path = None
       self.image = None
       self.new_image = None
       self.star_image = None
       self.star_drawing= None
+      self.annotated_image = None
       self.starlist_array = [] 
-
 
       # Menu
       menu = Menu(master)
@@ -203,6 +279,8 @@ class FireballGUI:
       master.bind("<ButtonPress-1>", self.ms_create_rect)
       master.bind("<ButtonRelease-1>", self.ms_create_rect)
       master.extra="main app"
+
+
 
       self.cal_obj = Calibration()
 
@@ -213,44 +291,91 @@ class FireballGUI:
       filemenu.add_separator()
       filemenu.add_command(label="Exit", command=master.quit)
 
-      brightness_slider = Scale(master, from_=-100, to=100, orient=HORIZONTAL, command=self.updateBrightness, bg="gray80")
-      brightness_slider.grid(row=1, column=1, padx=2, pady=2 )
+      # Image Canvas
+      canvas_width = 645 
+      canvas_height = 365 
+      self.image_canvas = Canvas(master, width=canvas_width, height=canvas_height, cursor="cross")
+      self.image_canvas.grid(row=0, column=0, padx=20, pady=20, columnspan=5)
+      self.image_canvas.extra = "image_canvas"
+
+      self.image_canvas.bind('<Button-1>', self.mouseClick)
+
+
+      # Sliders
+      brightness_slider = Scale(master, from_=-100, to=100, orient=HORIZONTAL, command=self.updateBrightness )
+      brightness_slider.grid(row=2, column=1, padx=2, pady=2 )
       brightness_slider.extra="Brightness Slider"
-      brightness_label = Label(master, text="Brightness", bg="gray80")
-      brightness_label.grid(row=1, column=0)
+      brightness_label = Label(master, text="Brightness" )
+      brightness_label.grid(row=2, column=0)
       brightness_label.extra="Brightness Label"
 
-      contrast_slider = Scale(master, from_=-100, to=100, orient=HORIZONTAL, command=self.updateContrast, bg="gray80")
-      contrast_slider.grid(row=2, column=1, padx=2, pady=2 )
+      contrast_slider = Scale(master, from_=-100, to=100, orient=HORIZONTAL, command=self.updateContrast )
+      contrast_slider.grid(row=3, column=1, padx=2, pady=2 )
       contrast_slider.extra="Contrast Slider"
-      contrast_label = Label(master, text="Contrast", bg="gray80")
-      contrast_label.grid(row=2, column=0)
+      contrast_label = Label(master, text="Contrast" )
+      contrast_label.grid(row=3, column=0)
       contrast_label.extra = "contrast"
       brightness_label.extra="Contrast Label"
 
-      #button = Button(master, text="Find Stars", fg="red", command=self.detect_all_stars, bg="gray80")
-      button = Button(master, text="Find Stars", fg="red", command=self.find_stars_handler, bg="gray80")
-      button.grid(row=4, column=0, padx=2, pady=2)
+      # Buttons
+      #button = Button(master, text="Find Stars", command=self.detect_all_stars )
+      button = Button(master, text="Find Stars", command=self.find_stars_handler )
+      button.grid(row=5, column=0, padx=2, pady=2)
       button.extra = "find stars"
 
-      button = Button(master, text="Solve Field", fg="red", command=self.solve_field_handler, bg="gray80")
-      button.grid(row=4, column=1, padx=2, pady=2)
+      button = Button(master, text="Solve Field", command=self.solve_field_handler )
+      button.grid(row=5, column=1, padx=2, pady=2)
+      button.extra = "solve field"
+ 
+      button = Button(master, text="Original",  command=self.show_original )
+      button.grid(row=1, column=0, padx=2, pady=2)
       button.extra = "solve field"
 
-      xy_label = Label(master, text="x,y", bg="gray80")
-      xy_label.grid(row=3, column=0)
-      xy_label.extra = "xy"
-      xy_value = Label(master, text="0,0", bg="gray80")
-      xy_value.extra = "xy"
-      xy_value.grid(row=3, column=1)
+      button = Button(master, text="Enhanced",  command=self.show_enhanced )
+      button.grid(row=1, column=1, padx=2, pady=2)
+      button.extra = "solve field"
 
-      starlist_label = Label(master, text="starlist", bg="gray80")
-      starlist_label.grid(row=5, column=0)
-      starlist_label.extra = "starlist"
+      button = Button(master, text="StarMap",  command=self.show_starmap )
+      button.grid(row=1, column=2, padx=2, pady=2)
+      button.extra = "solve field"
 
-      starlist_value = Label(master, text="", bg="gray80")
-      starlist_value.extra = "starlist"
-      starlist_value.grid(row=6, column=0)
+
+      # Display Labels / Areas
+      #xy_label = Label(master, text="x,y" )
+      #xy_label.grid(row=4, column=0)
+      #xy_label.extra = "xy"
+      #xy_value = Label(master, text="0,0" )
+      #xy_value.extra = "xy"
+      #xy_value.grid(row=4, column=1)
+
+      #starlist_label = Label(master, text="starlist" )
+      #starlist_label.grid(row=6, column=0)
+      #starlist_label.extra = "starlist"
+
+      #starlist_value = Label(master, text="" )
+      #starlist_value.extra = "starlist"
+      #starlist_value.grid(row=7, column=0)
+
+   def mouseClick(self, event):
+      print("Mouse Click")
+      x,y = event.x, event.y
+      print (event.widget.extra)
+      if event.widget.extra == "image_canvas":
+         if self.cal_obj.annotated_image != 'None':
+            print("clicked at ", x,y)
+            (ra, dec, radd, decdd) = self.cal_obj.find_radec_from_xy(x,y)
+            print ("ra,dec: ", ra, dec, radd, decdd)
+
+
+   def show_original(self):
+      self.displayImage(self.image)
+
+   def show_starmap(self):
+      self.displayImage(self.cal_obj.annotated_image)
+
+   def show_enhanced(self):
+      self.displayImage(self.new_image)
+
 
    def find_stars_handler(self):
       print ("find stars handler called")
@@ -263,7 +388,7 @@ class FireballGUI:
       self.cal_obj.update_path(self.path)
       self.cal_obj.solve_field()
       #self.displayImage(self.cal_obj.star_drawing)
-      self.image = self.cal_obj.annotated_image
+      self.annotated_image = self.cal_obj.annotated_image
       self.displayImage(self.cal_obj.annotated_image)
 
 
@@ -271,7 +396,7 @@ class FireballGUI:
 
    def motion(self,event):
       x,y = event.x, event.y
-      if self.image != None and event.widget.extra == "pic":
+      if self.image != None and event.widget.extra == "image_canvas":
          box = (x-10,y-10,x+10,y+10)
 
          crop_box = self.new_image.crop(box)
@@ -299,11 +424,15 @@ class FireballGUI:
 
          xy_val = str(x) + ", " + str(y) + ", " + str(int(avg_px)) + ", " + str(ax_pixel)
          xy_value = Label(self.master, text=xy_val)
-         xy_value.grid(row=3, column=1)
+         xy_value.grid(row=4, column=1)
          xy_value.extra = "xyv"
 
       #   print ("AXPIX", ax_pixel)
          self.displayImageCrop(crop_box)
+      else: 
+         xy_value = Label(self.master, text="                       ")
+         xy_value.grid(row=4, column=1)
+         xy_value.extra = "xy"
 
    def ms_xaxis(self, event):
       return (event.x - 1), (event.y - 1) # x1, y1
@@ -325,11 +454,11 @@ class FireballGUI:
       return(self.image)
 
    def updateBrightness(self, value):
-      if int(value) < 0:
-         value = int(value) * -1
+      if int(float(value)) < 0:
+         value = int(float(value)) * -1
          new_value = 1 - (value / 100)
       else:
-         new_value = (int(value) / 10) + 1
+         new_value = (int(float(value)) / 10) + 1
       if value == 0:
          new_value = 1
 
@@ -339,11 +468,11 @@ class FireballGUI:
          self.displayImage(self.new_image)
 
    def updateContrast(self, value):
-      if int(value) < 0:
-         value = int(value) * -1
+      if int(float(value)) < 0:
+         value = int(float(value)) * -1
          new_value = 1 - (value / 100)
       else:
-         new_value = (int(value) / 10) + 1
+         new_value = (int(float(value)) / 10) + 1
       if value == 0:
          new_value = 1
 
@@ -353,7 +482,7 @@ class FireballGUI:
          self.displayImage(self.new_image)
 
    def OpenImage(self):
-      image = self.select_image()
+      self.image = self.select_image()
       self.new_image = self.image
 
 
@@ -363,7 +492,7 @@ class FireballGUI:
       else:
          print ("starlist empty")
 
-      self.displayImage(image)
+      self.displayImage(self.image)
       self.updateContrast(0)
 
 
@@ -375,11 +504,12 @@ class FireballGUI:
       imageFrame.extra = "pic"
 
    def displayImage(self, image):
-      tkimage = ImageTk.PhotoImage(image)
-      imageFrame = Label(image=tkimage, bg="gray80")
-      imageFrame.image = tkimage
-      imageFrame.grid(row=0, column=0, padx=10, pady=10, columnspan=5)
-      imageFrame.extra = "pic"
+      self.tkimage = ImageTk.PhotoImage(image)
+      self.image_canvas.create_image(320,180, image=self.tkimage )
+      #imageFrame = Label(image=tkimage )
+      #imageFrame.image = tkimage
+      #imageFrame.grid(row=0, column=0, padx=10, pady=10, columnspan=5)
+      #imageFrame.extra = "pic"
 
    def OpenVideo(self):
       print ("BLAH")

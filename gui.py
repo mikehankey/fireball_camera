@@ -14,6 +14,17 @@ image = None
 new_image = None 
 starlist_array = None 
 
+def ms_xaxis(event):
+   return (event.x - 1), (event.y - 1) # x1, y1
+
+def ms_yaxis(event):
+   return (event.x + 1), (event.y + 1) # x2, y2
+
+def ms_create_rect(event):
+   x1, y1 = ms_xaxis(event)
+   x2, y2 = ms_yaxis(event)
+   master.create_rectangle(x1,y1,x2,y2,fill='Black')
+
 def select_image():
    global path
    global image
@@ -133,7 +144,8 @@ def solve_field():
       x2 = int(x)+2
       y2 = int(y)+2
       draw.ellipse((x1, y1, x2, y2), fill=255)
-      fits_data = str(x) + "," + str(y) + "\n"
+      avg_flux, max_flux = find_flux(int(x), int(y), 10)
+      fits_data = str(x) + "," + str(y) + "," + str(avg_flux) + "," + str(max_flux) + "\n"
       fp.write(fits_data)
    fp.close()
    displayImage(star_drawing)
@@ -147,17 +159,18 @@ def solve_field():
    print (cmd)
    os.system(cmd)
 
-## STOPPED HERE DRUNK ##
-def find_flux(x,y):
-   box = (x-10,y-10,x+10,y+10)
+def find_flux(x,y,size):
+   box = (x-size,y-size,x+size,y+size)
   
-   crop_box = new_image.crop(box) 
-   crop_box = crop_box.resize((75,75), Image.ANTIALIAS)
-   gray_crop_box = crop_box.convert('L')
+   flux_box = new_image.crop(box) 
+   gray_flux_box = flux_box.convert('L')
       
-   np_crop_box = np.asarray(gray_crop_box)
-   np_crop_box = cv2.GaussianBlur(np_crop_box, (21, 21), 0)
-   avg_px = np.average(np_crop_box) 
+   np_flux_box = np.asarray(gray_flux_box)
+   #np_flux_box = cv2.GaussianBlur(np_flux_box, (21, 21), 0)
+   avg_flux = np.average(np_flux_box) 
+   max_flux = np.amax(np_flux_box)
+
+   return (avg_flux, max_flux)
 
 
 def motion(event):
@@ -241,6 +254,7 @@ def OpenVideo():
 
 
 # Main window
+global master
 master = Tk()
 master.wm_title("Fireball Camera Manager")
 
@@ -248,7 +262,10 @@ master.wm_title("Fireball Camera Manager")
 menu = Menu(master)
 master.config(menu=menu)
 master.bind('<Motion>', motion)
-master.bind('<Button-1>', mouseClick)
+#master.bind('<Button-1>', mouseClick)
+master.bind("<ButtonPress-1>", ms_create_rect)
+master.bind("<ButtonRelease-1>", ms_create_rect)
+
 
 master.extra="main app"
 
