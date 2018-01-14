@@ -76,6 +76,20 @@ class MFTCalibration:
       self.cal_time = None
       self.location = None
 
+   def load_solution():
+      # Actual Images 
+      # detected_stars -- marked up image (show all detections, found in catalog, used in solution, mapped to x,y)
+      # starmap -- astrometry.net star map
+      # original image
+      # lens distortion image
+
+      # Image file names
+ 
+      # lists, values, totals and status
+
+      # AZ Information
+      # astropy objects Earthlocation
+
    def parse_file_date(self, full_file_name):
       stuff = full_file_name.split("/")
       file_name = stuff[-1]
@@ -502,6 +516,7 @@ class MFTCalibration:
       self.constellation_file = self.path.replace(".jpg", "-sd-grid.png")
       self.star_data_file = self.path.replace(".jpg", "-sd-stardata.txt")
       self.solved_file = self.path.replace(".jpg", "-sd.solved")
+      self.az_out_file = self.path.replace(".jpg", "-altaz.txt")
 
 
       axy = self.path.replace(".jpg", ".axy")
@@ -557,20 +572,29 @@ class MFTCalibration:
          # ALT AZ
          (alt,az) = self.convert_xy_to_altaz(320,180)
          print ("CENTER ALTAZ:", alt, az)
+         data = "CENTER,320,180," + str(az) + "," + str(alt) + "\n"
+         if alt < 10:
+            self.solve_success = 0
 
          (alt,az) = self.convert_xy_to_altaz(0,0)
          print ("TL ALTAZ:", alt, az)
+         data = data + "TL,0,0," + str(az) + "," + str(alt) + "\n"
 
          (alt,az) = self.convert_xy_to_altaz(640,0)
          print ("TR ALTAZ:", alt, az)
+         data = data + "TR,640,0," + str(az) + "," + str(alt) + "\n"
 
          (alt,az) = self.convert_xy_to_altaz(0,360)
          print ("BL ALTAZ:", alt, az)
+         data = data + "BL,0,360," + str(az) + "," + str(alt) + "\n"
 
          (alt,az) = self.convert_xy_to_altaz(640,360)
          print ("BR ALTAZ:", alt, az)
-  
-         self.draw_az_grid()
+         data = data + "BR,640,360," + str(az) + "," + str(alt) + "\n"
+         azout = open(self.az_out_file, "w")
+         azout.write(data)
+         azout.close() 
+         #self.draw_az_grid()
 
    def draw_az_grid(self):
       first_list = []
@@ -590,6 +614,9 @@ class MFTCalibration:
 
    def convert_xy_to_altaz(self, x,y):
       (ra, dec, radd, decdd) = self.find_radec_from_xy_pya(x, y)
+      radd = self.convert_dms_to_ddms(radd)
+      decdd = self.convert_dms_to_ddms(decdd)
+      #print ("TARGET: ", radd, decdd)
       self.target = SkyCoord(ra=radd*u.degree, dec=decdd*u.degree, frame='icrs')
       altaz = self.target.transform_to(AltAz(location=self.location, obstime=Time(self.cal_time)))
       alt = self.convert_dms_to_ddms(str(altaz.alt))
@@ -597,10 +624,8 @@ class MFTCalibration:
       return(alt,az)
 
    def convert_dms_to_ddms(self, dms):
-         print(dms)
          temp = str(dms)
          d,m,s,x = re.split("d|m|s", temp)
-         print (d,m,s)
          s = float(s)/60
          m = (int(m)/60) + s
          d = int(d) + float(m)

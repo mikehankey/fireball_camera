@@ -271,18 +271,41 @@ class calibration_page:
    def button_show_fireball(self):
       print ("Show Fireball")
       self.active_image = 'fireball'
+
    def button_solve_field(self):
+      result = None
       print ("solve field handler called")
       self.cal_obj.odds_to_solve = self.e2.get()
       self.cal_obj.code_tolerance = self.e3.get()
       self.cal_obj.update_path(self.image_path)
-      self.cal_obj.solve_field()
-      #self.displayImage(self.cal_obj.star_drawing)
-      #self.annotated_image = self.cal_obj.annotated_image
-      self.starmap_image= self.cal_obj.annotated_image
-      self.displayImage(self.cal_obj.annotated_image)
-      self.active_image = 'starmap'
-      self.update_star_id_image()
+
+
+      self.cal_obj.solved_file = self.image_path.replace(".jpg", "-sd.solved")
+      print ("solved? : ", self.cal_obj.solved_file)
+      if os.path.isfile(self.cal_obj.solved_file):
+         print ("already solved)")
+         self.solve_success = 1
+
+         #root.wait_window(d.top)
+         root.update_idletasks()
+         while result is None:
+            result = tk.messagebox.askokcancel("Field already solved.", "This field has already been solved. Do you want to solve it again?")
+
+            #self.displayImage(self.cal_obj.star_drawing)
+            #self.annotated_image = self.cal_obj.annotated_image
+         if result == 1:
+            self.cal_obj.solve_field()
+            self.starmap_image= self.cal_obj.annotated_image
+            self.displayImage(self.cal_obj.annotated_image)
+            self.active_image = 'starmap'
+            self.update_star_id_image()
+      else:
+         self.cal_obj.solve_field()
+         self.starmap_image= self.cal_obj.annotated_image
+         self.displayImage(self.cal_obj.annotated_image)
+         self.active_image = 'starmap'
+         self.update_star_id_image()
+
 
 
    def button_find_stars(self):
@@ -506,6 +529,14 @@ class calibration_page:
       os.system(cmd)
       self.image_path = "/var/www/html/out/cal/astrometry/" + file_name
       print (cmd)
+      
+      solved_file = self.image_path.replace(".jpg", "-sd.solved")
+
+      if os.path.isfile(solved_file):
+         print ("already solved)")
+
+         result = tk.messagebox.askokcancel("Image already solved.", "This image has already been solved. Do you want to load the know solution? Press cancel to solve it again?")
+
       if len(self.image_path) > 0:
          self.image = cv2.imread(self.image_path)
          self.image = Image.fromarray(self.image)
