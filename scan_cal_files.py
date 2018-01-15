@@ -86,10 +86,10 @@ def calibrate_file(image_path):
 cal_obj = MFTC.MFTCalibration()
 cal_obj.debug = 0
 
-characterize_all()
+#characterize_all()
 
 
-exit()
+#exit()
 dir = "/var/www/html/out/cal/"
 files = glob.glob(dir + "*")
 print ("Total files: ", len(files))

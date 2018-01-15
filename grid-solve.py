@@ -201,7 +201,119 @@ def draw_az_grid(file):
 
 
    cv2.imwrite("azgrid.png", az_grid)      
-      
+
+def az_grid_borders(file):      
+
+   cam_num = 1
+   config_file = "conf/config-" + str(cam_num) + ".txt"
+   config = read_config(config_file)
+   loc_lat = config['device_lat']
+   loc_lon = config['device_lng']
+   loc_alt = config['device_alt']
+
+   W = WCS(file)
+   image_file = file.replace("-sd.new", ".jpg")
+   cal_time = parse_file_date(image_file)
+
+   location = EarthLocation.from_geodetic(float(loc_lon)*u.deg,float(loc_lat)*u.deg,float(loc_alt)*u.m)
+
+   az_grid = cv2.imread(image_file)
+   az_grid_np = cv2.cvtColor(az_grid, cv2.COLOR_BGR2GRAY)
+
+   mypass = 0
+   print ("Grid y is ", az_grid_np.shape[0])
+   print ("Grid x is ", az_grid_np.shape[1])
+
+   last_az_pp = 0
+   last_at_pp = 0
+   avg_az_pp = 0
+   avg_at_pp = 0
+   az_pp = 0
+   at_pp = 0
+   last_alt= 0
+   last_az  = 0
+   last_x  = None
+   last_y  = None
+
+   # solve left 
+   x = 0
+   for y in range(az_grid_np.shape[0]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("LEFT-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("LEFT-AZ", x,y,oaz,oalt)
+
+   # solve right 
+   x = az_grid_np.shape[1]
+   for y in range(az_grid_np.shape[0]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("RIGHT-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("RIGHT-AZ", x,y,oaz,oalt)
+
+   # solve top 
+   y = 0
+   for x in range(az_grid_np.shape[1]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("TOP-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("TOP-AZ", x,y,oaz,oalt)
+   # solve bottom 
+   y = az_grid.shape[0]
+   for x in range(az_grid_np.shape[1]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("BOTTOM-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("BOTTOM-AZ", x,y,oaz,oalt)
+
+   # solve middle 
+   x = int(az_grid.shape[0] * .5)
+   for y in range(az_grid_np.shape[1]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("MID-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("MID-AZ", x,y,oaz,oalt)
+
+   # solve middle left
+   x = int(az_grid.shape[0] * .33333)
+   for y in range(az_grid_np.shape[1]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("MIDL-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("MIDL-AZ", x,y,oaz,oalt)
+
+   # solve middle right 
+   x = int(az_grid.shape[0] * .66666667)
+   for y in range(az_grid_np.shape[1]):
+      (oalt,oaz) = convert_xy_to_altaz(x,y,W,location,cal_time)
+      remat = 10 - (oalt % 10)
+      remaz = 10 - (oaz % 10)
+      if remat > 9.3:
+         print ("MIDR-ALT", x,y,oaz,oalt)
+      if remaz > 9.3:
+         print ("MIDR-AZ", x,y,oaz,oalt)
+
+
+
+
       
 def is_ten_close(x,y,alt,az, W, location, cal_time):
    alt_rem = alt % 10
@@ -359,5 +471,6 @@ def convert_dms_to_ddms(dms):
 
 
 file = "/var/www/html/out/cal/astrometry/20171230014758-1-sd.new"
-draw_az_grid(file)
+az_grid_borders(file)
+#draw_az_grid(file)
 #find_radec_from_xy_pya(W, 0,0)

@@ -23,6 +23,21 @@ def draw_line(az_grid, alt_cords):
    ret = cv2.polylines(az_grid, [np.int32(pts)], 0, (255,255,255), 1,1)
 #   print (ret)
 
+
+def load_az_grid_borders():
+   file = open('azgrid.txt', "r")
+   lc = 1
+   grid_points = []
+   for line in file:
+      type, x,y,az,alt = line.split(" ")
+      x = int(float(x))
+      y = int(float(y))
+      az = int(float(az))
+      alt = int(float(alt))
+      grid_points.append((type,x,y,az,alt))
+   #print (grid_points)
+   return(grid_points)
+
 def load_az_grid():
 
    file = open('azgrid.txt', "r")
@@ -32,42 +47,43 @@ def load_az_grid():
       junk = line.split(" ")
       az_line = 0
       alt_line = 0
-      if len(junk) == 5:
-         rem, x,y,az,alt = line.split(" ")
-         x = int(float(x))
-         y = int(float(y))
-         az = int(float(az))
-         alt = int(float(alt))
-         grid_points.append(("y",x,y,az,alt))
-      else:
-         x,y,az,alt = line.split(" ")
-         x = int(float(x))
-         y = int(float(y))
-         az = int(float(az))
-         alt = int(float(alt))
-         grid_points.append(("x",x,y,az,alt))
+      type, x,y,az,alt = line.split(" ")
+      x = int(float(x))
+      y = int(float(y))
+      az = int(float(az))
+      alt = int(float(alt))
+      grid_points.append((type,x,y,az,alt))
    return(grid_points)
 
  
 def group_points(grid_points, mytype, min,max):
-   az_cords = []
-   alt_cords = []
+   az_cords_left = []
+   alt_cords_left = []
+   az_cords_right = []
+   alt_cords_right = []
    for line in grid_points:
       type, x, y, az, alt = line
-      if type == "x":
+      if type == "LEFT-AZ":
          if int(min) <= int(float(az)) <= int(max):
-            az_cords.append([int(x),int(y)])
-      else:
+            az_cords_left.append([int(x),int(y)])
+      if type == "RIGHT-AZ":
+         if int(min) <= int(float(az)) <= int(max):
+            az_cords_right.append([int(x),int(y)])
+      if type == "LEFT-ALT":
          if int(min) <= int(float(alt)) <= int(max):
-            #print ("ADDING Y: alt,az", alt,az, x,y)
-            alt_cords.append([int(x),int(y)])
+            alt_cords_left.append([int(x),int(y)])
+      if type == "RIGHT-ALT":
+         if int(min) <= int(float(alt)) <= int(max):
+            alt_cords_right.append([int(x),int(y)])
 
-   if mytype == "x": 
-      #print("RETURN AZ", type)
-      return(az_cords)
-   else:  
-      #print("RETURN ALT")
-      return(alt_cords)
+   if mytype == "LEFT-ALT": 
+      return(alt_cords_left)
+   if mytype == "RIGHT-ALT": 
+      return(alt_cords_right)
+   if mytype == "LEFT-AZ": 
+      return(az_cords_left)
+   if mytype == "RIGHT-AZ": 
+      return(az_cords_right)
 
 
 
@@ -77,6 +93,17 @@ img_file = "/var/www/html/out/cal/astrometry/20171230014758-1.jpg"
 az_grid = cv2.imread(img_file)
 az_grid_gray = cv2.cvtColor(az_grid, cv2.COLOR_BGR2GRAY)
 
+grid_points = load_az_grid_borders()
+
+left_points = group_points(grid_points, "LEFT-ALT", 30-1, 30+1)
+avg_left_x = np.average(left_points, axis = 0)
+print ("AVG LEFT SIDE X,Y FOR ELEVATION 30:", avg_left_x)
+
+right_points = group_points(grid_points, "RIGHT-ALT", 30-1, 30+1)
+avg_right_x = np.average(right_points, axis = 0)
+print ("AVG RIGHT SIDE X,Y FOR ELEVATION 30:", avg_right_x)
+
+exit()
 grid_points = load_az_grid()
 
 grid_points = np.array(grid_points)

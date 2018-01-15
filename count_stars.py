@@ -151,7 +151,6 @@ cmd = "/usr/bin/python /usr/local/astrometry/bin/text2fits.py -f \"ff\" -s \",\"
 print (cmd)
 os.system(cmd)
 
-cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
-#cmd = "/usr/local/astrometry/bin/solve-field " + xyfits + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
+cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95 --no-remove-lines --x-column x --y-column y"
 print (cmd)
 os.system(cmd)

@@ -81,7 +81,7 @@ def nighttime_settings( config):
    time.sleep(1)
    fix_ir(config)
    ### BLC 
-   set_special(config, "1017", "0")
+   set_special(config, "1017", "30")
    #set_setting(config, "Brightness", config['Brightness'])
    #set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])

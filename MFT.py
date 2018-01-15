@@ -10,10 +10,11 @@ import os
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw
+from PIL import ImageFont
 from PIL import ImageTk
 from PIL import ImageEnhance
 from tkinter.filedialog import askopenfilename
-import tkSimpleDialog as tks
+#import tkSimpleDialog as tks
 import cv2
 
 class calibration_page:
@@ -88,16 +89,9 @@ class calibration_page:
 
       # FRAME 3 - Action Buttons
       self.cal_frame3 = tk.Frame(self.master, bg='blue', height=50, width=650)
-      self.find_stars = tk.Button(self.cal_frame3, text='Find Stars', command=self.button_find_stars).pack(padx=1, pady=1, side=tk.LEFT)
-      self.solve_field = tk.Button(self.cal_frame3, text='Solve Field', command=self.button_solve_field).pack(padx=1, pady=1, side=tk.LEFT)
-      self.show_original = tk.Button(self.cal_frame3, text='Original', command=self.button_show_original).pack(padx=1, pady=1, side=tk.LEFT)
-      self.show_enhanced = tk.Button(self.cal_frame3, text='Enhanced', command=self.button_show_enhanced).pack(padx=1, pady=1, side=tk.LEFT)
-      self.show_starmap= tk.Button(self.cal_frame3, text='Starmap', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
-      self.show_fireball = tk.Button(self.cal_frame3, text='Add Mask', command=self.button_add_mask).pack(padx=1, pady=1, side=tk.LEFT)
-      self.add_stars = tk.Button(self.cal_frame3, text='Add Stars', command=self.button_add_stars).pack(padx=1, pady=1, side=tk.LEFT)
-      self.cal_frame3.pack_propagate(0)
+      self.cal_frame3_unsolved()
       self.cal_frame3.pack(side=tk.TOP)
-
+      self.cal_frame3.pack_propagate(0)
 
       # FRAME 4 
 
@@ -125,7 +119,6 @@ class calibration_page:
       self.e3 = tk.Entry(self.fcfl3, textvariable=self.code_tolerance)
 
       self.e3.insert(0, ".3")
-      #self.e3.insert(0, self.code_tolerance)
       self.e3.pack(side=tk.TOP)
       self.fcfl3.pack(side=tk.TOP)
 
@@ -179,6 +172,33 @@ class calibration_page:
 
       self.cal_frame4.pack_propagate(0)
       self.cal_frame4.pack(side=tk.TOP)
+
+   def cal_frame3_unsolved(self):
+      self.button_container = tk.Frame(self.cal_frame3)
+      # FRAME 3 - Action Buttons
+      self.find_stars = tk.Button(self.button_container, text='Find Stars', command=self.button_find_stars).pack(padx=1, pady=1, side=tk.LEFT)
+      self.solve_field = tk.Button(self.button_container, text='Solve Field', command=self.button_solve_field).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_original = tk.Button(self.button_container, text='Original', command=self.button_show_original).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_enhanced = tk.Button(self.button_container, text='Enhanced', command=self.button_show_enhanced).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_starmap= tk.Button(self.button_container, text='Starmap', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_fireball = tk.Button(self.button_container, text='Add Mask', command=self.button_add_mask).pack(padx=1, pady=1, side=tk.LEFT)
+      self.add_stars = tk.Button(self.button_container, text='Add Stars', command=self.button_add_stars).pack(padx=1, pady=1, side=tk.LEFT)
+      self.button_container.pack(side=tk.LEFT)
+
+   def cal_frame3_solved(self):
+      # FRAME 3 - Action Buttons
+      self.button_container = tk.Frame(self.cal_frame3)
+      # FRAME 3 - Action Buttons
+      self.show_original = tk.Button(self.button_container, text='Original', command=self.button_show_original).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_enhanced = tk.Button(self.button_container, text='Enhanced', command=self.button_show_enhanced).pack(padx=1, pady=1, side=tk.LEFT)
+      self.find_stars = tk.Button(self.button_container, text='Marked Stars', command=self.button_show_all_stars).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_starmap= tk.Button(self.button_container, text='Constellations', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
+      self.show_starmap= tk.Button(self.button_container, text='Star Chart', command=self.button_show_starmap).pack(padx=1, pady=1, side=tk.LEFT)
+      self.solve_field = tk.Button(self.button_container, text='Resolve', command=self.button_solve_field).pack(padx=1, pady=1, side=tk.LEFT)
+      self.button_container.pack(side=tk.LEFT)
+
+
+
 
    def motion(self,event):
       x,y = event.x, event.y
@@ -307,6 +327,9 @@ class calibration_page:
          self.update_star_id_image()
 
 
+   def button_show_all_stars(self):
+      print ("Show all stars")
+      self.update_star_id_image()
 
    def button_find_stars(self):
 
@@ -407,8 +430,8 @@ class calibration_page:
          y = int(float(y))
          cx = int(float(cx))
          cy = int(float(cy))
-         cv2.circle(star_id_image_np, (x,y), 5, (255,255,255), 1)
-         cv2.circle(star_id_image_np, (cx,cy), 5, (0,255,0), 1)
+         cv2.circle(star_id_image_np, (x,y), 3, (255,255,255), 1)
+         cv2.circle(star_id_image_np, (cx,cy), 4, (0,255,0), 1)
          named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
          fp.write(named_star_data + "\n")
       print ("Not found list is: ", len(self.cal_obj.not_found_stars))
@@ -418,13 +441,31 @@ class calibration_page:
          print("Not found list: ", x,y, myra, mydec)
          x = int(float(x))
          y = int(float(y))
-         cv2.circle(star_id_image_np, (x,y), 5, (255,0,0), 1)
+         cv2.circle(star_id_image_np, (x,y), 2, (255,0,0), 1)
 
       fp.close()
       self.star_id_image = Image.fromarray(star_id_image_np)
-      yo = Image.fromarray(star_id_image_np)
-      self.active_image = 'star_id'
-      self.displayImage(yo)
+      draw = ImageDraw.Draw(self.star_id_image)
+      font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
+
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.named_stars:
+         x = int(float(cx))
+         y = int(float(cy))
+         nn = str(name) + " " + str(cons)
+         draw.text((x+10,y-10), str(nn), font = font, fill=(255,255,255)) 
+
+      for (x,y,w,h,avg_flux,max_flux) in self.cal_obj.starlist:
+         x = x + (w/2)
+         y = y + (h/2)
+         x1 = int(x)-1
+         y1 = int(y)-1
+         x2 = int(x)+1
+         y2 = int(y)+1
+         draw.ellipse((x1, y1, x2, y2), fill=255)
+
+            
+
+      self.displayImage(self.star_id_image)
 
    def update_mask_image(self):
       self.mask_image = self.image.convert('L')
@@ -536,6 +577,44 @@ class calibration_page:
          print ("already solved)")
 
          result = tk.messagebox.askokcancel("Image already solved.", "This image has already been solved. Do you want to load the know solution? Press cancel to solve it again?")
+         if result is True:
+            self.new_image = self.image
+            self.cal_obj = MFTC.MFTCalibration()
+            self.cal_obj.update_path(self.image_path)
+            self.cal_obj.new_image = self.image
+            self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+            self.cal_obj.load_solution() 
+            #print(self.solve_field)
+            #self.hide_widget(self.solve_field)
+            #self.cal_frame3.destroy()
+            self.button_container.pack_forget()
+
+            self.cal_frame3_solved()
+            self.starmap_image= self.cal_obj.annotated_image
+         else: 
+            self.new_image = self.image
+            self.cal_obj = MFTC.MFTCalibration()
+            self.cal_obj.update_path(self.image_path)
+            self.cal_obj.new_image = self.image
+            self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+            if self.starlist_array != None:
+               print("Clear starlist")
+               self.clear_starlist()
+            else:
+               print ("starlist empty")
+      # image has not been solved yet... 
+      else:
+         self.new_image = self.image
+         self.cal_obj = MFTC.MFTCalibration()
+         self.cal_obj.update_path(self.image_path)
+         self.cal_obj.new_image = self.image
+         self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+         if self.starlist_array != None:
+            print("Clear starlist")
+            self.clear_starlist()
+         else:
+            print ("starlist empty")
+
 
       if len(self.image_path) > 0:
          self.image = cv2.imread(self.image_path)
@@ -545,10 +624,6 @@ class calibration_page:
 
    def OpenImage(self):
       self.image = self.select_image()
-      self.new_image = self.image
-      self.cal_obj = MFTC.MFTCalibration()
-      self.cal_obj.new_image = self.image
-      self.cal_time = self.cal_obj.parse_file_date(self.image_path)
       print ("Cal Date: ", self.cal_time)
 
       #ALTAZ
@@ -562,11 +637,6 @@ class calibration_page:
       self.active_image = "original"
       print ("PATH:", self.image_path)
 
-      if self.starlist_array != None:
-         print("Clear starlist")
-         self.clear_starlist()
-      else:
-         print ("starlist empty")
 
       self.displayImage(self.image)
       self.updateContrast(0)

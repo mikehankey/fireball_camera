@@ -76,8 +76,73 @@ class MFTCalibration:
       self.cal_time = None
       self.location = None
 
-   def load_solution():
+   def save_solution(self):
+      #image, new_image, marked_image, star_drawing, annotated_image 
+      solution_file = self.path.replace(".jpg", "-solution.txt")
+      sf = open(solution_file, "w")
+      sf.write("path=\""+ str(self.path) + "\"\n")
+      sf.write("path_corr=\""+ str(self.path_corr) + "\"\n")
+      sf.write("path_solve_field_output=\""+ str(self.path_solve_field_output) + "\"\n")
+      sf.write("wcs_file=\""+ str(self.wcs_file) + "\"\n")
+      sf.write("star_data_file=\""+ str(self.star_data_file) + "\"\n")
+      sf.write("constellation_file=\""+ str(self.constellation_file) + "\"\n")
+
+      sf.write("loc_lat="+ str(self.loc_lat) + "\n")
+      sf.write("loc_lon="+ str(self.loc_lon) + "\n")
+      sf.write("loc_alt="+ str(self.loc_alt) + "\n")
+      sf.write("cal_time=\""+ str(self.cal_time) + "\"\n")
+      sf.write("star_thresh="+ str(self.star_thresh) + "\n")
+      sf.write("odds_to_solve="+ str(self.odds_to_solve) + "\n")
+      sf.write("code_tolerance="+ str(self.code_tolerance) + "\n")
+
+
+
+      sf.write("block_masks="+ str(self.block_masks) + "\n")
+
+      sf.write("my_stars="+ str(self.my_stars) + "\n")
+      sf.write("starlist="+ str(self.starlist) + "\n")
+      sf.write("man_sources="+ str(self.man_sources) + "\n")
+      sf.write("not_found_stars="+ str(self.not_found_stars) + "\n")
+      sf.write("found_stars="+ str(self.found_stars) + "\n")
+      sf.write("matching_stars="+ str(self.matching_stars) + "\n")
+      sf.write("named_stars="+ str(self.named_stars) + "\n")
+      sf.write("azinfo="+ str(self.azinfo) + "\n")
+      sf.close() 
+
+   def load_solution(self):
+
+
+
+      #self.displayImage(self.cal_obj.star_drawing)
+      #self.displayImage(self.cal_obj.annotated_image)
+      #self.displayImage(self.cal_obj.marked_image)
+
+      #GUI IMAGES
+      #self.displayImage(self.starmap_image)
+      #self.displayImage(self.mask_image)
+
+
+      solution_file = self.path.replace(".jpg", "-solution.txt")
+      print ("Loading", solution_file)
+      sf = open(solution_file, "r")
+      for lines in sf:
+         line, jk = lines.split("\n")
+         field, val = line.split("=")
+         print (field, val) 
+
+         exec("self."+line)
+      
       # Actual Images 
+      print ("opening cons:", self.constellation_file)
+
+      self.np_annotated_image = cv2.imread(self.constellation_file)
+      self.annotated_image = Image.fromarray(self.np_annotated_image)
+      
+      star_drawing_fn = self.path.replace(".jpg", "-sd.jpg")
+      self.np_star_drawing = cv2.imread(star_drawing_fn)
+      self.star_drawing = Image.fromarray(self.np_star_drawing)
+
+     
       # detected_stars -- marked up image (show all detections, found in catalog, used in solution, mapped to x,y)
       # starmap -- astrometry.net star map
       # original image
@@ -529,11 +594,14 @@ class MFTCalibration:
 
       for star in self.starlist:
          x,y,h,w,af,mf  = star
+         x = x + (w/2)
+         y = y + (h/2)
          x1 = int(x)-2
          y1 = int(y)-2
          x2 = int(x)+2
          y2 = int(y)+2
-         draw.ellipse((x1, y1, x2, y2), fill=255)
+         mff = mf+100
+         draw.ellipse((x1, y1, x2, y2), fill=mff)
          avg_flux, max_flux = self.find_flux(int(x), int(y), 10)
          fits_data = str(x) + "," + str(y) + "," + str(avg_flux) + "," + str(max_flux) + "\n"
          fp.write(fits_data)
@@ -568,32 +636,39 @@ class MFTCalibration:
          self.name_stars()
          #for (name, x,y, myra, mydec,ra, dec, mag) in self.found_stars:
          #self.make_star_plot()
-
+         self.azinfo = []
          # ALT AZ
          (alt,az) = self.convert_xy_to_altaz(320,180)
          print ("CENTER ALTAZ:", alt, az)
          data = "CENTER,320,180," + str(az) + "," + str(alt) + "\n"
+         self.azinfo.append(("C", 320,180,az,alt))
          if alt < 10:
             self.solve_success = 0
 
          (alt,az) = self.convert_xy_to_altaz(0,0)
          print ("TL ALTAZ:", alt, az)
          data = data + "TL,0,0," + str(az) + "," + str(alt) + "\n"
+         self.azinfo.append(("TL", 0,0,az,alt))
 
          (alt,az) = self.convert_xy_to_altaz(640,0)
          print ("TR ALTAZ:", alt, az)
          data = data + "TR,640,0," + str(az) + "," + str(alt) + "\n"
+         self.azinfo.append(("TR", 640,0,az,alt))
 
          (alt,az) = self.convert_xy_to_altaz(0,360)
          print ("BL ALTAZ:", alt, az)
          data = data + "BL,0,360," + str(az) + "," + str(alt) + "\n"
+         self.azinfo.append(("BL", 0,360,az,alt))
 
          (alt,az) = self.convert_xy_to_altaz(640,360)
          print ("BR ALTAZ:", alt, az)
          data = data + "BR,640,360," + str(az) + "," + str(alt) + "\n"
+         self.azinfo.append(("BR", 0,360,az,alt))
+
          azout = open(self.az_out_file, "w")
          azout.write(data)
          azout.close() 
+         self.save_solution()
          #self.draw_az_grid()
 
    def draw_az_grid(self):

@@ -122,7 +122,7 @@ def get_calibration_frames(config_file, cam_num):
    cap.release()
 
    # set BLC
-   set_special(config, "1017", "0")
+   set_special(config, "1017", "30")
    # set brightness contrast gamma and BLC back to original setting before calibration
    set_setting(config, "Contrast", prev_settings['Contrast'])
    print ("setting brightness back to ", prev_settings['Brightness'])

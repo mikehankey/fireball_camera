@@ -62,7 +62,7 @@ while not_ok == 1:
    loop_count = loop_count + 1
    settings = get_settings(config)
    print("Current Brightness Setting:", settings['Brightness'])
-   max_bright_dark = 120
+   max_bright_dark = 100
    if int(settings['Brightness']) >= int(max_bright_dark):
       print ("Current brightness above max reset!")
       set_setting(config, "Brightness", max_bright_dark)
@@ -123,14 +123,16 @@ while not_ok == 1:
       if magic > magic_dark_max:
          print ("image is too bright for ", sun_info['status'], ", lower brightness")
          new_brightness = int(settings['Brightness']) - factor
+         print ("setting (from pic): ", new_brightness)
          set_setting(config, "Brightness", new_brightness)
       elif magic < magic_dark_min:
          print ("image is too dark for ", sun_info['status'], ", increase brightness")
          new_brightness = int(settings['Brightness']) + factor
          if int(new_brightness) <= int(max_bright_dark):
+            print ("setting: ", new_brightness)
             set_setting(config, "Brightness", new_brightness)
          else: 
-            print ("Abortng")
+            print ("Abortng", max_bright_dark)
             set_setting(config, "Brightness", max_bright_dark)
             not_ok = 0
       else: 
