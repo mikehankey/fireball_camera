@@ -2,7 +2,7 @@
 import re
 import fitsio
 import sys
-
+from PIL import ImageFont
 import subprocess
 import os
 import numpy as np
@@ -52,11 +52,15 @@ class MFTCalibration:
       self.wcs_file = None
       self.star_data_file = None
       self.constellation_file = None
+      self.solve_success = 0
+      self.padding = 0
 
       self.debug = 0
       self.star_thresh = None
       self.odds_to_solve = None
       self.code_tolerance = None
+      self.image_width = None
+      self.image_height = None
 
       #self.matching_stars = []
       self.matching_stars = []
@@ -94,8 +98,11 @@ class MFTCalibration:
       sf.write("star_thresh="+ str(self.star_thresh) + "\n")
       sf.write("odds_to_solve="+ str(self.odds_to_solve) + "\n")
       sf.write("code_tolerance="+ str(self.code_tolerance) + "\n")
+      sf.write("az_center="+ str(self.az_center) + "\n")
+      sf.write("alt_center="+ str(self.alt_center) + "\n")
 
-
+      sf.write("image_width=" + str(self.image_width) + "\n")
+      sf.write("image_height=" + str(self.image_height) + "\n")
 
       sf.write("block_masks="+ str(self.block_masks) + "\n")
 
@@ -107,20 +114,10 @@ class MFTCalibration:
       sf.write("matching_stars="+ str(self.matching_stars) + "\n")
       sf.write("named_stars="+ str(self.named_stars) + "\n")
       sf.write("azinfo="+ str(self.azinfo) + "\n")
+      
       sf.close() 
 
    def load_solution(self):
-
-
-
-      #self.displayImage(self.cal_obj.star_drawing)
-      #self.displayImage(self.cal_obj.annotated_image)
-      #self.displayImage(self.cal_obj.marked_image)
-
-      #GUI IMAGES
-      #self.displayImage(self.starmap_image)
-      #self.displayImage(self.mask_image)
-
 
       solution_file = self.path.replace(".jpg", "-solution.txt")
       print ("Loading", solution_file)
@@ -134,6 +131,11 @@ class MFTCalibration:
       
       # Actual Images 
       print ("opening cons:", self.constellation_file)
+      self.solve_success = 1
+      self.star_id_image_file = self.path.replace(".jpg", "-starid.jpg")
+
+      self.star_id_image = cv2.imread(self.star_id_image_file)
+      self.star_id_image = Image.fromarray(self.star_id_image)
 
       self.np_annotated_image = cv2.imread(self.constellation_file)
       self.annotated_image = Image.fromarray(self.np_annotated_image)
@@ -149,11 +151,82 @@ class MFTCalibration:
       # lens distortion image
 
       # Image file names
+      if len(self.path) > 0:
+         self.image = cv2.imread(self.path)
+         self.image = Image.fromarray(self.image)
+         self.new_image = self.image
  
       # lists, values, totals and status
 
       # AZ Information
       # astropy objects Earthlocation
+      self.location = EarthLocation.from_geodetic(float(self.loc_lon)*u.deg,float(self.loc_lat)*u.deg,float(self.loc_alt)*u.m)
+      self.update_star_id_image()
+
+
+
+
+   def update_star_id_image(self):
+      name_star_data_file = self.path.replace(".jpg", "-named_star_data.txt")
+      star_id_image_file = self.path.replace(".jpg", "-starid.jpg")
+      fp = open (name_star_data_file, "w")
+      print ("STARID IMAGE FILE:", star_id_image_file)
+      if self.image is None:
+         print ("Self.image is NONE!")
+      self.star_id_image = self.image
+      found_points = []
+      star_id_image_np = np.asarray(self.star_id_image)
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag,diffra,diffdec) in self.named_stars:
+         x = int(float(x))
+         y = int(float(y))
+         cx = int(float(cx))
+         cy = int(float(cy))
+         cv2.circle(star_id_image_np, (x,y), 3, (255,255,255), 1)
+         cv2.circle(star_id_image_np, (cx,cy), 4, (0,255,0), 1)
+         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
+         fp.write(named_star_data + "\n")
+         found_points.append((x,y))
+      print ("Not found list is: ", len(self.not_found_stars))
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.not_found_stars:
+         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
+         fp.write(named_star_data + "\n")
+         print("Not found list: ", x,y, myra, mydec)
+         x = int(float(x))
+         y = int(float(y))
+         cv2.circle(star_id_image_np, (x,y), 2, (255,0,0), 1)
+
+      fp.close()
+      self.star_id_image = Image.fromarray(star_id_image_np)
+      draw = ImageDraw.Draw(self.star_id_image)
+      font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
+
+      avg_star_xy = np.average(found_points, axis = 0)
+      print ("AVG XY OF STAR FIELD: ", avg_star_xy)
+      draw.text((avg_star_xy[0], avg_star_xy[1]), "X", font = font, fill=(255,255,255))
+      draw.text((avg_star_xy[0]+15, avg_star_xy[1]), "Plate Center X,Y:" + str(int(avg_star_xy[0])) + "," + str(int(avg_star_xy[1])), font = font, fill=(255,255,255))
+      self.plate_center = (avg_star_xy[0], avg_star_xy[1])
+      degree_sign= u'\N{DEGREE SIGN}'
+      draw.text((int(self.image_width/2), int(self.image_height/2)), "X", font = font, fill=(255,255,255))
+      draw.text((int(self.image_width/2)+15, int(self.image_height/2)), "FOV Center ALT/AZ " + str(int(self.alt_center)) + str(degree_sign) + "/" + str(int(self.az_center)) + str(degree_sign) , font = font, fill=(255,255,255))
+      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag,diffra,diffdec) in self.named_stars:
+         x = int(float(cx))
+         y = int(float(cy))
+         nn = str(name) + " " + str(cons)
+         draw.text((x+10,y-10), str(nn), font = font, fill=(255,255,255))
+
+      for (x,y,w,h,avg_flux,max_flux,total_flux) in self.starlist:
+         x = x + (w/2)
+         y = y + (h/2)
+         x1 = int(x)-1
+         y1 = int(y)-1
+         x2 = int(x)+1
+         y2 = int(y)+1
+         draw.ellipse((x1, y1, x2, y2), fill=255)
+      print ("Saving:", star_id_image_file) 
+
+      star_id_image_np = np.asarray(self.star_id_image)
+      cv2.imwrite(star_id_image_file, star_id_image_np)
+
 
    def parse_file_date(self, full_file_name):
       stuff = full_file_name.split("/")
@@ -185,7 +258,7 @@ class MFTCalibration:
       ax.set_xlim(-0.1, hdu[0].data.shape[1] - 0.1)
       ax.set_ylim(-0.1, hdu[0].data.shape[0] - 0.1)
       ax.invert_yaxis()
-      ax.imshow(hdu[0].data, origin='lower', shape = (640,360))
+      ax.imshow(hdu[0].data, origin='lower', shape = (740,480))
 
       overlay = ax.get_coords_overlay('fk5')
 
@@ -211,7 +284,7 @@ class MFTCalibration:
          my_y = fits[1][i][0][1]
          self.my_stars.append((my_x, my_y))
 
-   def find_closest_star_in_catalog(self,x,y,myra,mydec,factor):
+   def find_closest_star_in_catalog(self,x,y,myra,mydec,factor,mymag):
       matches = []
       raran = range(int(float(myra)-factor), int(float(myra)+factor))
       decran = range(int(float(mydec)-factor), int(float(mydec)+factor))
@@ -219,17 +292,23 @@ class MFTCalibration:
          cons = cons.decode("utf-8") 
          name = bname.decode("utf-8")
          #print (name, cons)
-         if int(float(ra)) in raran and int(float(dec)) in decran and float(mag) < 10:
-            print ("Possible match: ", name, x,y, myra, mydec, ra,dec,mag)
-            matches.append((str(name), str(cons), x,y, myra, mydec,float(ra), float(dec), float(mag)))
+         if int(float(ra)) in raran and int(float(dec)) in decran and float(mag) <= mymag:
+            diff_ra = abs(float(myra) - float(ra))
+            diff_dec = abs(float(mydec) - float(dec))
+            print ("Possible match: ", name, cons, x,y, myra, mydec, ra,dec,mag, diff_ra, diff_dec)
+            matches.append((str(name), str(cons), x,y, myra, mydec,float(ra), float(dec), float(mag), diff_ra, diff_dec))
          else :
             if self.debug == 1:
                print ("No stars close to: ", myra,mydec,ra,dec)
             no = 1
       if len(matches) == 0:
-         matches.append((0,0,x,y,myra,mydec,0,0,0))
+         matches.append((0,0,x,y,myra,mydec,0,0,0,0,0))
          print ("COULD NOT FIND STAR IN CATALOG WITH:", x,y,myra,mydec,factor)
       else:
+         matches.sort(key=lambda x: x[10] )
+         print("Sorted Matches: ", matches)
+         for xxx in matches:
+            print (xxx[0], xxx[1], xxx[9], xxx[10])
          print (len(matches), " matches found") 
       return(matches)
 
@@ -241,25 +320,25 @@ class MFTCalibration:
       self.load_found_stars()
       for (x,y) in self.my_stars:
          (ra,dec,radd,decdd) = self.find_radec_from_xy(x,y)
-         matches = self.find_closest_star_in_catalog(x,y,radd,decdd,1)
+         matches = self.find_closest_star_in_catalog(x,y,radd,decdd,1,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,2)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,2,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,3)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,3,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,4)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,4,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,5)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,5,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,6)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,6,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,7)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,7,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,8)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,8,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,9)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,9,3)
          if matches[0][0] == 0:
-            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,10)
+            (matches) = self.find_closest_star_in_catalog(x,y,radd,decdd,10,3)
 
          if matches[0][0] != 0:
             finds = finds + 1
@@ -268,33 +347,33 @@ class MFTCalibration:
          bright = 10
          best_match = []
          if len(matches) > 1:
-            for (name, cons, x,y, myra, mydec,ra, dec, mag) in matches[:]:
+            for (name, cons, x,y, myra, mydec,ra, dec, mag, diffra, diffdec) in matches[:]:
                if float(mag) < bright:
                   bright = mag
-                  best_matches = [(name, cons, x,y, myra, mydec,ra, dec, mag)]
+                  best_matches = [(name, cons, x,y, myra, mydec,ra, dec, mag, diffra, diffdec)]
             matches = best_matches
-            (name, cons, x,y, myra, mydec,ra, dec, mag) = matches[0]
+            (name, cons, x,y, myra, mydec,ra, dec, mag, diffra, diffdec) = matches[0]
          else:
             print(matches[0])
-            (name, cons, x,y, myra, mydec,ra, dec, mag) = matches[0]
+            (name, cons, x,y, myra, mydec,ra, dec, mag, diffra, diffdec) = matches[0]
          print("NAME:", str(name))
          if str(name) != '':
-            self.found_stars.append((str(name), str(cons), x,y, myra, mydec,ra, dec, mag))
+            self.found_stars.append((str(name), str(cons), x,y, myra, mydec,ra, dec, mag, diffra, diffdec))
          else:
             print("NO NAME FOUND:", str(name), x,y)
             self.not_found_stars.append ((str(name) , str(cons), x , y , 0, 0, myra , mydec , 0, 0, 0))
         
 
-      header = "name,lx,ly,cx,cy,lra,ldec,ra,dec,mag"
+      header = "name,lx,ly,cx,cy,lra,ldec,ra,dec,mag,diffra,diffdec"
       print (header)
-      for (name, cons, x,y, myra, mydec,ra, dec, mag) in self.found_stars:
+      for (name, cons, x,y, myra, mydec,ra, dec, mag,diffra,diffdec) in self.found_stars:
          name = str(name)
          if name == "":
             name = "noname"
             print ("No Name on list!")
          else: 
             cor_x, cor_y = self.find_star_match(name, cons)
-            self.named_stars.append ((str(name) , str(cons), x , y , cor_x , cor_y , myra , mydec , ra , dec , mag))
+            self.named_stars.append ((str(name) , str(cons), x , y , cor_x , cor_y , myra , mydec , ra , dec , mag,diffra,diffdec))
 
       print ("Total Stars = ", len(self.my_stars))
       print ("Total Found in Catalog = ", len(self.found_stars))
@@ -344,6 +423,8 @@ class MFTCalibration:
       self.path_corr = path.replace(".jpg", "-sd.corr")
       self.path_solve_field_output = path.replace(".jpg", "-solve-field.txt")
 
+
+
    def update_block_masks(self, block_masks):
       self.block_masks = block_masks 
 
@@ -352,6 +433,7 @@ class MFTCalibration:
 
    def update_image(self, image):
       self.image = image
+      self.new_image = self.image
       print("calibration image updated.")
 
    def update_marked_image(self, image):
@@ -433,8 +515,11 @@ class MFTCalibration:
       return out
 
 
-   def find_flux(self, x,y,size):
+   def find_flux(self, x,y,size,writeout=0):
+      if self.new_image is None:
+         self.new_image = self.image
       box = (x-size,y-size,x+size,y+size)
+      #print ("TOTAL FUX: ", total_flux)
 
       flux_box = self.new_image.crop(box)
       flux_box = flux_box.resize((75,75), Image.ANTIALIAS)
@@ -444,8 +529,45 @@ class MFTCalibration:
       np_flux_box = cv2.GaussianBlur(np_flux_box, (21, 21), 0)
       avg_flux = np.average(np_flux_box)
       max_flux = np.amax(np_flux_box)
-      #cv2.imwrite("/var/www/html/out/cal/crop" + str(int(max_flux)) + ".jpg", np_flux_box) 
-      return (int(avg_flux), int(max_flux))
+
+      ffw= int(np_flux_box.shape[1] / 2)
+      ffh = int(np_flux_box.shape[0] / 2)
+
+      #SEX
+      abr = 0
+      for afx in range(0,np_flux_box.shape[1]):
+         for afy in range(np_flux_box.shape[0]):
+            pixel_val = np_flux_box[afx,afy]
+            if pixel_val > abr:
+               #print ("Brightest Pixel Value", afx, afy, pixel_val)
+               brightest_pix = (afx,afy)
+               abr = pixel_val
+
+
+      if abr == 0:
+         brightest_pix = (ffw,ffh)
+
+      (cxx,cxy) = brightest_pix
+
+      box_tiny = (cxx-1,cxy-1,cxx+1,cxy+1)
+      np_flux_box_tiny = np_flux_box[cxy-1:cxy+1, cxx-1:cxx+1]
+      total_flux = np.sum(np_flux_box_tiny)
+
+
+
+     
+      #cv2.rectangle(np_flux_box, (x,y), (x+2, y+2), (0,0,255),2)
+      np_flux_box.setflags(write=1)
+      #print ("BRIGHTEST CENTER: ", cxy,cxx)
+      tag = str(x) + "," + str(y) + "/ " + str(cxx) + "," + str(cxy) 
+      cv2.putText(np_flux_box, tag, (2, np_flux_box.shape[0] - 2), cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255), 1)
+
+      cv2.circle(np_flux_box, (cxx,cxy), 10, (255,255,255), 1)
+      if writeout == 1:
+         cv2.imwrite("/var/www/html/out/cal/flux/" + str(int(total_flux)) + ".jpg", np_flux_box) 
+
+      #cv2.imwrite("/var/www/html/out/cal/flux/tiny" + str(int(total_flux)) + ".jpg", np_flux_box_tiny) 
+      return (int(avg_flux), int(max_flux), int(total_flux))
 
    def add_to_starlist(self, x,y,w,h):
       if self.new_image is None:
@@ -453,10 +575,11 @@ class MFTCalibration:
       print (x,y,w,h)
       x2 = x + w
       y2 = y + h
-      px = int(x + (w/2))
-      py = int(y + (h/2))
-      avg_flux, max_flux = self.find_flux(int(px), int(py), 10)
-      self.starlist.append([x,y,w,h,avg_flux,max_flux])
+      px = x
+      py = y
+      avg_flux, max_flux, total_flux = self.find_flux(int(px), int(py), 10,0)
+      
+      self.starlist.append([x,y,w,h,avg_flux,max_flux,total_flux])
       for source in self.starlist:
          print ("starlist is")
          print (source)
@@ -468,7 +591,7 @@ class MFTCalibration:
       ok_to_add = 1
       c = 0
       for source in self.starlist[:]:
-         tx,ty,w,h,a,m = source
+         tx,ty,w,h,a,m,tm = source
          if tx in xran and ty in yran:
              print ("This source exists, lets remove it!")
              #del self.starlist[c]
@@ -498,7 +621,11 @@ class MFTCalibration:
       np_new_image = np.asarray(gray_new_image)
       np_new_image.setflags(write=1)
       # apply masks
-      np_new_image[320:360, 0:640] = [0]
+
+      #np_new_image[360+self.padding:360+20+self.padding, 50+self.padding:380+self.padding] = [0]
+
+      np_new_image[335+int(self.padding/2):365+int(self.padding/2), 0+int(self.padding/2):300+int(self.padding/2)] = [0]
+
       img_width = int(np_new_image.shape[1])
       img_height = int(np_new_image.shape[0])
       print ("IM WH:", img_width, img_height)
@@ -542,9 +669,10 @@ class MFTCalibration:
             #print (x,y,w,h)
             x2 = x + w
             y2 = y + h
-            px = int(x + (w/2))
-            py = int(y + (h/2))
-            avg_flux, max_flux = self.find_flux(int(px), int(py), 10)
+            px = x 
+            py = y
+            avg_flux, max_flux, total_flux = self.find_flux(int(px), int(py), 10,0)
+            #print ("TOTAL FLUX 1: ", total_flux)
             if avg_flux > 0:
                ff = max_flux / avg_flux
             else:
@@ -552,11 +680,45 @@ class MFTCalibration:
             if max_flux > 30 and (w < 6 and h < 6) and ff > 2.5:
                cv2.rectangle(np_color_image, (x,y), (x+w, y+h), (0,0,255),2)
                starlist_txt = str(px) + "," + str(py)
-               self.starlist.append([x,y,w,h,avg_flux,max_flux])
+               self.starlist.append([x,y,w,h,avg_flux,max_flux,total_flux])
             cc = cc + 1
+      #self.starlist_confirmed = self.confirm_found_stars()
+      #self.starlist = self.starlist_confirmed
+      #print("CONFIRMED STARLIST:", self.starlist_confirmed)
+      #for (x,y,w,h,avg_flux,max_flux,total_flux) in self.starlist:
+      #   cv2.rectangle(np_color_image, (x,y), (x+w,y+h), (255,255,255),1)
+      #   cv2.rectangle(np_color_image, (x-int(w/2),y-int(h/2)), (x+int(w/2), y+int(h/2)), (255,255,255),1)
+
+      # black out
+      np_color_image.setflags(write=1)
+
+      np_color_image[335+int(self.padding/2):365+int(self.padding/2), 0+int(self.padding/2):300+int(self.padding/2)] = [255,255,255]
       self.marked_image = Image.fromarray(np_color_image)
       #print(self.starlist)
       #self.displayImage(self.star_image)
+
+   def confirm_found_stars(self):
+      temp_starlist = []
+      for (x,y,w,h,avg_flux,max_flux,total_flux) in self.starlist:
+         box = (x-10,y-10,x+10,y+10)
+
+         avg_flux, max_flux, total_flux  = self.find_flux(int(x), int(y), 20, 1)
+        
+         if total_flux >= 20 and w > 1 and h > 1:
+            temp_starlist.append((x,y,w,h,avg_flux,max_flux,total_flux))
+
+      print("New starlist length:", len(temp_starlist))
+      temp_starlist.sort(key=lambda x: x[6], reverse=True)
+      final_temp = []
+      cc = 0;
+      for (x,y,w,h,avg_flux,max_flux,total_flux) in temp_starlist:
+         if cc <= 25:
+            final_temp.append((x,y,w,h,avg_flux,max_flux,total_flux))
+            print("TEMP STARLIST: ", x,y,w,h,avg_flux,max_flux,total_flux) 
+         cc = cc + 1 
+      return(final_temp)
+
+
 
 
    def solve_field(self):
@@ -589,27 +751,33 @@ class MFTCalibration:
       fp.write("x,y\n")
  
 
-      self.star_drawing = Image.new('L', (640,360))
+      self.star_drawing = Image.new('L', (self.image_width,self.image_height))
       draw = ImageDraw.Draw(self.star_drawing)
 
       for star in self.starlist:
-         x,y,h,w,af,mf  = star
+         x,y,h,w,af,mf,tf  = star
          x = x + (w/2)
          y = y + (h/2)
-         x1 = int(x)-2
-         y1 = int(y)-2
-         x2 = int(x)+2
-         y2 = int(y)+2
+         #x = x 
+         #y = y 
+         x1 = int(x)-1
+         y1 = int(y)-1
+         x2 = int(x)+1
+         y2 = int(y)+1
          mff = mf+100
-         draw.ellipse((x1, y1, x2, y2), fill=mff)
-         avg_flux, max_flux = self.find_flux(int(x), int(y), 10)
+
+         draw.ellipse((x1, y1, x2, y2), fill=255)
+         avg_flux, max_flux, total_flux  = self.find_flux(int(x), int(y), 10)
          fits_data = str(x) + "," + str(y) + "," + str(avg_flux) + "," + str(max_flux) + "\n"
          fp.write(fits_data)
       fp.close()
       print("Saving star drawing here: ", star_drawing_fn) 
       self.star_drawing.save(star_drawing_fn)
 
-      cmd = "/usr/local/astrometry/bin/solve-field " + star_drawing_fn + " --overwrite --width=640 --height=360 --scale-units degwidth --scale-low 60 --scale-high 85 --no-remove-lines -cpulimit=15 --odds-to-solve " + str(self.odds_to_solve) + " --code-tolerance " + str(self.code_tolerance) + " 2>&1 > " + solve_out
+      
+
+      #cmd = "/usr/local/astrometry/bin/solve-field " + star_drawing_fn + " --overwrite --width=" + str(self.image_width) + " --height=" + str(self.image_height) + " --scale-units degwidth --scale-low 60 --scale-high 85 --no-remove-lines -cpulimit=15 --odds-to-solve " + str(self.odds_to_solve) + " --code-tolerance " + str(self.code_tolerance) + " 2>&1 > " + solve_out
+      cmd = "/usr/local/astrometry/bin/solve-field " + star_drawing_fn + " --overwrite --width=" + str(self.image_width) + " --height=" + str(self.image_height) + " --scale-units degwidth --scale-low 40 --scale-high 85 --no-remove-lines --odds-to-solve " + str(self.odds_to_solve) + " --code-tolerance " + str(self.code_tolerance) + " 2>&1 > " + solve_out
       print (cmd)
       os.system(cmd)
 
@@ -638,38 +806,47 @@ class MFTCalibration:
          #self.make_star_plot()
          self.azinfo = []
          # ALT AZ
-         (alt,az) = self.convert_xy_to_altaz(320,180)
+         (alt,az) = self.convert_xy_to_altaz(370,230)
          print ("CENTER ALTAZ:", alt, az)
          data = "CENTER,320,180," + str(az) + "," + str(alt) + "\n"
-         self.azinfo.append(("C", 320,180,az,alt))
+         self.azinfo.append(("C", 370,230,az,alt))
+         self.az_center = az
+         self.alt_center = alt
          if alt < 10:
             self.solve_success = 0
+         else:
 
-         (alt,az) = self.convert_xy_to_altaz(0,0)
-         print ("TL ALTAZ:", alt, az)
-         data = data + "TL,0,0," + str(az) + "," + str(alt) + "\n"
-         self.azinfo.append(("TL", 0,0,az,alt))
+            (alt,az) = self.convert_xy_to_altaz(50,50)
+            print ("TL ALTAZ:", alt, az)
+            data = data + "TL,0,0," + str(az) + "," + str(alt) + "\n"
+            self.azinfo.append(("TL", 0,0,az,alt))
 
-         (alt,az) = self.convert_xy_to_altaz(640,0)
-         print ("TR ALTAZ:", alt, az)
-         data = data + "TR,640,0," + str(az) + "," + str(alt) + "\n"
-         self.azinfo.append(("TR", 640,0,az,alt))
+            (alt,az) = self.convert_xy_to_altaz(690,50)
+            print ("TR ALTAZ:", alt, az)
+            data = data + "TR,640,0," + str(az) + "," + str(alt) + "\n"
+            self.azinfo.append(("TR", 690,50,az,alt))
 
-         (alt,az) = self.convert_xy_to_altaz(0,360)
-         print ("BL ALTAZ:", alt, az)
-         data = data + "BL,0,360," + str(az) + "," + str(alt) + "\n"
-         self.azinfo.append(("BL", 0,360,az,alt))
+            (alt,az) = self.convert_xy_to_altaz(0,360)
+            print ("BL ALTAZ:", alt, az)
+            data = data + "BL,0,360," + str(az) + "," + str(alt) + "\n"
+            self.azinfo.append(("BL", 50,410,az,alt))
 
-         (alt,az) = self.convert_xy_to_altaz(640,360)
-         print ("BR ALTAZ:", alt, az)
-         data = data + "BR,640,360," + str(az) + "," + str(alt) + "\n"
-         self.azinfo.append(("BR", 0,360,az,alt))
+            (alt,az) = self.convert_xy_to_altaz(640,360)
+            print ("BR ALTAZ:", alt, az)
+            data = data + "BR,640,360," + str(az) + "," + str(alt) + "\n"
+            self.azinfo.append(("BR", 50,410,az,alt))
 
-         azout = open(self.az_out_file, "w")
-         azout.write(data)
-         azout.close() 
-         self.save_solution()
-         #self.draw_az_grid()
+            azout = open(self.az_out_file, "w")
+            azout.write(data)
+            azout.close() 
+            self.save_solution()
+            self.update_star_id_image()
+         print ("SOLVE SUCCESS")
+      else:
+         print ("SOLVED FAILED :(")
+      if self.solve_success == 0:
+         print ("SOLVED FAILED. Solution wrong producing negative ALT/AZ :(")
+ 
 
    def draw_az_grid(self):
       first_list = []
@@ -693,6 +870,9 @@ class MFTCalibration:
       decdd = self.convert_dms_to_ddms(decdd)
       #print ("TARGET: ", radd, decdd)
       self.target = SkyCoord(ra=radd*u.degree, dec=decdd*u.degree, frame='icrs')
+      print ("CAL TIME IS: ", self.cal_time)
+      print ("LOCATION: ", self.location)
+      print ("RA/DEC: ", radd, decdd)
       altaz = self.target.transform_to(AltAz(location=self.location, obstime=Time(self.cal_time)))
       alt = self.convert_dms_to_ddms(str(altaz.alt))
       az = self.convert_dms_to_ddms(str(altaz.az))

@@ -35,6 +35,9 @@ class calibration_page:
       self.mask_image = None
 
       self.starlist_array = None
+      self.padding = 0
+      self.image_width = 640 + (self.padding * 2)  # 840
+      self.image_height = 360 + (self.padding * 2) # 560
 
       cam_num = 1 
       config_file = "conf/config-" + str(cam_num) + ".txt"
@@ -74,8 +77,8 @@ class calibration_page:
 
       # FRAME 2
       # image canvas 
-      canvas_width = 640
-      canvas_height = 360
+      canvas_width = self.image_width
+      canvas_height = self.image_height
       self.cal_frame2 = tk.Frame(self.master, bg='white', borderwidth=1, width=canvas_width+1, height=canvas_height+1, )
       self.image_canvas = tk.Canvas(self.cal_frame2, width=canvas_width, height=canvas_height, cursor="cross")
       self.image_canvas.extra = "image_canvas"
@@ -88,14 +91,14 @@ class calibration_page:
       self.cal_frame2.pack(side=tk.TOP)
 
       # FRAME 3 - Action Buttons
-      self.cal_frame3 = tk.Frame(self.master, bg='blue', height=50, width=650)
+      self.cal_frame3 = tk.Frame(self.master, bg='blue', height=50, width=self.image_width)
       self.cal_frame3_unsolved()
       self.cal_frame3.pack(side=tk.TOP)
       self.cal_frame3.pack_propagate(0)
 
       # FRAME 4 
 
-      self.cal_frame4 = tk.Frame(self.master, bg='blue', height=300, width=650)
+      self.cal_frame4 = tk.Frame(self.master, bg='blue', height=300, width=self.image_width)
 
       self.container_far_left = tk.Frame(self.cal_frame4)
 
@@ -223,7 +226,7 @@ class calibration_page:
          lower_thresh = ax_pixel - 10
 
          lower_thresh = avg_px * 1.7
-
+         avg_f, max_f, tot_f = self.cal_obj.find_flux(x,y,10,0)
          _, nice_threshold = cv2.threshold(np_crop_box, lower_thresh, 255, cv2.THRESH_BINARY)
          (_, cnts, xx) = cv2.findContours(nice_threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
          #print ("CNTS:", len(cnts))
@@ -233,7 +236,7 @@ class calibration_page:
             cv2.rectangle(np_color_crop_box, (xx,yy), (xx+w, yy+h), (0,0,255),2)
             crop_box = Image.fromarray(np_color_crop_box)
 
-         xy_val = str(x) + ", " + str(y) + ", " + str(int(avg_px)) + ", " + str(ax_pixel)
+         xy_val = str(x) + ", " + str(y) + ", " + str(int(avg_f)) + ", " + str(max_f) + ", " + str(tot_f)
 
          self.xy_label_value.set(xy_val)
 
@@ -419,53 +422,20 @@ class calibration_page:
             ra_str = ra + " " + dec
             self.ra_label_value.set(ra_str)
             print ("ra,dec: ", ra, dec, radd, decdd)
+            (alt,az) = self.cal_obj.convert_xy_to_altaz(x,y)
+            print ("alt,az: ", alt,az)
+            az_str = str(int(alt)) + " " + str(int(az))
+            self.az_label_value.set(az_str)
+            matches = self.cal_obj.find_closest_star_in_catalog(x,y,radd,decdd,15,4)
+
 
    def update_star_id_image(self):
-      name_star_data_file = self.image_path.replace(".jpg", "-named_star_data.txt")
-      fp = open (name_star_data_file, "w")
-      self.star_id_image = self.image
-      star_id_image_np = np.asarray(self.star_id_image) 
-      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.named_stars:
-         x = int(float(x))
-         y = int(float(y))
-         cx = int(float(cx))
-         cy = int(float(cy))
-         cv2.circle(star_id_image_np, (x,y), 3, (255,255,255), 1)
-         cv2.circle(star_id_image_np, (cx,cy), 4, (0,255,0), 1)
-         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
-         fp.write(named_star_data + "\n")
-      print ("Not found list is: ", len(self.cal_obj.not_found_stars))
-      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.not_found_stars:
-         named_star_data =  str(name) + "," + str(cons) + "," + str(x) + "," + str(y) + "," + str(cx) + "," + str(cy) + "," + str(myra) + "," + str(mydec) + "," + str(ra) + "," + str(dec) + "," + str(mag) + ","
-         fp.write(named_star_data + "\n")
-         print("Not found list: ", x,y, myra, mydec)
-         x = int(float(x))
-         y = int(float(y))
-         cv2.circle(star_id_image_np, (x,y), 2, (255,0,0), 1)
 
-      fp.close()
-      self.star_id_image = Image.fromarray(star_id_image_np)
-      draw = ImageDraw.Draw(self.star_id_image)
-      font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
-
-      for (name, cons, x,y, cx, cy, myra, mydec,ra, dec, mag) in self.cal_obj.named_stars:
-         x = int(float(cx))
-         y = int(float(cy))
-         nn = str(name) + " " + str(cons)
-         draw.text((x+10,y-10), str(nn), font = font, fill=(255,255,255)) 
-
-      for (x,y,w,h,avg_flux,max_flux) in self.cal_obj.starlist:
-         x = x + (w/2)
-         y = y + (h/2)
-         x1 = int(x)-1
-         y1 = int(y)-1
-         x2 = int(x)+1
-         y2 = int(y)+1
-         draw.ellipse((x1, y1, x2, y2), fill=255)
-
-            
-
-      self.displayImage(self.star_id_image)
+      self.cal_obj.update_star_id_image()
+      if self.cal_obj.solve_success == 1:
+         self.displayImage(self.cal_obj.star_id_image)
+      else:
+         print ("Cal obj success is 0")
 
    def update_mask_image(self):
       self.mask_image = self.image.convert('L')
@@ -488,7 +458,7 @@ class calibration_page:
    def update_marked_image(self):
       self.cal_obj.marked_image = self.image
       marked_image_np = np.asarray(self.cal_obj.marked_image) 
-      for x,y,w,h,af,mf in self.cal_obj.starlist:
+      for x,y,w,h,af,mf,tf in self.cal_obj.starlist:
          print("Drawing circle")
          cv2.circle(marked_image_np, (x,y), 5, (255), -1)
       self.cal_obj.marked_image = Image.fromarray(marked_image_np)
@@ -550,7 +520,8 @@ class calibration_page:
       #print (self.image_path)
       #print ("DisplayImage")
       self.tkimage = ImageTk.PhotoImage(image)
-      self.image_canvas.create_image(320,180, image=self.tkimage )
+
+      self.image_canvas.create_image(int(self.image_width/2),int(self.image_height/2), image=self.tkimage )
       #print ("EXTRA: ", self.image_canvas.extra)
       #self.cal_frame2.pack(side=tk.TOP)
 
@@ -566,10 +537,40 @@ class calibration_page:
       self.image_path = askopenfilename(title = "Open File", initialdir='/var/www/html/out/cal/', filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
       felm = self.image_path.split("/")
       file_name = felm[-1]
+
       cmd = "cp " + self.image_path + " /var/www/html/out/cal/astrometry/" + file_name
       os.system(cmd)
       self.image_path = "/var/www/html/out/cal/astrometry/" + file_name
       print (cmd)
+
+      if len(self.image_path) > 0:
+         self.image_np = cv2.imread(self.image_path)
+         self.image = Image.fromarray(self.image_np)
+         self.new_image = self.image
+
+         ow = self.image_np.shape[1]
+         oh = self.image_np.shape[0]
+
+         # add 100 pixels to each side changing 
+         # original dimensions of 640 / 360
+         # to new 840 / 560 
+ 
+         self.image_width = ow+self.padding
+         self.image_height= oh+self.padding
+         if (ow != self.image_width and oh != self.image_height): 
+            canvas_size = oh+self.padding,ow+self.padding,3
+            canvas = np.zeros(canvas_size,dtype=np.uint8)
+            canvas.fill(0)
+            canvas[int(self.padding/2):oh+int(self.padding/2),int(self.padding/2):ow+int(self.padding/2)] = self.image_np
+            self.image_np = canvas
+            self.image = Image.fromarray(self.image_np)
+            self.new_image = self.image
+            cv2.imwrite(self.image_path, self.image_np)
+
+            self.image_np = cv2.imread(self.image_path)
+            self.image = Image.fromarray(self.image_np)
+            self.new_image = self.image
+
       
       solved_file = self.image_path.replace(".jpg", "-sd.solved")
 
@@ -578,12 +579,17 @@ class calibration_page:
 
          result = tk.messagebox.askokcancel("Image already solved.", "This image has already been solved. Do you want to load the know solution? Press cancel to solve it again?")
          if result is True:
+            print ("Using previous solve.")
             self.new_image = self.image
             self.cal_obj = MFTC.MFTCalibration()
             self.cal_obj.update_path(self.image_path)
             self.cal_obj.new_image = self.image
+          
             self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+            self.cal_obj.image_width = self.image_np.shape[1]
+            self.cal_obj.image_height = self.image_np.shape[0]
             self.cal_obj.load_solution() 
+            self.cal_obj.solve_success == 1
             #print(self.solve_field)
             #self.hide_widget(self.solve_field)
             #self.cal_frame3.destroy()
@@ -592,11 +598,14 @@ class calibration_page:
             self.cal_frame3_solved()
             self.starmap_image= self.cal_obj.annotated_image
          else: 
+            print ("Ignoring previous solve.")
             self.new_image = self.image
             self.cal_obj = MFTC.MFTCalibration()
             self.cal_obj.update_path(self.image_path)
             self.cal_obj.new_image = self.image
             self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+            self.cal_obj.image_width = self.image_np.shape[1]
+            self.cal_obj.image_height = self.image_np.shape[0]
             if self.starlist_array != None:
                print("Clear starlist")
                self.clear_starlist()
@@ -604,11 +613,15 @@ class calibration_page:
                print ("starlist empty")
       # image has not been solved yet... 
       else:
+         print ("Never been solved.")
          self.new_image = self.image
          self.cal_obj = MFTC.MFTCalibration()
          self.cal_obj.update_path(self.image_path)
          self.cal_obj.new_image = self.image
          self.cal_time = self.cal_obj.parse_file_date(self.image_path)
+         self.cal_obj.image_width = self.image_np.shape[1]
+         self.cal_obj.image_height = self.image_np.shape[0]
+
          if self.starlist_array != None:
             print("Clear starlist")
             self.clear_starlist()
@@ -616,10 +629,6 @@ class calibration_page:
             print ("starlist empty")
 
 
-      if len(self.image_path) > 0:
-         self.image = cv2.imread(self.image_path)
-         self.image = Image.fromarray(self.image)
-         self.new_image = self.image
       return(self.image)
 
    def OpenImage(self):
@@ -651,7 +660,7 @@ class FireballGUI:
       self.make_tabs(note)
 
    def make_tabs(self, note):
-      tab1 = tk.Frame(note, width=700, height=600)
+      tab1 = tk.Frame(note, width=760, height=800)
       example = calibration_page(tab1)
       note.add(tab1, text = "Calibration")
       tab1.pack_propagate(0)

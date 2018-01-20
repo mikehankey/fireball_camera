@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import cv2
 import iproc
 import time
@@ -22,6 +23,9 @@ def compute_straight_line(x1,y1,x2,y2,x3,y3):
    return(straight_line)
 
 
+noise = 0
+total_contours = 0
+nice_frame = None
 frame_count = 0
 tstamp_prev = None
 image_acc = None
@@ -32,7 +36,7 @@ motion_frames = []
 colors = []
 bps_list = []
 cv2.namedWindow('pepe')
-cv2.namedWindow('pepe2')
+#cv2.namedWindow('pepe2')
 
 video_file = sys.argv[1]
 cap = cv2.VideoCapture(video_file)
@@ -68,6 +72,11 @@ while True:
          print ("BPS MIN: ", min(bps_list))
          print ("BPS MAX: ", max(bps_list))
          print ("BPS AVG: ", np.mean(bps_list))
+         print ("Total Frames: ", count)
+         print ("Total Noise: ", noise)
+         print ("Total Contours: ", count)
+         print ("Noise ratio: ", noise / count)
+
 
 
          #writer = cv2.VideoWriter(outfile, cv2.VideoWriter_fourcc(*'X264'), fps, (height, width), True)
@@ -113,7 +122,11 @@ while True:
       max_pixel = 0
       contours = len(cnts)
       x,y,w,h = 0,0,0,0
-      print ("Contours: ", contours)
+      #print ("Contours: ", contours)
+      total_contours = total_contours + contours
+      if contours > 1:
+       noise = noise + 1    
+ 
       if contours > 0:
           for (i,c) in enumerate(cnts):
              x,y,w,h = cv2.boundingRect(cnts[i])
@@ -136,7 +149,6 @@ while True:
              #params.maxInertiaRatio = 1
              #params.filterByCircularity = True
              #params.minCircularity = .
-
 
              detector = cv2.SimpleBlobDetector_create(params)
              keypoints = detector.detect(nice_threshold)
@@ -168,8 +180,9 @@ while True:
              motion_frames.extend([frame_count])
              text = " x,y: " + str(x) + "," + str(y) + " Contours: " + str(contours) + " Convex: " + str(k) + " Color: " + str(color)
              cv2.putText(nice_frame, text,  (x,y), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
-             cv2.imshow('pepe2', nice_frame)
-             cv2.imshow('pepe', nice_threshold)
+             #cv2.imshow('pepe2', nice_frame)
+             cv2.imshow('pepe', nice_frame)
+             #cv2.imshow('pepe', nice_threshold)
              print (count, x,y, contours, color, bright_pixel_sum);
       #cv2.imshow('pepe', image_diff)
       cv2.waitKey(int(1000 / 25))

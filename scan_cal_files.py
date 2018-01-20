@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from amscommon import read_config
 import MFTCalibration as MFTC
 import MyDialog as MD
@@ -16,7 +17,7 @@ import cv2
 import glob
 
 def characterize_all():
-   solves = ('10000', '1000', '100')
+   solves = ('100000', '10000', '1000', '100')
    cams = ('1', '2', '3', '4', '5', '6') 
    for solve in solves:
       for cam in cams:
@@ -44,16 +45,46 @@ def scan_image_for_stars(image_path):
    cal_obj.image = Image.fromarray(cal_obj.image)
    cal_obj.new_image = cal_obj.image
 
-   cal_obj.star_thresh = 7
+   cal_obj.star_thresh = 5 
    cal_obj.find_stars()
    return(len(cal_obj.starlist))
 
 def calibrate_file(image_path):
+
+   padding = 100
+   image_np = cv2.imread(image_path)
+   image = Image.fromarray(image_np)
+   new_image = image
+   ow = image_np.shape[1]
+   oh = image_np.shape[0]
+
+
+   image_width = ow+padding
+   image_height= oh+padding
+   if (ow != image_width and oh != image_height):
+      canvas_size = oh+padding,ow+padding,3
+      canvas = np.zeros(canvas_size,dtype=np.uint8)
+      canvas.fill(0)
+      canvas[padding:oh+padding,padding:ow+padding] = image_np
+      image_np = canvas
+
+
+
+      image = Image.fromarray(image_np)
+      new_image = image
+      cv2.imwrite(image_path, image_np)
+
+      image_np = cv2.imread(image_path)
+      image = Image.fromarray(image_np)
+      new_image = image
+
    cal_obj.image = cv2.imread(image_path)
    cal_obj.image = Image.fromarray(cal_obj.image)
    cal_obj.new_image = cal_obj.image
-   cal_obj.star_thresh = 7
+   cal_obj.star_thresh = 5 
    cal_obj.find_stars()
+   cal_obj.image_width = image_np.shape[1]
+   cal_obj.image_height = image_np.shape[0]
 
    # load site and date here...
    config = read_config("conf/config-1.txt")
@@ -63,17 +94,22 @@ def calibrate_file(image_path):
    cal_obj.cal_time = cal_obj.parse_file_date(image_path)
 
 
-   cal_obj.odds_to_solve = 10000
-   odds = 10000
+   cal_obj.odds_to_solve = 100000
+   odds = 100000
    cal_obj.code_tolerance = .03
    cal_obj.update_path(image_path)
 
    cal_obj.solve_field()
    if cal_obj.solve_success == 0:
+      odds = 10000
+      cal_obj.odds_to_solve = 10000
+      cal_obj.solve_field()
+      
+   if cal_obj.solve_success == 0:
       odds = 1000
       cal_obj.odds_to_solve = 1000
       cal_obj.solve_field()
-      
+
    if cal_obj.solve_success == 0:
       odds = 100
       cal_obj.odds_to_solve = 100
@@ -103,9 +139,10 @@ for file in files:
       elif ".jpg" in file:
          star_count = scan_image_for_stars(file)
          print (star_count, " Stars found.")
-         if star_count == 0: 
+         if star_count <= 3 or star_count >= 100: 
             cmd = "mv " + file + " " + dir + "bad/"
             print(cmd)
+            os.system(cmd)
          elif star_count > 3 and star_count < 100: 
             cmd = "cp " + file + " " + dir + "astrometry/"
             print(cmd)

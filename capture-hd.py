@@ -50,6 +50,7 @@ def cam_loop(pipe_parent, shared_dict):
     frame_times = deque(maxlen=200)
     frame_data = deque(maxlen=200)
     count = 0
+    shared_dict['noise'] = 0
     shared_dict['motion_on'] = 0
     shared_dict['motion_off'] = 0
 
@@ -77,6 +78,19 @@ def cam_loop(pipe_parent, shared_dict):
             pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
         if count % 500 == 0:
+            if shared_dict['noise'] > 0:
+               noise_ratio = shared_dict['noise'] / 500
+               dist_time = datetime.datetime.now()
+               log_entry = str(cam_num) + "|" + str(noise_ratio) + "|" + str(dist_time)  
+               cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/noise.log"
+               os.system(cmd)
+               shared_dict['noise'] = 0
+            else:
+               noise_ratio = 0
+
+
+            print("NOISE RATIO: " + str(noise_ratio))
+
             time_diff = frame_time - time_start
             fps = count / time_diff.total_seconds()
             print("FPS: " + str(fps))
@@ -239,12 +253,17 @@ def show_loop(pipe_child, shared_dict):
         (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         #print(len(cnts), motion_on, motion_off)
         #print(cnts)
+
+        if len(cnts) > 1:
+           shared_dict['noise'] = shared_dict['noise'] + 1
+        
+
         if len(cnts) == 0:
             shared_dict['motion_off'] = shared_dict['motion_off'] + 1
             #middle_pixel = 0
             #avg_color = 0
         else:
-            # if the total cnts are over 10 then cat to the log!
+            # if the total cnts are over 1 then cat to the log!
             dist_time = datetime.datetime.now()
             log_entry = str(cam_num) + "|" + str(len(cnts)) + "|" + str(dist_time)  
             cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/distortion.log"
