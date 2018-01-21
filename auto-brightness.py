@@ -62,7 +62,7 @@ while not_ok == 1:
    loop_count = loop_count + 1
    settings = get_settings(config)
    print("Current Brightness Setting:", settings['Brightness'])
-   max_bright_dark = 100
+   max_bright_dark = 75 
    if int(settings['Brightness']) >= int(max_bright_dark):
       print ("Current brightness above max reset!")
       set_setting(config, "Brightness", max_bright_dark)
