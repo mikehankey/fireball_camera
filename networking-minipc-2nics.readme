@@ -133,4 +133,4 @@ host cam6 {
 
 **** to see CAMS on primary network, you must add route to your client PC so it can access the CAMS subnet ***
 for mac use this command:
-sudo route -n add 192.168.176.0/255.255.255.0 196.168.1.12
+sudo route -n add 192.168.176.0/255.255.255.0 192.168.1.12

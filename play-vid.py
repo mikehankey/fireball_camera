@@ -10,11 +10,11 @@ def compute_straight_line(x1,y1,x2,y2,x3,y3):
    if x2 - x1 != 0:
       a = (y2 - y1) / (x2 - x1)
    else:
-      a = 0
+      a = -1 
    if x3 - x1 != 0:
       b = (y3 - y1) / (x3 - x1)
    else:
-      b = 0
+      b = -1 
    straight_line = a - b
    if (straight_line < 1):
       straight = "Y"
@@ -45,6 +45,10 @@ time.sleep(1)
 frames = deque(maxlen=201)
 
 count = 0
+
+prev_motion = 0
+motion_events = 0
+
 while True:
    _ , frame = cap.read()
    if frame is None:
@@ -55,14 +59,18 @@ while True:
          total_motion = len(motion_frames)
          half_motion = int(total_motion/2) 
          avg_color = sum(colors) / float(len(colors))
-         x1 = xs[1]
-         y1 = xs[1]
-         x2 = xs[half_motion]
-         y2 = xs[half_motion]
-         x3 = xs[total_motion-2]
-         y3 = xs[total_motion-2]
+         if len(xs) > 1:
+            x1 = xs[1]
+            y1 = xs[1]
+            x2 = xs[half_motion]
+            y2 = xs[half_motion]
+            x3 = xs[total_motion-2]
+            y3 = xs[total_motion-2]
+         else:
+            x1,y1,x2,y2,x3,y3 = 0,0,0,0,0,0
+
          straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
-         if (straight_line < 1 and straight_line > 0) or avg_color > 190:
+         if (straight_line < 1 and straight_line >= 0) or avg_color > 190:
             meteor_yn = "Y"
          else:
             meteor_yn = "N"
@@ -74,8 +82,24 @@ while True:
          print ("BPS AVG: ", np.mean(bps_list))
          print ("Total Frames: ", count)
          print ("Total Noise: ", noise)
-         print ("Total Contours: ", count)
+         print ("Total Contours: ", total_contours)
          print ("Noise ratio: ", noise / count)
+         print ("Motion Events: ", motion_events)
+         print ("Meteor YN : ", meteor_yn)
+         # dst profile #1 -- all x,y are the same, color same, w,h same. This is a flicker. 
+         xdiff = max(xs) - min(xs)
+         ydiff = max(ys) - min(ys)
+         if (xdiff + ydiff) == 0:
+            print ("Bad capture: NO X,Y Motion!")
+         if motion_events > 4:
+            print ("Bad capture: too many uniuqe motion events!", motion_events)
+         if total_contours > 400:
+            print ("Bad capture: too many contours to frames!", total_contours)
+         if noise / count > .25:
+            print ("Bad capture: noise ratio above 25%!", noise / count)
+         
+       
+         # dst profile #2 -- many conts x,y are all over This is a h265 crunch dump. 
 
 
 
@@ -106,11 +130,11 @@ while True:
       _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
       thresh= cv2.dilate(threshold, None , iterations=2)
 
-      #(_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
       _, nice_threshold = cv2.threshold(gray_frame, 150, 255, cv2.THRESH_BINARY)
       nice_threshold = cv2.GaussianBlur(nice_threshold, (21, 21), 0)
-      (_, cnts, xx) = cv2.findContours(nice_threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      #(_, cnts, xx) = cv2.findContours(nice_threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
       bright_pixel_sum = nice_threshold.sum(0).sum(0)
       #print ("BPS: ", bright_pixel_sum)
@@ -124,8 +148,9 @@ while True:
       x,y,w,h = 0,0,0,0
       #print ("Contours: ", contours)
       total_contours = total_contours + contours
+      print ("CNT:", count, contours, total_contours, motion_events)
       if contours > 1:
-       noise = noise + 1    
+       noise = noise + contours    
  
       if contours > 0:
           for (i,c) in enumerate(cnts):
@@ -177,13 +202,19 @@ while True:
              ys.extend([y])
              if contours == 1:
                 colors.extend([color])
-             motion_frames.extend([frame_count])
              text = " x,y: " + str(x) + "," + str(y) + " Contours: " + str(contours) + " Convex: " + str(k) + " Color: " + str(color)
              cv2.putText(nice_frame, text,  (x,y), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
              #cv2.imshow('pepe2', nice_frame)
              cv2.imshow('pepe', nice_frame)
              #cv2.imshow('pepe', nice_threshold)
-             print (count, x,y, contours, color, bright_pixel_sum);
+             #print (count, x,y, contours, color, bright_pixel_sum);
+          if prev_motion == 0:
+             motion_events = motion_events + 1
+             prev_motion = 1
+          motion_frames.extend([frame_count])
+      elif prev_motion == 1:
+         prev_motion = 0
+         print ("Reset motion event!", motion_events)
       #cv2.imshow('pepe', image_diff)
       cv2.waitKey(int(1000 / 25))
       height = frame.shape[1]

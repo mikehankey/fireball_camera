@@ -17,8 +17,8 @@ def setup_cam(cam):
       exit()
    else:
       print ("Turning on cam# ", cam)
-      os.system("./pizero-relay.py cam_on " + str(cam))
-   time.sleep(15)
+      #os.system("./pizero-relay.py cam_on " + str(cam))
+   #time.sleep(15)
    cont = input("Now is your time to focus. Press enter once done. ")
 
   

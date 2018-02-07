@@ -156,6 +156,8 @@ def cam_loop(pipe_parent, shared_dict):
 
             #r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
             print("RECORD BUFFER NOW!\n")
+            #check to make sure we aren't dealing with a distortion capture
+
             shared_dict['motion_on'] = 0
             shared_dict['motion_off'] = 0 
             shared_dict['cnts'] = 0 
@@ -169,6 +171,10 @@ def cam_loop(pipe_parent, shared_dict):
             else:
                outfile = "{}/{}.avi".format("/var/www/html/out", format_time )
                outfile_text = "{}/{}-time.txt".format("/var/www/html/out", format_time ) 
+ 
+            if shared_dict['noise'] > 10:
+               outfile = outfile.replace("out", "out/dist")
+               outfile_text = outfile.replace("out", "out/dist")
 
             df = open(outfile_text, 'w', 1)
             dql = len(frame_times) - 2

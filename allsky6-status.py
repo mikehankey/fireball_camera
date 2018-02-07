@@ -3,6 +3,8 @@ import sys
 import subprocess 
 import time
 import os
+import requests
+from amscommon import read_config
 
 def proc_count(cam_num):
    cmd = "ps -aux |grep \"capture-hd.py " + cam_num + "\" | grep -v grep | wc -l"
@@ -58,6 +60,12 @@ def stop_capture(cam_num):
       output = subprocess.check_output(cmd, shell=True).decode("utf-8")
       print (output)
 
+def restart_cam(cam_num):
+   cfile = "conf/config-" + cam_num + ".txt"
+   config = read_config(cfile)
+   url = "http://" + config['cam_ip'] + "/cgi-bin/restart_cgi?user=admin&pwd=" + config['cam_pwd'] 
+   print ("RESTART: ", url)
+   r = requests.get(url)
 
 def check_cam(cam_num):
    status = check_running(cam_num)
@@ -83,6 +91,8 @@ try:
 except: 
    do_all = 1
 
+if (cmd == "restart"):
+   restart_cam(cam_num)
 if (cmd == "stop"):
    stop_capture(cam_num)
 if (cmd == "start"):
