@@ -123,7 +123,7 @@ print (url)
 r = requests.get(url)
 print (r.text)
 
-url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType2=H.264&Resolution2=640*480&KeyInterval2=25&FrameRate2=25&BitflowType2=VBR&NormalBitrate2=2048&PicLevel2=1&Profile2=Main Profile&quality2=1&ratectrl2=1"
+url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType2=H.264&Resolution2=640*480&KeyInterval2=25&FrameRate2=25&BitflowType2=VBR&NormalBitrate2=256&PicLevel2=1&Profile2=Main Profile&quality2=1&ratectrl2=1"
 print (url)
 r = requests.get(url)
 print (r.text)

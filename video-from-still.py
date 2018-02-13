@@ -36,7 +36,12 @@ for filename in sorted_list:
     if count % 1 == 0:
        #print (filename)
        open_cv_image = cv2.imread(filename,1)
-       height , width, chan =  open_cv_image.shape
+       try:
+          height , width, chan =  open_cv_image.shape
+       except: 
+          height = 360
+          width = 640
+          chan = 3
        if height > 400:
           open_cv_image = cv2.resize(open_cv_image, (0,0), fx=1, fy=.75)
        #print(open_cv_image.shape)
