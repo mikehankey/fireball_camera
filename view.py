@@ -112,8 +112,8 @@ def view(file, show = 0):
       print ("no frame time data! " + dir_name + "/" + time_file_name ) 
       for x in range(0, 225): 
          frame_time_data.append("||||")
-   
-
+  
+  
    print ("Viewing file: " + file)
    print ("Directory: " + dir_name)
    print ("File Name: " + file_name)
@@ -206,6 +206,7 @@ def view(file, show = 0):
             y2 = xs[half_motion]
             x3 = xs[total_motion-2]
             y3 = xs[total_motion-2]
+
             straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
             if (straight_line < 1 and straight_line > 0) or avg_color > 190:
                meteor_yn = "Y"

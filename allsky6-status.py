@@ -5,6 +5,17 @@ import time
 import os
 import requests
 from amscommon import read_config
+from pathlib import Path
+
+def check_lock(cam_num):
+   file_exists = Path("/home/ams/fireball_camera/norun" + str(cam_num));
+   if (file_exists.is_file()):
+      print ("lock file exists! Don't run...")
+      return 0
+   else:
+      print ("lock file does not exist ok to run...")
+      return 1
+
 
 def proc_count(cam_num):
    cmd = "ps -aux |grep \"capture-hd.py " + cam_num + "\" | grep -v grep | wc -l"
@@ -60,6 +71,11 @@ def stop_capture(cam_num):
       output = subprocess.check_output(cmd, shell=True).decode("utf-8")
       print (output)
 
+def restart_capture(cam_num):
+   stop_capture(cam_num)
+   time.sleep(1)
+   start_capture(cam_num)
+
 def restart_cam(cam_num):
    cfile = "conf/config-" + cam_num + ".txt"
    config = read_config(cfile)
@@ -91,7 +107,10 @@ try:
 except: 
    do_all = 1
 
-if (cmd == "restart"):
+if (cmd == "restart_cap"):
+   restart_capture(cam_num)
+
+if (cmd == "restart_cam"):
    restart_cam(cam_num)
 if (cmd == "stop"):
    stop_capture(cam_num)
@@ -101,12 +120,18 @@ if (cmd == "status"):
    check_cam(cam_num)
 
 if do_all == 1:
-   status = check_cam("1")
-   status = check_cam("2")
-   status = check_cam("3")
-   status = check_cam("4")
-   status = check_cam("5")
-   status = check_cam("6")
+   if check_lock(1) == 1:
+      status = check_cam("1")
+   if check_lock(2) == 1:
+      status = check_cam("2")
+   if check_lock(3) == 1:
+      status = check_cam("3")
+   if check_lock(4) == 1:
+      status = check_cam("4")
+   if check_lock(5) == 1:
+      status = check_cam("5")
+   if check_lock(6) == 1:
+      status = check_cam("6")
 
 
 

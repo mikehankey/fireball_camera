@@ -86,6 +86,9 @@ def read_time_file(file):
 
 def view(file, show = 0):
 
+   # before processing dump frames from this file for 24 hour time lapse
+   os.system("./dump-frames-tl.py " + file )
+
    config_file = ""
    try:
       (file_date, cam_num) = file.split("-")
@@ -126,7 +129,21 @@ def view(file, show = 0):
    else: 
       print ("no frame time data! " + dir_name + "/" + time_file_name ) 
       for x in range(0, 225): 
-         frame_time_data.append("||||")
+         frame_time_data.append("|||")
+
+
+   fps_t = 0
+   for ftd in frame_time_data:
+      print ("FRAMEdata", ftd)
+      fps, tc, tt, tx = ftd.split("|")
+      if fps == "":
+         fps = 0
+      fps_t = int(float(fps_t)) + int(float(fps))
+   if len(frame_time_data) > 0:
+      avg_fps = fps_t / len(frame_time_data)
+   else :
+      avg_fps = 0
+
    
 
    print ("Viewing file: " + file)
@@ -137,6 +154,7 @@ def view(file, show = 0):
    print ("Screen Cap File Name: " + screen_cap_file_name)
    print ("Object File Name: " + object_file_name)
    print ("Capture Date: " + capture_date)
+   print ("FPS: " + str(avg_fps))
 
    # make sure the file exists
    if os.path.isfile(file) is False:
@@ -174,6 +192,8 @@ def view(file, show = 0):
    frames = []
    colors = []
 
+   noise = 0
+
    while True:
       _ , frame = cap.read()
       frame_count = frame_count + 1
@@ -189,7 +209,7 @@ def view(file, show = 0):
             total_motion = len(motion_frames)
             if total_motion < 3 :
                #this a BS capture. abort
-               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
+               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/dist/") 
                return(0)
  
             half_motion = int(round(total_motion/2,0))
@@ -221,6 +241,16 @@ def view(file, show = 0):
             y2 = xs[half_motion]
             x3 = xs[total_motion-2]
             y3 = xs[total_motion-2]
+
+            xmax = max(xs)
+            ymax = max(ys)
+            xmin = min(xs)
+            ymin = min(ys)
+            skip = 0
+
+            if xmax - xmin == 0 and ymax - ymin == 0:
+               skip = 1
+
             straight_line = compute_straight_line(x1,y1,x2,y2,x3,y3)
             if (straight_line < 1 and straight_line > 0) or avg_color > 190:
                meteor_yn = "Y"
@@ -232,7 +262,18 @@ def view(file, show = 0):
             else:
                meteor_yn = "N"
 
+       
+
             #meteor_yn = "Y"
+            if skip == 1:
+               meteor_yn = "N"
+               print ("Skipping not enough x,y movement!", xmax, xmin, ymax, ymin)
+            if noise >= 5:
+               meteor_yn = "N"
+               print ("Skipping to much noise!", noise)
+            if avg_fps < 20:
+               meteor_yn = "N"
+               print ("Skipping calibration file!", avg_fps)
 
 
             print ("Status:", status)
@@ -272,6 +313,7 @@ def view(file, show = 0):
                   print ("failed to upload event file.")
                   return(0)
                #move files to maybe dir
+               print ("Move to maybe dir!")
                os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/maybe/") 
             else:
                log_motion_capture(config, dir_name + "/" + object_file_name, values)
@@ -280,12 +322,13 @@ def view(file, show = 0):
                except:
                   print ("failed to upload capture file.")
                   return(0)
-               os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
-               #move files to false dir
-
-
-
-
+               print ("Move to false dir!")
+               if (skip == 1 or noise >= 5) and status == 'night': 
+                  os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/dist/") 
+               elif avg_fps < 20:
+                  os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/calvid/") 
+               else:
+                  os.system("mv " + dir_name + "/" + file_base_name + "* " + "/var/www/html/out/false/") 
 
             return(1)
       nice_frame = frame
@@ -309,6 +352,9 @@ def view(file, show = 0):
       color = 0
       contours = len(cnts)
       x,y,w,h = 0,0,0,0
+
+      if contours > 3:
+         noise = noise + 1
 
       if contours > 0:
           x,y,w,h = cv2.boundingRect(cnts[0])

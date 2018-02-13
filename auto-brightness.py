@@ -58,14 +58,19 @@ except:
 
 not_ok = 1
 loop_count = 0
+sun_info = read_sun()
+
+max_bright_dark = 80
+max_bright_day = 200
+
 while not_ok == 1:
+   print ("Sun Status:", sun_info['status'])
    loop_count = loop_count + 1
    settings = get_settings(config)
-   print("Current Brightness Setting:", settings['Brightness'])
-   max_bright_dark = 75 
-   if int(settings['Brightness']) >= int(max_bright_dark):
-      print ("Current brightness above max reset!")
-      set_setting(config, "Brightness", max_bright_dark)
+   print("Current Brightness Setting is:", settings['Brightness'])
+   #if int(settings['Brightness']) >= int(max_bright_dark):
+   #   print ("Current brightness above max reset!")
+   #   set_setting(config, "Brightness", max_bright_dark)
    get_cap(config)
 
 
@@ -76,7 +81,6 @@ while not_ok == 1:
    magic = float(magic)
    print ("Mean Image Brightness:", magic)
 
-   sun_info = read_sun()
 
 
 
@@ -87,10 +91,11 @@ while not_ok == 1:
       magic_dark_max = 6800
       magic_dark_min = 5800
    magic_day_max = 40000
-   magic_day_min = 20000
-   if sun_info['status'] == 'dusk' or sun_info['status'] == 'dawn': 
+   magic_day_min = 30000
+   if -10 < int(sun_info['el']) < 0: 
+      print ("it is dawn or dusk!")
       magic_day_max = 30000 
-      magic_day_min = 20000 
+      magic_day_min = 8000 
 
  
    diff = magic_day_max - magic
@@ -103,19 +108,20 @@ while not_ok == 1:
 
    # Daytime   
    if int(sun_info['dark']) != 1:
+      print ("Adjusting for daytime settings.")
       if magic > magic_day_max:
          print ("image is too bright for ", sun_info['status'], ", lower brightness with factor " + str(factor))
          new_brightness = int(settings['Brightness']) - factor
          set_setting(config, "Brightness", new_brightness)
       elif magic < magic_day_min :
-         print ("image is too dark for ", sun_info['status'], ", increase brightness with factor " + str(factor))
+         print (str(magic) + "/" + str(magic_day_min) + " image is too dark for ", sun_info['status'], ", increase brightness with factor " + str(factor))
          new_brightness = int(settings['Brightness']) + factor
-         if int(new_brightness) >= int(max_bright_dark):
+         if int(new_brightness) <= int(max_bright_day):
             print ("Setting new brightness")
             set_setting(config, "Brightness", new_brightness)
          else:
-            print ("Abortng")
-            set_setting(config, "Brightness", max_bright_dark)
+            print ("Abortng new daytime brightness of " + str(new_brightness) + " is greater than the max. Setting to max", max_bright_day)
+            set_setting(config, "Brightness", max_bright_day)
             not_ok = 0
       else: 
          not_ok = 0

@@ -66,7 +66,7 @@ def cam_loop(pipe_parent, shared_dict):
             this_time = time.time()
             cap_unix_time = cap_start_unix_time + (currentFrame/ 1000)
             latency = this_time - cap_unix_time
-            print (this_time, cap_unix_time, latency)
+            print (this_time, cap_unix_time, currentFrame / 1000, latency)
 
             #if int(config['hd']) == 0:
             #    frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
@@ -77,16 +77,20 @@ def cam_loop(pipe_parent, shared_dict):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             pipe_parent.send(cv2.resize(frame, (0,0), fx=resize, fy=resize))
 
-        if count % 500 == 0:
+        if count % 1500 == 0:
             if shared_dict['noise'] > 0:
-               noise_ratio = shared_dict['noise'] / 500
+               noise_ratio = shared_dict['noise'] / 1500
                dist_time = datetime.datetime.now()
-               log_entry = str(cam_num) + "|" + str(noise_ratio) + "|" + str(dist_time)  
+               log_entry = str(cam_num) + "|" + str(noise_ratio) + "|" + str(dist_time) + "|" + str(latency) + "|"
                cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/noise.log"
                os.system(cmd)
                shared_dict['noise'] = 0
             else:
                noise_ratio = 0
+               dist_time = datetime.datetime.now()
+               log_entry = str(cam_num) + "|0|" + str(dist_time) + "|" + str(latency) + "|"
+               cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/noise.log"
+               os.system(cmd)
 
 
             print("NOISE RATIO: " + str(noise_ratio))
@@ -102,7 +106,10 @@ def cam_loop(pipe_parent, shared_dict):
             log.write( frame_time.strftime("%Y%m%d%H%M%S") + "|FPS:" + str(fps) + "|\n")
             log.flush()
             if cam_num != "":
-               cv2.imwrite("/var/www/html/out/latest" + cam_num + ".jpg", frames[0])
+               latest_file = frame_time.strftime("%Y%m%d%H%M%S-") + cam_num + ".jpg"
+               cv2.imwrite("/var/www/html/out/time_lapse/" + latest_file, frames[0])
+               cmd = "cp /var/www/html/out/time_lapse/" + latest_file + " /var/www/html/out/latest" + cam_num + ".jpg"
+               os.system(cmd)
             else:
                cv2.imwrite("/var/www/html/out/latest.jpg", frames[0])
 

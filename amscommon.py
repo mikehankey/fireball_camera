@@ -26,7 +26,7 @@ def read_config(config_file = ""):
     
     for line in file:
       line = line.strip('\n')
-      
+      #print (line) 
       #Find first index of =
       c = line.index('=')
       config[line[0:c]] = line[c+1:]

@@ -4,6 +4,7 @@
 # OSD - /videoosd.asp?
 # Settings - /videolens.asp
 
+import datetime
 import sys
 import requests
 from amscommon import read_config
@@ -26,7 +27,9 @@ print (config)
 
 cam_ip = config['cam_ip']
 
-print ("Setting up defaults for camera on IP address:", cam_ip)
+cur_datetime = datetime.datetime.now()
+req_str = "year=" + str(cur_datetime.strftime("%Y")) + "&" + "month=" + str(cur_datetime.strftime("%m")) + "&" + "day=" + str(cur_datetime.strftime("%d")) + "&" + "hour=" + str(cur_datetime.strftime("%H")) + "&" + "minute=" + str(cur_datetime.strftime("%M")) + "&" + "second=" + str(cur_datetime.strftime("%S"))
+
 
 print ("Set timezone and NTP server.")
 url = "http://" + str(cam_ip) + "/cgi-bin/date_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&timezone=14&ntpHost=clock.isc.org"
