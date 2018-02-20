@@ -1,6 +1,11 @@
+#!/usr/bin/python3
+import glob
 import sys
 import subprocess
 import os
+import time
+
+video_dir = "/media/ams/Samsung_T5/video"
 
 def start_capture(cam_num):
    cmd = "/home/ams/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_0 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + "/media/ams/Samsung_T5/video/" + cam_num + "/capture-%Y-%m-%d_%H-%M-%S.mp4\" 2>&1 > /dev/null & "
@@ -13,9 +18,23 @@ def stop_capture(cam_num):
    print (output)
 
 def purge(cam_num):
-   cmd = "rm " + cam_num + "/*"
-   print (cmd)
-   os.system(cmd)
+   cur_time = int(time.time())
+   #cmd = "rm " + cam_num + "/*"
+   #print (cmd)
+   #os.system(cmd)
+
+   for filename in (glob.glob(video_dir + '/' + cam_num + '/*.mp4')):
+      st = os.stat(filename)
+      mtime = st.st_mtime
+      tdiff = cur_time - mtime
+      tdiff = tdiff / 60 / 60 / 24
+      if tdiff >= .8:
+         cmd = "rm " + filename
+         print(cmd)
+         os.system(cmd)
+         #file_list.append(filename)
+
+
 
 
 try:
