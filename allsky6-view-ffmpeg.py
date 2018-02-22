@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#import skvideo.io
 import subprocess
 import requests
 import pytesseract
@@ -393,14 +392,11 @@ def view(file, show = 0):
             np_enhanced_image = np.asarray(enhanced_image)
             #cv2.imwrite(acc_file, np_enhanced_image)
 
-            #np_final_image = np.asarray(final_image)
-            total_stars, star_image = find_stars(np_final_image)
+            print ("Total Stars: ", total_stars)
             if total_stars == 0:
                star_file = star_file.replace("/stars/", "/clouds/")
                acc_file = acc_file.replace("/stars/", "/clouds/")
             cv2.imwrite(acc_file, np_enhanced_image)
-
-            #total_stars, star_image = find_stars(cv2.convertScaleAbs(image_acc))
 
             if total_stars > 0:
                cv2.imwrite(star_file, star_image)
@@ -432,6 +428,8 @@ def view(file, show = 0):
             values['straight_line'] = straight_line
             values['meteor_yn'] = meteor_yn
             values['bp_frames'] = total_motion
+            print("ending here...")
+            exit()
 
             if meteor_yn == 'Y':
                try:
@@ -519,7 +517,8 @@ def view(file, show = 0):
 
          if frame_count > 5:
             np_final_image = np.asarray(final_image)
-            total_stars, star_image = find_stars(np_final_image)
+            gray_nice_frame = cv2.cvtColor(nice_frame, cv2.COLOR_BGR2GRAY)
+            total_stars, star_image = find_stars(gray_nice_frame)
             if total_stars == 0:
                print("Cloudy...???")
                nostars = nostars + 1
@@ -566,9 +565,12 @@ def view(file, show = 0):
          print (frame_count, contours, x,y,w,h,color)
          if frame_count % 10 == 0:
             np_final_image = np.asarray(final_image)
-            #cv2.imshow('pepe', np_final_image)
+            np_star_image = np.asarray(star_image)
+            small_star_image = cv2.resize(star_image, (0,0), fx=0.5, fy=0.5)
+            #cv2.imshow('pepe', small_star_image)
+            cv2.imshow('pepe', np_final_image)
             #cv2.imshow('pepe', cv2.convertScaleAbs(image_acc))
-            #cv2.waitKey(1) 
+            cv2.waitKey(1) 
 
          #if frame_count % 2 == 0:
          #  cv2.imshow('pepe', frame)
@@ -583,7 +585,6 @@ def find_stars(star_image):
    star_image_gray = star_image
 
    cloudy = 0
-#cv2.cvtColor(star_image, cv2.COLOR_BGR2GRAY)
 
    avg_px = np.average(star_image_gray)
    ax_pixel = np.amax(star_image_gray)
@@ -591,13 +592,13 @@ def find_stars(star_image):
    #lower_thresh = ax_pixel - 10
    bp_dif = ax_pixel - avg_px
    lower_thresh = avg_px + (bp_dif / 2)
-   if avg_px * 2 > ax_pixel or ax_pixel < 60:
+   if avg_px * 2 > ax_pixel or ax_pixel < 30:
       print ("there are no stars, likely cloudy... should skip.")
       total_stars = 0 
       cloudy = 1
    else:
       #lower_thresh = avg_px * 3
-      star_image_gray = cv2.GaussianBlur(star_image_gray, (1, 1), 0)
+      #star_image_gray = cv2.GaussianBlur(star_image_gray, (1, 1), 0)
       _, nice_threshold = cv2.threshold(star_image_gray, lower_thresh, 255, cv2.THRESH_BINARY)
       (_, cnts, xx) = cv2.findContours(nice_threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
       contours = len(cnts)
@@ -618,6 +619,8 @@ def find_stars(star_image):
                total_stars = total_stars + 1
             else:
                print ("Failed flux test")
+               #cv2.circle(star_image_gray, (x,y), 3, (120), 1)
+               total_stars = total_stars + 1
    return(total_stars, star_image_gray)
 
 
