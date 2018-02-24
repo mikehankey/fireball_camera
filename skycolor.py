@@ -17,7 +17,8 @@ def get_cap(config):
 def is_it_clear(cam_num):
    # load the image
    config = read_config("conf/config-" + str(cam_num) + ".txt")
-   image = get_cap(config)
+   #image = get_cap(config)
+   image = cv2.imread("ffvids/1/time_lapse/capture-2018-02-20_18-07-10-stack.jpg")
 
    avg_color_per_row = np.average(image,axis=0)
    r,g,b = np.average(avg_color_per_row,axis=0)
@@ -29,8 +30,8 @@ def is_it_clear(cam_num):
       print(r,g,b)
 
 is_it_clear(1)
-is_it_clear(2)
-is_it_clear(3)
-is_it_clear(4)
-is_it_clear(5)
-is_it_clear(6)
+#is_it_clear(2)
+#is_it_clear(3)
+#is_it_clear(4)
+#is_it_clear(5)
+#is_it_clear(6)
