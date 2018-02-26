@@ -82,14 +82,14 @@ else:
 
 #print (obs.previous_rising(ephem.Sun()))
 #print (obs.next_setting(ephem.Sun()))
-if int(sun_alt) < -8:
+if int(sun_alt) < -4:
    dark = 1
 else:
    dark = 0
 
-if int(sun_alt) < -8:
+if int(sun_alt) < -4:
    status = "dark";
-if int(sun_alt) >= -8 and int(sun_alt) < 3:
+if int(sun_alt) >= -4 and int(sun_alt) < 5:
       if int(sun_az) > 0 and int(sun_az) < 180:
          #status = "dawn"
          status = "day"
