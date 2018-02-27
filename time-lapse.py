@@ -166,7 +166,15 @@ yest_time = int(time.time()- 86400)
 stop_time = datetime.datetime.fromtimestamp(int(cur_time)).strftime("%Y-%m-%d %H:%M:%S")
 start_time = datetime.datetime.fromtimestamp(int(yest_time)).strftime("%Y-%m-%d %H:%M:%S")
 
-config = read_config("conf/config-1.txt")
+try:
+   config = read_config("conf/config-1.txt")
+   config = read_config(config_file)
+   single = 0
+except:
+   config = read_config("config.txt")
+   cam_num = config['cam_num']
+   single = 1
+
 
 report = "AllSky6 24 Hour Report for " + config['obs_name'] + "\n"
 report = report + "Period:" + str(start_time) + " to " + str(stop_time) + "\n"
@@ -175,49 +183,67 @@ report = report + "Latitude : " + config['device_lat'] + "\n"
 report = report + "Longitude: " + config['device_lng'] + "\n"
 report = report + "Altitude: " + config['device_alt'] + "\n"
 
-sort_files("1")
-sort_files("2")
-sort_files("3")
-sort_files("4")
-sort_files("5")
-sort_files("6")
+if single == 0: 
+   sort_files("1")
+   sort_files("2")
+   sort_files("3")
+   sort_files("4")
+   sort_files("5")
+   sort_files("6")
 
-report = do_24_hour_report("1", report)
-report = do_24_hour_report("2", report)
-report = do_24_hour_report("3", report)
-report = do_24_hour_report("4", report)
-report = do_24_hour_report("5", report)
-report = do_24_hour_report("6", report)
-datestr = datetime.datetime.now()
-datestr = datestr.strftime("%Y%m%d")
-rpt_file = datestr + "-report.txt"
-fp = open("/var/www/html/out/time_lapse/videos/" + rpt_file, "w")
-fp.write(report)
-fp.close()
+   report = do_24_hour_report("1", report)
+   report = do_24_hour_report("2", report)
+   report = do_24_hour_report("3", report)
+   report = do_24_hour_report("4", report)
+   report = do_24_hour_report("5", report)
+   report = do_24_hour_report("6", report)
 
-
-
-
-make_time_lapse("1")
-make_time_lapse("2")
-make_time_lapse("3")
-make_time_lapse("4")
-make_time_lapse("5")
-make_time_lapse("6")
-
-move_to_trash("1")
-move_to_trash("2")
-move_to_trash("3")
-move_to_trash("4")
-move_to_trash("5")
-move_to_trash("6")
+   datestr = datetime.datetime.now()
+   datestr = datestr.strftime("%Y%m%d")
+   rpt_file = datestr + "-report.txt"
+   fp = open("/var/www/html/out/time_lapse/videos/" + rpt_file, "w")
+   fp.write(report)
+   fp.close()
 
 
-for x in range(1,7): 
-   print (x)
-   cam_num = str(x)
+
+
+   make_time_lapse("1")
+   make_time_lapse("2")
+   make_time_lapse("3")
+   make_time_lapse("4")
+   make_time_lapse("5")
+   make_time_lapse("6")
+
+   move_to_trash("1")
+   move_to_trash("2")
+   move_to_trash("3")
+   move_to_trash("4")
+   move_to_trash("5")
+   move_to_trash("6")
+
+
+   for x in range(1,7): 
+      print (x)
+      cam_num = str(x)
+      title = config['obs_name'] + " CAM#" + str(cam_num) + " timelapse for " + stop_time + " to " + start_time  
+      desc = "AMS #" + config['device_id'] + " Operated by " + config['first_name'] + " " + config['last_name'] + " in " + config['city_name'] + "," + config['state_name']
+      upload_to_youtube(datestr, cam_num, title, desc)
+else:
+   print("do 1 file")
+   sort_files(str(cam_num))
+   report = do_24_hour_report(str(cam_num), report)
+
+   datestr = datetime.datetime.now()
+   datestr = datestr.strftime("%Y%m%d")
+   rpt_file = datestr + "-report.txt"
+   fp = open("/var/www/html/out/time_lapse/videos/" + rpt_file, "w")
+   fp.write(report)
+   fp.close()
+   make_time_lapse(str(cam_num))
    title = config['obs_name'] + " CAM#" + str(cam_num) + " timelapse for " + stop_time + " to " + start_time  
    desc = "AMS #" + config['device_id'] + " Operated by " + config['first_name'] + " " + config['last_name'] + " in " + config['city_name'] + "," + config['state_name']
+   move_to_trash(cam_num)
    upload_to_youtube(datestr, cam_num, title, desc)
 
 

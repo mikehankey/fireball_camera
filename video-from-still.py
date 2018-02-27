@@ -17,8 +17,8 @@ datestr = datetime.datetime.now()
 datestr = datestr.strftime("%Y%m%d")
 datestr = datestr + "-" + cam_num + ".avi"
 
-#outfile = "/var/www/html/out/time_lapse/videos/" + datestr
-outfile = "test.avi"
+outfile = "/var/www/html/out/time_lapse/videos/" + datestr
+#outfile = "test.avi"
 
 
 image_list = []

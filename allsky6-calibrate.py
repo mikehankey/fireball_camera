@@ -219,9 +219,9 @@ try:
    config_file = "conf/config-" + cam_num + ".txt"
    #config = read_config(config_file)
 except:
-   #config = read_config(config_file)
-   config_file = ""
-   cam_num = ""
+   config_file = "config.txt"
+   config = read_config(config_file)
+   cam_num = config['cam_num']
 
 if cmd == 'read_noise':
    read_noise(config_file, cam_num)
