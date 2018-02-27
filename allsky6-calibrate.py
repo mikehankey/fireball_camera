@@ -45,7 +45,7 @@ def set_setting(config, setting, value):
    return(r.text)
 
 def read_noise(config_file, cam_num) :
-   cv2.namedWindow('pepe')
+   #cv2.namedWindow('pepe')
 
    last_frame = None
    config = read_config(config_file)
@@ -221,6 +221,7 @@ try:
 except:
    #config = read_config(config_file)
    config_file = ""
+   cam_num = ""
 
 if cmd == 'read_noise':
    read_noise(config_file, cam_num)

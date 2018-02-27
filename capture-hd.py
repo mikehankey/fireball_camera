@@ -340,6 +340,7 @@ if __name__ == '__main__':
        config = read_config(config_file)
     except: 
        config = read_config(config_file)
+       cam_num = config['cam_num']
 
     print (config['cam_ip'])
  
