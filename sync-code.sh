@@ -1,3 +1,3 @@
 /usr/bin/git pull
-./capture-stop.sh
-./capture-start.sh
+#./capture-stop.sh
+#./capture-start.sh
