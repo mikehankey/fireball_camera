@@ -81,7 +81,7 @@ def nighttime_settings( config):
    time.sleep(1)
    fix_ir(config)
    ### BLC 
-   set_special(config, "1017", "30")
+   set_special(config, "1017", "10")
    #set_setting(config, "Brightness", config['Brightness'])
    #set_setting(config, "Contrast", config['Contrast'])
    set_setting(config, "Gamma", config['Gamma'])
@@ -162,7 +162,9 @@ else:
    if cam_status != sun['status']:
       print ("Nighttime settings are not set but it is nighttime!", cam_status, sun['status'])
       nighttime_settings(config)
-
-os.system("./auto-brightness.py " + cam_num)
+if sun['status'] == 'day':
+   os.system("./auto-brightness.py " + cam_num)
+else:
+   os.system("./allsky6-calibrate.py read_noise " + cam_num)
 time.sleep(7)
 os.system("rm /home/pi/fireball_camera/calnow"+str(cam_num))
