@@ -5,11 +5,37 @@ import subprocess
 import os
 import time
 
-video_dir = "/media/ams/Samsung_T5/video"
+video_dir = "/mnt/ams"
+
+def check_running(cam_num, type):
+   if type == "HD":
+      cmd = "ps -aux |grep \"ffmpeg\" | grep \"HD\" | grep \"cam" + cam_num + "\" | grep -v grep | wc -l"
+   else: 
+      cmd = "ps -aux |grep \"ffmpeg\" | grep \"SD\" | grep \"cam" + cam_num + "\" | grep -v grep | wc -l"
+   print(cmd)
+   output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+   output = int(output.replace("\n", ""))
+   return(int(output))
+
 
 def start_capture(cam_num):
-   cmd = "/home/ams/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_0 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + "/media/ams/Samsung_T5/video/" + cam_num + "/capture-%Y-%m-%d_%H-%M-%S.mp4\" 2>&1 > /dev/null & "
-   os.system(cmd)
+   running = check_running(cam_num, "HD")
+   if running == 0:
+      cmd = "/home/ams/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_0 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/HD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
+      print(cmd)
+   
+      os.system(cmd)
+   else: 
+      print ("ffmpeg already running for cam:", cam_num)
+
+   running = check_running(cam_num, "SD")
+   if running == 0:
+      cmd = "/home/ams/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_1 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/SD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
+      print(cmd)
+      os.system(cmd)
+   else: 
+      print ("ffmpeg already running for cam:", cam_num)
+
 
 def stop_capture(cam_num):
    #print ("Stopping capture for ", cam_num)
@@ -58,6 +84,12 @@ if (cmd == "start_all"):
 
 if (cmd == "purge"):
    purge(cam_num)
+
+if (cmd == "check_running"):
+   running = check_running(cam_num, "HD")
+   print (running)
+   running = check_running(cam_num, "SD")
+   print (running)
 
 if (cmd == "purge_all"):
    purge("1")

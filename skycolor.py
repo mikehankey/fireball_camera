@@ -1,3 +1,4 @@
+#!/usr/bin/python3 
 # import the necessary packages
 import numpy as np
 import cv2
@@ -17,8 +18,7 @@ def get_cap(config):
 def is_it_clear(cam_num):
    # load the image
    config = read_config("conf/config-" + str(cam_num) + ".txt")
-   #image = get_cap(config)
-   image = cv2.imread("ffvids/1/time_lapse/capture-2018-02-20_18-07-10-stack.jpg")
+   image = get_cap(config)
 
    avg_color_per_row = np.average(image,axis=0)
    r,g,b = np.average(avg_color_per_row,axis=0)

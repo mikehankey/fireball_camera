@@ -65,7 +65,7 @@ class ProcessVideo:
       self.file_class = "" # where we will ultiamtely move the file. 
       self.cams = [1,2,3,4,5,6]
       self.file_classes = ['day', 'day_motion', 'day_nomotion', 'night', 'night_motion', 'night_nomotion', 'dist', 'calvid', 'meteor', 'time_lapse']
-      self.video_dir = "/home/ams/fireball_camera/ffvids"
+      self.video_dir = "/mnt/ams/SD"
       self.config = {}
       self.config_file = "" 
 
@@ -73,7 +73,6 @@ class ProcessVideo:
       for dir in self.file_classes:
          dd = self.video_dir + "/" + self.cam_num + "/" + dir
          if not os.path.isdir(dd):
-            print("making dir", dd)
             os.mkdir(dd)
 
 
@@ -99,8 +98,6 @@ class ProcessVideo:
       self.config = read_config(self.config_file)
 
    def move_all_files(self,dest_dir):
-      #return(0)
-      print (self.orig_video_file, dest_dir)
       if ".avi" in self.orig_video_file:
          wild_card = self.orig_video_file.replace(".avi", "*") 
       else:
@@ -110,14 +107,14 @@ class ProcessVideo:
       # copy the time lapse file
 
       orig_dir = self.orig_video_file.replace(ff, "")
-      tl_filename = orig_dir + "time_lapse" + "/" 
+      tl_filename = orig_dir + self.cam_num + "/time_lapse" + "/" 
       cmd =  "cp " + self.stacked_image_fn + " " + tl_filename
-      print(cmd)
+      #print(cmd)
       os.system(cmd)
 
-      new_filename = orig_dir + dest_dir + "/" 
+      new_filename = orig_dir + self.cam_num + "/" + dest_dir + "/" 
       cmd =  "mv " + wild_card + " " + new_filename
-      print(cmd)
+      #print(cmd)
       os.system(cmd)
 
    def StackVideo(self):
@@ -132,15 +129,16 @@ class ProcessVideo:
          return(0)
       if self.sun_status == 'day':
          print ("Skipping daytime files for now.")
-         self.drop_frame()
-         self.move_all_files("day")
-         mod_skip = 5
+         #self.drop_frame()
+         #self.move_all_files("day")
+         mod_skip = 25
+         #return(0)
       else:
-         mod_skip = 3 
+         mod_skip = 2 
 
       if self.show_video == 1:
          cv2.namedWindow('pepe')
-
+      print ("Mod skip is", mod_skip)
       cap = cv2.VideoCapture(self.orig_video_file)
       while True:
          #cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES,frame_count)
@@ -172,6 +170,8 @@ class ProcessVideo:
                   self.stacked_image = nice_frame_im 
                   self.stacked_image=ImageChops.lighter(self.stacked_image,nice_frame_im)
 
+
+
    def ProcessVideo(self):
       # determine sun status for video
       # play the video frame by frame 
@@ -192,18 +192,17 @@ class ProcessVideo:
       #   # move file to daytime dir
       #   return(0)
       if self.sun_status == 'day':
-         print ("Skipping daytime files for now.")
-         self.drop_frame()
-         self.move_all_files("day")
-         mod_skip = 5
-      else:
+         #print ("Skipping daytime files for now.")
+         #self.drop_frame()
+         #self.move_all_files("day")
          mod_skip = 5 
+      else:
+         mod_skip = 5  
 
-      if self.show == 1:
+      if self.show_video == 1:
          cv2.namedWindow('pepe')
 
       cap = cv2.VideoCapture(self.orig_video_file)
-
       frame_count = 0
       image_acc = None
       last_frame = None
@@ -211,6 +210,7 @@ class ProcessVideo:
       real_motion = 0
       tstamp_prev = 0
       while True:
+         #print(frame_count, self.motion_events, self.prev_motion)
          #cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES,frame_count)
          _ , frame = cap.read()
          frame_count = frame_count + 1
@@ -236,7 +236,7 @@ class ProcessVideo:
             nice_frame = frame
             if self.show_video == 1:
                nice_frame_small = frame
-               nice_frame_small = cv2.resize(frame, (0,0), fx=0.25, fy=0.25) 
+               nice_frame_small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
 
             nice_frame_im = Image.fromarray(nice_frame)
             #nice_frame_im = Image.fromarray(cleaned)
@@ -244,8 +244,10 @@ class ProcessVideo:
             # mask out the time for motion detection 
             if self.detect_motion == 1:
                if frame is not None:
-                  masked = frame[680:720, 0:620] 
-                  frame[680:720, 0:620] = [0,0,0]
+                  #masked = frame[680:720, 0:620] 
+                  #frame[680:720, 0:620] = [0,0,0]
+                  masked = frame[460:480, 0:310] 
+                  frame[460:480, 0:310] = [0,0,0]
 
                frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -268,10 +270,12 @@ class ProcessVideo:
                if len(cnts) > 0:
                   for (i,c) in enumerate(cnts):
                      x,y,w,h = cv2.boundingRect(cnts[i])
+                     cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0),2)
                      if w > 5 and h > 5 and frame_count > 8:
                         real_cnts.append([x,y,w,h])
                         self.motion_cnts.append([frame_count,len(cnts),x,y,w,h])
-               if len(real_cnts) >= 1:
+               if len(real_cnts) >= 1 and frame_count > 3:
+                  self.motion = 1
                   self.total_motion = self.total_motion + 1
                   self.xs.append(x)
                   self.ys.append(y)
@@ -284,13 +288,12 @@ class ProcessVideo:
                      self.prev_motion = 1
                   else:
                      self.prev_motion = 0
-                  self.motion = 1
                   self.motion_frames.append(frame_count)
                else:
                   real_cnts = []
                   self.frame_data.append([frame_count, len(real_cnts),0,0,0,0])
-                  #print ("no motion", frame_count, 0,0,0, 0,0)
-                  #print ("No real motion")
+                  self.motion = 0
+                  self.prev_motion = 0
 
 
             if self.make_stack != 0:
@@ -351,11 +354,13 @@ class ProcessVideo:
                   cv2.imshow('pepe', star_image_small)
                   cv2.waitKey(1)
                else:
-                  np_stacked_image = np.asarray(self.stacked_image)
+                  np_stacked_image = np.asarray(nice_frame)
                   with_stars = self.draw_stars(np_stacked_image)
-                  stacked_image_small = cv2.resize(with_stars, (0,0), fx=0.5, fy=0.5) 
-                  cv2.imshow('pepe', stacked_image_small)
-                  cv2.waitKey(1)
+                  if len(np_stacked_image.shape) > 0 :
+                     #stacked_image_small = cv2.resize(with_stars, (0,0), fx=0.5, fy=0.5) 
+                     stacked_image_small = cv2.resize(np_stacked_image, (0,0), fx=0.5, fy=0.5) 
+                     cv2.imshow('pepe', stacked_image_small)
+                     cv2.waitKey(1)
 
    def draw_stars(self, img):
       for (x,y,w,h,avg_flux,max_flux,total_flux) in self.starlist:
@@ -369,7 +374,6 @@ class ProcessVideo:
       cap.release()
 
    def cleanup_process(self):
-      #print ("yo")
       xl = len(self.xs)
       yl = len(self.ys)
       if xl >= 3 :
@@ -378,9 +382,7 @@ class ProcessVideo:
          ef = xl - 1
          self.straight_line = self.compute_straight_line(self.xs[sf],self.ys[sf],self.xs[mf],self.ys[mf],self.xs[ef],self.ys[ef])
 
-         #print ("Straight Line:", self.straight_line)
-     
-         if self.straight_line >= -0.9 and self.straight_line < 1:
+         if self.straight_line < 1 and self.sun_status != 'day':
             self.meteor_yn = "Y"
          else:
             self.meteor_yn = "N"
@@ -390,7 +392,8 @@ class ProcessVideo:
       np_stacked_image = np.asarray(self.stacked_image)
       np_star_image = np.asarray(self.star_image_gray)
       #cleaned_stack = morphology.remove_small_objects(np_stacked_image, min_size=2, connectivity=12)
-      cleaned_stack = cv2.fastNlMeansDenoisingColored(np_stacked_image,None,8,8,7,21)
+
+      #cleaned_stack = cv2.fastNlMeansDenoisingColored(np_stacked_image,None,8,8,7,21)
       #cleaned_stars = cv2.fastNlMeansDenoising(np_star_image,None,8,8,7,21)
 
       #cv2.imwrite(self.stacked_image_fn, np_stacked_image)
@@ -399,7 +402,10 @@ class ProcessVideo:
          cv2.imwrite(self.star_image_fn, np_star_image)
       #cv2.imwrite(self.star_image_fn, cleaned_stars)
       print ("Writing:", self.stacked_image_fn)
-      cv2.imwrite(self.stacked_image_fn, cleaned_stack)
+      
+      #print(np_stacked_image)
+
+      cv2.imwrite(self.stacked_image_fn, np_stacked_image)
       report = "File:" + self.orig_video_file + "\n"
       report = report + "Total Frames:" + str(self.frame_count) + "\n"
       report = report + "FPS:" + str(self.frame_count/60) + "\n"
@@ -412,16 +418,15 @@ class ProcessVideo:
          report = report + "Contours:" + str(self.motion_cnts) + "\n"
          report = report + "Straight Line:" + str(self.straight_line) + "\n"
          report = report + "Meteor Y/N:" + str(self.meteor_yn) + "\n"
-         report = report + "Cons Motion Events:" + str(self.motion_events) + "\n"
-         #print("Contours :" + self.motion_cnts)
-         #for (frame_count,cn,x,y,w,h) in self.frame_data:
-         #   report = report + str(frame_count) + "," + str(cn) + "," + str(x) + "," + str(y) + "," + str(w) + "," + str(h) + "\n"
+         report = report + "Motion Events:" + str(self.motion_events) + "\n"
+         report = report + "Consecutive Motion:" + str(self.cons_motion) + "\n"
+         report = report + "Frame Data:" + str(self.frame_data) + "\n"
       # Write out report file.
-      #print ("Writing: ", self.report_fn)
-      #fp = open(self.report_fn, "w")
-      #fp.write(report)
-      #fp.close()
-      #print (report)
+      print ("Writing: ", self.report_fn)
+      fp = open(self.report_fn, "w")
+      fp.write(report)
+      fp.close()
+      print (report)
 
 
       #self.file_classes = ['day', 'day_motion', 'day_nomotion', 'night', 'night_motion', 'night_nomotion', 'dist', 'calvid', 'meteor']
@@ -672,22 +677,15 @@ class ProcessVideo:
          self.report_fn = self.orig_video_file.replace(".avi", "-report.txt") 
       el = self.orig_video_file.split("/") 
       file_name = el[-1]
-      cam_num = el[-2]
+      file_name = file_name.replace("_", "-")
+      file_name = file_name.replace(".", "-")
+      print (file_name)
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
+      cam_num = xcam_num.replace("cam", "")
       self.SetCamNum(cam_num)
       self.chk_dirs() 
-      print ("VID: ", self.orig_video_file)
-      print ("STAR IMG: ", self.star_image_fn)
-      print ("STACK IMG: ", self.stacked_image_fn)
     
-      file_name = file_name.replace("capture-", "")
-      file_name = file_name.replace("-", "")
-      file_name = file_name.replace("_", "")
-      year = file_name[0:4]
-      month = file_name[4:6]
-      day = file_name[6:8]
-      hour = file_name[8:10]
-      min = file_name[10:12]
-      sec = file_name[12:14]
-      date_str = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
+      date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
       self.capture_date = date_str
+      print(self.capture_date, cam_num)
 
