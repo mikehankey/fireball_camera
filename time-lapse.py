@@ -168,7 +168,6 @@ start_time = datetime.datetime.fromtimestamp(int(yest_time)).strftime("%Y-%m-%d 
 
 try:
    config = read_config("conf/config-1.txt")
-   config = read_config(config_file)
    single = 0
 except:
    config = read_config("config.txt")
