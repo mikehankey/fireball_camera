@@ -61,6 +61,11 @@ def mkdirs():
    os.system("mkdir /var/www/html/out/time_lapse/5")
    os.system("mkdir /var/www/html/out/time_lapse/6")
 
+def clean_trash():
+   cmd = "rm /var/www/html/out/time_lapse/trash/*"
+   print (cmd)
+   os.system(cmd)
+
 def move_to_trash(cam_num):
    cmd = "mv /var/www/html/out/time_lapse/" + cam_num + "/*.jpg /var/www/html/out/time_lapse/trash/"
    print (cmd)
@@ -183,6 +188,7 @@ report = report + "Longitude: " + config['device_lng'] + "\n"
 report = report + "Altitude: " + config['device_alt'] + "\n"
 
 if single == 0: 
+   clean_trash()
    sort_files("1")
    sort_files("2")
    sort_files("3")
