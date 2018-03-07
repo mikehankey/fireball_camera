@@ -62,7 +62,10 @@ def mkdirs():
    os.system("mkdir /var/www/html/out/time_lapse/6")
 
 def clean_trash():
-   cmd = "rm /var/www/html/out/time_lapse/trash/*"
+   cmd = "rm -rf /var/www/html/out/time_lapse/trash"
+   print (cmd)
+   os.system(cmd)
+   cmd = "mkdir /var/www/html/out/time_lapse/trash"
    print (cmd)
    os.system(cmd)
 
