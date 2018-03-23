@@ -17,8 +17,8 @@ datestr = datetime.datetime.now()
 datestr = datestr.strftime("%Y%m%d")
 datestr = datestr + "-" + cam_num + ".avi"
 
-#outfile = "/var/www/html/out/time_lapse/videos/" + datestr
-outfile = "test.avi"
+outfile = "/var/www/html/out/time_lapse/videos/" + datestr
+#outfile = "test.avi"
 
 
 image_list = []
@@ -32,7 +32,7 @@ height , width, chan =  open_cv_image.shape
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'H264')
-out = cv2.VideoWriter(outfile,fourcc, 5, (width,height),1)
+out = cv2.VideoWriter(outfile,fourcc, 25, (width,height),1)
 
 sorted_list = sorted(file_list)
 count = 0

@@ -1,3 +1,5 @@
+sudo pip2 install --upgrade google-api-python-client
+sudo pip2 install --upgrade dropbox 
 mkdir /var/www/html/out/calvid
 mkdir /var/www/html/out/cal
 mkdir /var/www/html/out/dist
