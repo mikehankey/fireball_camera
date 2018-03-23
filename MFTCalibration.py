@@ -533,7 +533,6 @@ class MFTCalibration:
       ffw= int(np_flux_box.shape[1] / 2)
       ffh = int(np_flux_box.shape[0] / 2)
 
-      #SEX
       abr = 0
       for afx in range(0,np_flux_box.shape[1]):
          for afy in range(np_flux_box.shape[0]):

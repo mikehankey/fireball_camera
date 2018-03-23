@@ -59,7 +59,7 @@ for x in range(0,140):
 
 url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=2000&paramchannel=0&paramcmd=2006&paramctrl=0&paramstep=0&paramreserved=0"
 print (url)
-for x in range(0,138):
+for x in range(0,134):
     r = requests.get(url)
     print (r.text)
 
@@ -76,10 +76,10 @@ r = requests.get(url)
 print (r.text)
 
 #WDR Closed
-url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1037&paramctrl=0&paramstep=0&paramreserved=0"
-print (url)
-r = requests.get(url)
-print (r.text)
+#url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1037&paramctrl=0&paramstep=0&paramreserved=0"
+#print (url)
+#r = requests.get(url)
+#print (r.text)
 
 #3D-DNR Normal
 url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1049&paramctrl=3&paramstep=0&paramreserved=0"
@@ -93,22 +93,22 @@ r = requests.get(url)
 print (r.text)
 
 # IR CONTROL TO TIME UTC 5pm to 7am open it up
-url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1063&paramctrl=1&paramstep=0&paramreserved=0"
-print (url)
-r = requests.get(url)
-print (r.text)
+#url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1063&paramctrl=1&paramstep=0&paramreserved=0"
+#print (url)
+#r = requests.get(url)
+#print (r.text)
 
-url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1081&paramctrl=1&paramstep=0&paramreserved=0"
-print (url)
-r = requests.get(url)
-print (r.text)
+#url = "http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1081&paramctrl=1&paramstep=0&paramreserved=0"
+#print (url)
+#r = requests.get(url)
+#print (r.text)
 
 
 
-url = "http://" + str(cam_ip) + "/webs/videoLensCfgEx?irtodayh=11&irtonighth=20"
-print (url)
-r = requests.get(url)
-print (r.text)
+#url = "http://" + str(cam_ip) + "/webs/videoLensCfgEx?irtodayh=11&irtonighth=20"
+#print (url)
+#r = requests.get(url)
+#print (r.text)
 
 # default shutter speed of 50
 
@@ -116,9 +116,9 @@ r = requests.get("http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramch
 
 #os.system("./camera-settings.py " + str(cam_num) )
 #print ("Set the video encoding params.")
-#url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=512&FrameRate1=5&Profile1=Main Profile&PicLevel1=1"
+#url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=1024&FrameRate1=25&Profile1=High Profile&PicLevel1=1"
 
-time.sleep(45)
+#time.sleep(45)
 print (url)
 r = requests.get(url)
 print (r.text)

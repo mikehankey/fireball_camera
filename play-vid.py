@@ -48,7 +48,7 @@ count = 0
 
 prev_motion = 0
 motion_events = 0
-
+no_motion = 0
 while True:
    _ , frame = cap.read()
    if frame is None:
@@ -110,12 +110,16 @@ while True:
          #writer.release()
          exit()
    else: 
-      frame[340:360, 0:230] = [0,0,0]
+      if frame.shape[1] > 640:
+         frame[680:720, 0:620] = [0,0,0]
+      else:
+         frame[340:360, 0:230] = [0,0,0]
       nice_frame = frame
       #if last_frame == None:
       last_frame = frame
 
-      alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
+      #alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
+      alpha = .1
       #frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       gray_frame = frame
@@ -153,6 +157,7 @@ while True:
        noise = noise + contours    
  
       if contours > 0:
+          no_motion = 0
           for (i,c) in enumerate(cnts):
              x,y,w,h = cv2.boundingRect(cnts[i])
              x2 = x + w
@@ -205,16 +210,23 @@ while True:
              text = " x,y: " + str(x) + "," + str(y) + " Contours: " + str(contours) + " Convex: " + str(k) + " Color: " + str(color)
              cv2.putText(nice_frame, text,  (x,y), cv2.FONT_HERSHEY_SIMPLEX, .4, (255, 255, 255), 1)
              #cv2.imshow('pepe2', nice_frame)
-             cv2.imshow('pepe', nice_frame)
+             #nice_frame_sm = cv2.resize(frame, (0,0), fx=0.5, fy=0.5)
+             #cv2.imshow('pepe', frame)
+             time.sleep(1)
              #cv2.imshow('pepe', nice_threshold)
              #print (count, x,y, contours, color, bright_pixel_sum);
           if prev_motion == 0:
+             print ("Start motion event!")
              motion_events = motion_events + 1
              prev_motion = 1
           motion_frames.extend([frame_count])
       elif prev_motion == 1:
-         prev_motion = 0
-         print ("Reset motion event!", motion_events)
+         if no_motion > 3:
+            prev_motion = 0
+            print ("Reset motion event!", motion_events)
+      no_motion = no_motion + 1
+      nice_frame_sm = cv2.resize(nice_frame, (0,0), fx=0.5, fy=0.5)
+      cv2.imshow('pepe', nice_frame_sm)
       #cv2.imshow('pepe', image_diff)
       cv2.waitKey(int(1000 / 25))
       height = frame.shape[1]

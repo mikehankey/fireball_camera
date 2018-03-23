@@ -43,10 +43,6 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install python2.7-dev python3.5-dev
 cd ~
 
-wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.1.0.zip
-unzip opencv.zip
-wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.1.0.zip
-unzip opencv_contrib.zip
 
 apt-get install -y tesseract-ocr libtesseract-dev libleptonica-dev
 
@@ -54,6 +50,8 @@ apt-get install -y tesseract-ocr libtesseract-dev libleptonica-dev
 ##python
 wget https://bootstrap.pypa.io/get-pip.py
 python3 get-pip.py
+mv /usr/local/bin/pip /usr/local/bin/pip3
+python get-pip.py
 pip install numpy
 pip install netifaces
 pip install pyephem
@@ -66,6 +64,10 @@ pip install pytesseract
 ##compile opencv
 #
 
+wget -O opencv.zip https://github.com/Itseez/opencv/archive/3.1.0.zip
+unzip opencv.zip
+wget -O opencv_contrib.zip https://github.com/Itseez/opencv_contrib/archive/3.1.0.zip
+unzip opencv_contrib.zip
 
 cd ~/opencv-3.1.0/
 mkdir build
@@ -82,7 +84,7 @@ make -j4
 make install
 ldconfig
 
-# NEED TO INSTALL GCC6 FOR ASTROMETRY TO WORK
+# NEED TO INSTALL GCC6 FOR ASTROMETRY TO WORK ON PI ONLY
 #awk '{gsub(/\jessie/,"stretch"); print}' /etc/apt/sources.list > sources.list.x
 #cp sources.list.x /etc/apt/sources.list
 #apt-get update
@@ -122,8 +124,8 @@ wget http://astrometry.net/downloads/astrometry.net-latest.tar.gz
 gunzip astrometry.net-latest.tar.gz
 tar xf astrometry.net-latest.tar
 
-mv /usr/bin/gcc /usr/bin/gcc.bak
-ln -s /usr/bin/arm-linux-gnueabihf-gcc-6 /usr/bin/gcc
+#mv /usr/bin/gcc /usr/bin/gcc.bak
+#ln -s /usr/bin/arm-linux-gnueabihf-gcc-6 /usr/bin/gcc
 
 cd astrometry.net-*
 make
@@ -132,8 +134,8 @@ make extra
 make install
 
 #when done
-rm /usr/bin/gcc
-mv /usr/bin/gcc.bak /usr/bin/gcc
+#rm /usr/bin/gcc
+#mv /usr/bin/gcc.bak /usr/bin/gcc
 #index-4116.fits  index-4117.fits  index-4118.fits  index-4119.fits
 
 wget http://broiler.astrometry.net/~dstn/4100/index-4116.fits
@@ -160,4 +162,3 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install gnome-panel -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install curl -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
-##

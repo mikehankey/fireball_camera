@@ -1,1 +1,6 @@
-curl "http://192.168.86.72/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=xrp23q&username=admin&password=admin"
+#curl "http://192.168.176.71/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"
+#curl "http://192.168.176.72/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"
+#curl "http://192.168.176.73/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"
+#curl "http://192.168.176.74/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"
+#curl "http://192.168.176.75/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"
+curl "http://192.168.176.76/cgi-bin/pwdgrp_cgi?action=update&user=admin&pwd=admin&username=admin&password=xrp23q"

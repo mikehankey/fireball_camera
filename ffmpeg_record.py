@@ -5,7 +5,7 @@ import subprocess
 import os
 import time
 
-video_dir = "/mnt/ams"
+video_dir = "/mnt/ams2"
 
 def check_running(cam_num, type):
    if type == "HD":

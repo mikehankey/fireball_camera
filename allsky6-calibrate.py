@@ -44,8 +44,59 @@ def set_setting(config, setting, value):
    r = requests.get(url)
    return(r.text)
 
-def read_noise(config_file, cam_num) :
+def focus(config_file, cam_num) :
+   config = {}
    cv2.namedWindow('pepe')
+   config = read_config(config_file)
+
+   mask_file = "conf/mask-" + str(cam_num) + ".txt"
+   file_exists = Path(mask_file)
+   print ("MASK FILE: ", mask_file)
+   mask_exists = 0
+   if (file_exists.is_file()):
+      print("File found.")
+      ms = open(mask_file)
+      for lines in ms:
+         line, jk = lines.split("\n")
+         exec(line)
+      ms.close()
+      #mask_exists = 1
+      #(sm_min_x, sm_max_x, sm_min_y, sm_max_y) = still_mask
+
+
+   #config['cam_ip'] = ip
+   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0")
+   for fc in range(0,10000):
+      _ , frame = cap.read()       
+      if frame is not None:
+         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+         frame[680:720, 0:620] = [0]
+         frame[580:720, 0:1280] = [0]
+         if mask_exists == 1:
+            frame[sm_min_y:sm_max_y, sm_min_x:sm_max_x] = [0]
+         max_px = np.amax(frame)
+         _, threshold = cv2.threshold(frame, max_px - 5, 255, cv2.THRESH_BINARY)
+         (_, cnts, xx) = cv2.findContours(threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+         if len(cnts) > 0:
+            x,y,w,h = cv2.boundingRect(cnts[0])
+            cv2.rectangle(frame, (x-5,y-5), (x+w+5, y+h+5), (255),1)
+            crop = frame[y-20:y+20, x-20:x+20] 
+            _, crop_threshold = cv2.threshold(crop, max_px - 15, 255, cv2.THRESH_BINARY)
+            #(_, cnts2, xx) = cv2.findContours(crop.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #x,y,w,h = cv2.boundingRect(cnts2[0])
+
+            if (fc % 10 == 0): 
+               print(w,h)
+
+            showme = cv2.resize(crop, (0,0), fx=2.5, fy=2.5)
+            #showme = cv2.resize(frame, (0,0), fx=.5, fy=.5)
+            #showme = cv2.resize(threshold, (0,0), fx=.5, fy=.5)
+            cv2.imshow('pepe', showme)
+            cv2.waitKey(1)
+
+
+def read_noise(config_file, cam_num) :
+   #cv2.namedWindow('pepe')
 
    last_frame = None
    config = read_config(config_file)
@@ -221,6 +272,10 @@ try:
 except:
    #config = read_config(config_file)
    config_file = ""
+
+if cmd == 'focus':
+   print ("FOCUS")
+   focus(config_file, cam_num)
 
 if cmd == 'read_noise':
    read_noise(config_file, cam_num)

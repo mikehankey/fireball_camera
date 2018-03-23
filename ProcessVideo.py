@@ -1,3 +1,4 @@
+
 from skimage import morphology
 import subprocess
 import requests
@@ -19,6 +20,7 @@ import ephem
 import sys
 import os
 import settings
+import math 
 from amscommon import read_config, caldate
 from PIL import Image
 from PIL import ImageDraw
@@ -38,6 +40,7 @@ class ProcessVideo:
       self.detect_stars = 0
       self.detect_motion = 0
       self.make_stack = 0
+      self.image_acc = None
       self.star_image_gray = None
       self.star_image_fn = None
       self.report_fn = None
@@ -52,22 +55,92 @@ class ProcessVideo:
       self.image_stack = []
       self.xs = []
       self.ys = []
+      self.points = []
       self.colors = []
       self.noise= []
+      self.cx= 0
+      self.cy= 0
+      self.max_x= 0
+      self.max_y= 0
+      self.min_x= 0
+      self.min_y= 0
       self.prev_motion= 0
-      self.cons_motion= 0
+      self.cons_motion= 1
       self.motion= 0
       self.total_motion= 0
       self.motion_events = 0
       self.motion_frames = []
+      self.frames = []
       self.frame_data = []
       self.motion_cnts  = []
       self.file_class = "" # where we will ultiamtely move the file. 
       self.cams = [1,2,3,4,5,6]
       self.file_classes = ['day', 'day_motion', 'day_nomotion', 'night', 'night_motion', 'night_nomotion', 'dist', 'calvid', 'meteor', 'time_lapse']
-      self.video_dir = "/mnt/ams/SD"
+      self.video_dir = "/mnt/ams2/SD"
+      self.video_dir_hd = "/mnt/ams2/HD"
       self.config = {}
       self.config_file = "" 
+
+   def ls_HD(self, hd_date, cam_num):
+      xyear = hd_date.strftime("%Y")
+      xmon = hd_date.strftime("%m")
+      xday = hd_date.strftime("%d")
+      xhour = hd_date.strftime("%H")
+      xmin = hd_date.strftime("%M")
+
+      hd_str = self.video_dir_hd + "/" + str(xyear) + "-" + str(xmon) + "-" + str(xday) + "_" + str(xhour) + "-" +str(xmin) + "*cam" + cam_num + "*"
+      cmd = "ls " + hd_str
+      output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+      files = output.split("\n")
+      return(files[0])
+
+   def find_HD_files(self, start_frame = 0):
+
+      (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = self.parse_date(self.orig_video_file)
+      hd_str = self.video_dir_hd + "/" + str(xyear) + "-" + str(xmonth) + "-" + str(xday) + "_" + str(xhour) + "-" +str(xmin) + "*cam" + cam_num + "*"
+      cmd = "ls " + hd_str
+      print (cmd)
+      output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+      files = output.split("\n")
+      print(files)
+      (hcam_num, hdate_str, hyear, hmonth, hday, hhour, hmin, hsec) = self.parse_date(files[0])
+      sd_date = datetime.datetime(int(xyear),int(xmonth),int(xday),int(xhour),int(xmin),int(xsec)) 
+      hd_date = datetime.datetime(int(hyear),int(hmonth),int(hday),int(hhour),int(hmin),int(hsec)) 
+      td = (sd_date - hd_date).total_seconds()
+      print("SD/HD offset", xsec, hsec, td)
+      print("The HD file started ", td, "seconds before the SD file." )
+      print("So if you want to find what you're looking ")
+      print ("check the HD file for this same minute and ALSO the file")
+      if td > 1:
+         print("BEFORE this minute") 
+         offset_hd_date = hd_date - datetime.timedelta(seconds=td)
+         offset_hd_date_end = offset_hd_date + datetime.timedelta(seconds=60)
+         print("the start hd date is", offset_hd_date)
+         print("the end hd date is", offset_hd_date_end)
+         HD_file1 = self.ls_HD(offset_hd_date, self.cam_num)
+         HD_file2 = self.ls_HD(offset_hd_date_end, self.cam_num)
+         print(HD_file1, HD_file2)
+         hd_cat_file = HD_file1.replace(".mp4", "-cat.mp4")
+         cmd = "ffmpeg -i \"concat:" + HD_file1 + "|" + HD_file2 + "\" -c copy " + hd_cat_file
+         print(cmd)
+         output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+         print("MADE:", hd_cat_file)
+     
+
+   def load_report(self):
+      file_exists = Path(self.report_fn)
+      if (file_exists.is_file()):
+         print("File found.")
+      else:
+         print("File not found.") 
+         return(0)
+      fp = open(self.report_fn, "r")
+      for lines in fp:
+         line, jk = lines.split("\n")
+         field, val = line.split("=")
+         exec("self."+line)
+      fp.close()
+      return(1)
 
    def chk_dirs(self):
       for dir in self.file_classes:
@@ -75,6 +148,102 @@ class ProcessVideo:
          if not os.path.isdir(dd):
             os.mkdir(dd)
 
+   def examine_cnts(self):
+      gc = 1 
+      real_groups = 0
+      for cnt_group in self.event_cnts:
+         print ("Contour Group:", gc)
+         rc = 0
+         if len(cnt_group) >3:
+            for (frame_count,tot_cnts,x,y,w,h) in cnt_group:
+               if tot_cnts > 1:
+                  print ("there are too many cnts in this frame, skip")
+
+               else:
+                  print ("CG:", frame_count, tot_cnts, x,y,w,h)
+                  rc = rc + 1
+         else:
+            print("group too small, skipping.")
+         if rc < 4:
+            print ("There are not enough 'real' contours in this group.")
+         else:
+            print ("Maybe this is a real group, we can eval further")
+            real_groups = real_groups + 1
+         gc = gc + 1
+         return(real_groups)
+      
+
+   def is_straight(self, points):
+      last_angle = None
+      total = len(points)
+      print ("TP", total)
+      passed = 0
+      for i in range(1,total):
+         print(i)
+         angle = self.find_angle(points[0][0], points[0][1], points[i][0], points[i][1])
+         print (points[0][0], points[0][1], points[i][0], points[i][1], angle)
+         if last_angle is not None:
+            if (last_angle - 1) < angle < (last_angle + 1):
+               passed = passed + 1
+               print("passed")
+            else:
+               print("failed")
+
+         last_angle = angle
+
+      match_percent = passed / (total - 2)
+      if match_percent > .6:
+         return(1) 
+      else:
+         return(0) 
+
+   def find_angle(self, x1,x2,y1,y2):
+      if x2 - x1 != 0:
+         a1 = (y2 - y1) / (x2 - x1)
+      else:
+         a1 = 0
+      angle = math.atan(a1)
+      angle = math.degrees(angle)
+
+      return(angle)
+
+   def calc_dist(self, x1,y1,x2,y2):
+      dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+      return dist
+
+   def find_objects(self,index, points):
+      apoints = []
+      sorted_points = []
+      last_angle = None
+      objects = []
+      group_pts = []
+      count = 0
+      x1,y1 = points[index-count]
+      for x1,y1 in points:
+         for x2,y2 in points:
+            dist = self.calc_dist(x1,y1,x2,y2)
+            angle = self.find_angle(x1,y1,x2,y2)
+            if dist > 10 and dist < 100:
+               apoints.append((dist,angle,(x1,y1),(x2,y2)))
+            count = count + 1
+      sorted_points = sorted(apoints, key=lambda x: x[1])
+
+      for dist,angle,(x1,y1),(x2,y2) in sorted_points:
+         if last_angle != None:
+            if ((last_angle - 5) < angle < (last_angle + 5)) and (dist > 5 and dist < 70):
+               group_pts.append((dist,angle,(x1,y1),(x2,y2)))
+            #  print ("MATCHING POINTS DX/AN", dist, angle, x1,y1,x2,y2)
+            else:
+               if len(group_pts) >= 3:
+                  #print("NEW GROUP")
+                  objects.append(group_pts)
+                  group_pts = []
+               else:
+                  group_pts = []
+         last_angle = angle
+      if len(group_pts) >= 3:
+         objects.append(group_pts)
+      return(objects)
 
    def compute_straight_line(self,x1,y1,x2,y2,x3,y3):
       if x2 - x1 != 0:
@@ -98,24 +267,191 @@ class ProcessVideo:
       self.config = read_config(self.config_file)
 
    def move_all_files(self,dest_dir):
+      if "HD" in self.orig_video_file:
+         print ("HD FILE!")
+
+         for event in self.motion_frames:
+            if len(event) > 3:
+               start = int(event[0]) - 50
+               cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 50) + " " + str( event[-1]+50)
+               print (cmd)
+               os.system(cmd)
+               self.xs = []
+               self.ys = []
+               for frame_num in event:
+                  for frame_count,tot_cnt,x,y,w,h in self.motion_cnts:
+                     print ("COMPARE: ", frame_num, frame_count)
+                     if int(frame_num) == int(frame_count):
+                        print ("ADD X,Ys")
+                        self.xs.append(x)
+                        self.ys.append(y)
+               self.start_frame = event[0] - 50
+               print("XSYS", self.xs, self.ys)
+               self.trim_file = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".mp4")
+               self.cropVideo()
+         #cmd = "./PV.py crop " + str(self.orig_video_file)
+         #os.system(cmd)
+         exit()
       if ".avi" in self.orig_video_file:
          wild_card = self.orig_video_file.replace(".avi", "*") 
       else:
          wild_card = self.orig_video_file.replace(".mp4", "*") 
       el = self.orig_video_file.split("/")
       ff = el[-1]
+
+      if dest_dir == "meteor":
+         print ("TRIM: ", self.motion_frames[0] - 25, self.motion_frames[-1]+25)
+         #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+25)
+         cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 50) + " " + str( self.motion_frames[-1]+50)
+         #print (cmd)
+         #os.system(cmd)
+
+
       # copy the time lapse file
 
       orig_dir = self.orig_video_file.replace(ff, "")
       tl_filename = orig_dir + self.cam_num + "/time_lapse" + "/" 
+      latest_filename = "/var/www/html/out/latest" + self.cam_num + ".jpg" 
       cmd =  "cp " + self.stacked_image_fn + " " + tl_filename
-      #print(cmd)
+      os.system(cmd)
+      cmd =  "cp " + self.stacked_image_fn + " " + latest_filename 
       os.system(cmd)
 
       new_filename = orig_dir + self.cam_num + "/" + dest_dir + "/" 
       cmd =  "mv " + wild_card + " " + new_filename
       #print(cmd)
       os.system(cmd)
+
+   def find_HD_video(self, start, end):
+      self.parse_file_date()
+      self.day_or_night()
+
+      self.HD_orig_video_file = self.orig_video_file.replace("SD", "HD") 
+      el = self.HD_orig_video_file.split("/")
+      file_name = el[-1]
+      hd_video_dir = "/mnt/ams2/HD/"
+      
+      (dd,tt) = self.capture_date.split(" ")
+      (yr,mm,da) = dd.split("-")
+      (h,m,s) = tt.split(":")
+      hd_wildcard = hd_video_dir + dd + "_" + h + "-" + m + "*cam" + self.cam_num + "*.mp4"
+      files = glob.glob(hd_wildcard)
+      print(hd_wildcard)
+      print(files)
+
+   def findBestCrop(self):
+      org_x = 1280
+      org_y = 720
+      max_x = np.amax(self.xs) + 100
+      max_y = np.amax(self.ys) + 100
+      min_x = np.amin(self.xs) - 100
+      min_y = np.amin(self.ys) - 100
+      height = max_y - min_y
+      width = max_x - min_x
+      cx = int((max_x + min_x ) / 2)
+      cy = int((max_y + min_y ) / 2)
+
+      if height < 360 and width < 640:
+         # we are good to crop a SD image 
+         print ('case 1', width, height) 
+         # now check to see if the ROI center crop extends beyond the frame, 
+         # if so adjust the crop center so it fits.
+         if cx + 320 >= 1280:
+            cx = 1280 - 320
+         if cy + 180 >= 720:
+            cy = 720 - 180
+         min_x =  cx - 320
+         max_x =  cx + 320
+         min_y =  cy - 180
+         max_y =  cy + 180 
+         print ("CX,CY", cx, cy)
+         print ("MIN/MAZ X/Y", min_x, max_x,min_y,max_y)
+      else: 
+         # Just abort and don't make a crop file for now!
+         exit()
+         # the ROI is larger than SD size, so we will need to be crop it 
+         # and rescale before saving
+         print ('case 2') 
+         if cx + (width / 2) > 1280:
+            cx = int(1280 - (width / 2))
+         if cy + (height / 2) > 720 :
+            cy = int(720 - (width / 2))
+         fr = width / 640
+         new_height = int(360 * fr)
+         print ("FR, W,H:", fr,width, new_height)
+         min_x =  int(cx - (width/2))
+         max_x =  int(cx + (width/2))
+         min_y =  int(cy - (height/2)) 
+         max_y =  int(cy + (height/2))
+
+      return(min_x, max_x, min_y, max_y)
+
+   def cropVideo(self):
+      # find center x,y and crop around it 640 x 360 (1280/720)
+      go = True 
+      min_x, max_x, min_y, max_y = self.findBestCrop()
+
+      print ("CROP: ", self.trim_file)
+      cap = cv2.VideoCapture(self.trim_file)
+
+      self.crop_file = self.trim_file.replace("trim", "trimcrop")
+
+      cap = cv2.VideoCapture(self.trim_file)
+      fourcc = cv2.VideoWriter_fourcc(*'H264')
+      height = max_y - min_y
+      width = max_x - min_x
+      print ("WIDTH, HEIGHT:", width, height)
+      out = cv2.VideoWriter(self.crop_file,fourcc, 25, (width,height),1)
+
+
+      print ("CROP!", self.trim_file)
+      frame_count = 0
+      while go is True:
+         _ , frame = cap.read()
+         if frame is None and frame_count > 5:
+            go = False
+         else:
+            print ("FC:", frame_count)
+            crop_frame = frame[min_y:max_y, min_x:max_x]
+            print(crop_frame.shape)
+            out.write(crop_frame)
+            cv2.imshow('pepe', crop_frame)
+            cv2.waitKey(1)
+         frame_count = frame_count + 1
+      out.release()
+
+   def trimVideo(self, start, end):
+      if self.show_video == 1:
+         cv2.namedWindow('pepe')
+      if int(start) < 0:
+         start = 0
+      outfile = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".mp4")
+      self.trim_file = outfile
+      if os.path.isfile(self.orig_video_file) is False:
+         print("This file does not exist. Exiting.")
+         return(0)
+      cap = cv2.VideoCapture(self.orig_video_file)
+      fourcc = cv2.VideoWriter_fourcc(*'H264')
+      _ , frame = cap.read()
+      height, width, x = frame.shape
+      out = cv2.VideoWriter(outfile,fourcc, 25, (width,height),1)
+      go = True
+      self.frame_count = 0
+      while go is True:
+         _ , frame = cap.read()
+         if frame is None:
+            go = False
+         if int(start) < self.frame_count < int(end):
+            print ("Write: ", self.frame_count)
+            out.write(frame)
+            if self.show_video == 1:
+               cv2.imshow('pepe', frame)
+         #else: 
+            #print ("Skip: ", self.frame_count)
+         self.frame_count = self.frame_count + 1
+ 
+      out.release()
+      time.sleep(1)
 
    def StackVideo(self):
       sum_image = None
@@ -131,10 +467,10 @@ class ProcessVideo:
          print ("Skipping daytime files for now.")
          #self.drop_frame()
          #self.move_all_files("day")
-         mod_skip = 25
+         mod_skip = 50
          #return(0)
       else:
-         mod_skip = 2 
+         mod_skip = 1 
 
       if self.show_video == 1:
          cv2.namedWindow('pepe')
@@ -160,18 +496,115 @@ class ProcessVideo:
                return(0)
 
          # main video loop
+         print("MAIN VIDEO LOOP")
          if self.frame_count % mod_skip == 0:
             nice_frame_im = Image.fromarray(frame)
+            print("MODE", nice_frame_im.mode)
             if self.sun_status == 'day':
                if self.stacked_image is None:
+                  nice_frame_im.convert("RGB")
+                  #rgb = Image.new("RGBA", nice_frame_im.size)
+                  #rgb.paste(nice_frame_im)
                   self.stacked_image = nice_frame_im 
             else:
                if self.stacked_image is None:
-                  self.stacked_image = nice_frame_im 
+                  print("working on the stack...")
+                  nice_frame_im.convert("RGB")
+                  #rgb = Image.new("RGBA", nice_frame_im.size)
+                  #rgb.paste(nice_frame_im)
                   self.stacked_image=ImageChops.lighter(self.stacked_image,nice_frame_im)
 
+   def stillMask(self):
+      mask_file = "conf/mask-" + str(self.cam_num) + ".txt"
+      file_exists = Path(mask_file)
+      mask_exists = 0
+      if (file_exists.is_file()):
+         print("Mask File found.")
+         ms = open(mask_file)
+         for lines in ms:
+            line, jk = lines.split("\n")
+            ex = "self." + str(line)
+            exec(ex)
+         ms.close()
+         mask_exists = 1
+      #(sm_min_x, sm_max_x, sm_min_y, sm_max_y) = still_mask
+      if mask_exists == 1:
+         return(self.still_mask)
+      else:
+         return(0,0,0,0)
+
+   def save_best_thresh(self, tlimit):
+      thresh = "conf/limit-" + self.cam_num + ".txt" 
+      fp = open(thresh, "w") 
+      fp.write(str(tlimit))
+      fp.close()
+
+   def load_best_thresh(self):
+      thresh = "conf/limit-" + self.cam_num + ".txt" 
+
+      file_exists = Path(thresh)
+      if (file_exists.is_file()):
+         fp = open(thresh, "r") 
+         for line in fp:
+            tlimit = line
+      else:
+         tlimit = 10
+
+      print ("USING LAST LIMIT", tlimit)
+      time.sleep(5)
+      return(int(tlimit))
+     
+
+   def find_best_thresh(self, tlimit):
+      noise = 0 
+      go = 1
+      attempts = 0
+      #make the self.image_acc starter
+      for i in range (0,50):
+         frame = self.frames[i]
+         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+         frame = cv2.GaussianBlur(frame, (21, 21), 0) 
+         if self.image_acc is None:
+            self.image_acc = np.empty(np.shape(frame))
+
+         image_diff = cv2.absdiff(self.image_acc.astype(frame.dtype), frame,)
+         alpha = .1 
+         hello = cv2.accumulateWeighted(frame, self.image_acc, alpha)
 
 
+      while go == 1:
+         noise = 0
+         for i in range (0,100):
+            frame = self.frames[i]
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = cv2.GaussianBlur(frame, (21, 21), 0) 
+            if self.image_acc is None:
+               self.image_acc = np.empty(np.shape(frame))
+
+            image_diff = cv2.absdiff(self.image_acc.astype(frame.dtype), frame,)
+            alpha = .1 
+            hello = cv2.accumulateWeighted(frame, self.image_acc, alpha)
+            _, threshold = cv2.threshold(image_diff, tlimit, 255, cv2.THRESH_BINARY)
+            thresh= cv2.dilate(threshold, None , iterations=4)
+            (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            print ("CNTS:", i, len(cnts))
+            if len(cnts) > 1:
+               noise = noise + 1
+         if noise < 3:
+            print("Limit is good after tries:",attempts,  tlimit)
+            go = 0
+            self.save_best_thresh(tlimit)
+            break
+         else:
+            print("Too Much Noise Increase limit:", tlimit)
+            tlimit = tlimit + 2
+         attempts= attempts + 1 
+         if attempts > 10:
+            print ("We tried and couldn't fix this!")
+            break
+
+      print ("noise at this limit is :", tlimit, noise)
+      return(noise, tlimit)
    def ProcessVideo(self):
       # determine sun status for video
       # play the video frame by frame 
@@ -195,40 +628,75 @@ class ProcessVideo:
          #print ("Skipping daytime files for now.")
          #self.drop_frame()
          #self.move_all_files("day")
-         mod_skip = 5 
+         mod_skip = 25 
       else:
-         mod_skip = 5  
+         mod_skip = 3
+         if "HD" in self.orig_video_file:
+            mod_skip = 1
 
       if self.show_video == 1:
          cv2.namedWindow('pepe')
 
       cap = cv2.VideoCapture(self.orig_video_file)
       frame_count = 0
-      image_acc = None
+      self.image_acc = None
       last_frame = None
       nostars = 0
       real_motion = 0
       tstamp_prev = 0
-      while True:
-         #print(frame_count, self.motion_events, self.prev_motion)
-         #cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES,frame_count)
-         _ , frame = cap.read()
-         frame_count = frame_count + 1
-         self.frame_count = frame_count
+      self.events = []
+      self.still_mask = self.stillMask()
+      (sm_min_x, sm_max_x, sm_min_y, sm_max_y) = self.still_mask
+      if "HD" in self.orig_video_file:
+         sm_min_y = int(sm_min_y) * .75
+         sm_max_y = int(sm_max_y) * .75     
+         sm_min_y = int(sm_min_y) * 2     
+         sm_max_y = int(sm_max_y) * 2     
+         sm_min_x = int(sm_min_x) * 2     
+         sm_max_x = int(sm_max_x) * 2     
 
-         if frame is None:
+      #preload video then do analytics
+      frames = []
+      frame_count = 0
+      go = 1
+      while go == 1:
+         _ , frame = cap.read()
+         if frame is None: 
             if frame_count <= 1:
                cap.release()
                print("Bad file.")
                return(0)
             else:
-               end_time = int(time.time())
-               elapsed = end_time - start_time
-               print("Processed ", frame_count, "frames. in ", elapsed, "seconds" )
-               cap.release()
-               self.cleanup_process()
-           
-               return(0)
+               go = 0
+         else:
+            self.frames.append(frame)
+            frame_count = frame_count + 1
+      #while True:
+         #print(frame_count, self.motion_events, self.prev_motion)
+         #cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES,frame_count)
+         #_ , frame = cap.read()
+
+
+      frame_count = 0
+      sum_thresh_total = 0
+      best_limit = 10
+      best_limit = self.load_best_thresh()
+      print ("TOTAL FRAMES: ", len(self.frames))
+      if len(self.frames) > 100:
+         noise, best_limit = self.find_best_thresh(best_limit)
+      else: 
+         best_limit = 10 
+         noise = 1 
+      if (noise == 0):
+         best_limit = best_limit - 2
+
+      cnt_group = []
+      self.event_cnts = []
+      for frame in self.frames:
+         frame_count = frame_count + 1
+         print(frame_count)
+         self.frame_count = frame_count
+ 
 
          # main video loop
          if frame_count % mod_skip == 0:
@@ -236,60 +704,93 @@ class ProcessVideo:
             nice_frame = frame
             if self.show_video == 1:
                nice_frame_small = frame
-               nice_frame_small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+               nice_frame_small = cv2.resize(frame, (0,0), fx=0.75, fy=0.75) 
 
             nice_frame_im = Image.fromarray(nice_frame)
             #nice_frame_im = Image.fromarray(cleaned)
 
+            # Apply still mask
+            frame[sm_min_y:sm_max_y, sm_min_x:sm_max_x] = [0,0,0]
+
+
             # mask out the time for motion detection 
             if self.detect_motion == 1:
                if frame is not None:
-                  #masked = frame[680:720, 0:620] 
-                  #frame[680:720, 0:620] = [0,0,0]
-                  masked = frame[460:480, 0:310] 
-                  frame[460:480, 0:310] = [0,0,0]
+                  if frame.shape[1] == 640:
+                     masked = frame[440:480, 0:310] 
+                     frame[440:480, 0:640] = [0,0,0]
+                  else:
+                     masked = frame[680:720, 0:620] 
+                     frame[670:720, 0:620] = [0,0,0]
 
-               frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+               #frame = cv2.resize(frame, (0,0), fx=0.75, fy=0.75) 
                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                frame = cv2.GaussianBlur(frame, (21, 21), 0) 
         
                # setup image accumulation 
                if last_frame is None:
                   last_frame = nice_frame
-               if image_acc is None:
-                  image_acc = np.empty(np.shape(frame))
+               if self.image_acc is None:
+                  self.image_acc = np.empty(np.shape(frame))
 
-               image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
-               alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
-               hello = cv2.accumulateWeighted(frame, image_acc, alpha)
-               _, threshold = cv2.threshold(image_diff, 30, 255, cv2.THRESH_BINARY)
-               thresh= cv2.dilate(threshold, None , iterations=2)
+               image_diff = cv2.absdiff(self.image_acc.astype(frame.dtype), frame,)
+               #alpha, tstamp_prev = iproc.getAlpha(tstamp_prev)
+               alpha = .1 
+               hello = cv2.accumulateWeighted(frame, self.image_acc, alpha)
+               _, threshold = cv2.threshold(image_diff, best_limit, 255, cv2.THRESH_BINARY)
+               thresh= cv2.dilate(threshold, None , iterations=4)
                (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-               #print("CNTS:", len(cnts))
+              # _, br_threshold = cv2.threshold(frame, 12, 255, cv2.THRESH_BINARY)
+              # max_pix = np.max(frame) 
+              # sum_thresh = np.sum(br_threshold) / 255
+              # sum_thresh_total = sum_thresh_total + sum_thresh
+              # sum_thresh_avg = sum_thresh_total / (int(frame_count  ))
+              # perc = sum_thresh / sum_thresh_avg
+               #print("BRIGHTNESS:", frame_count, max_pix, sum_thresh_avg, sum_thresh, perc)
+               #if sum_thresh > (sum_thresh_avg * 1.3):
+              #    print ("HIT!")
+
+
+               if len(cnts) > 0:
+                  print("CNTS:", len(cnts))
                real_cnts = []
                if len(cnts) > 0:
                   for (i,c) in enumerate(cnts):
                      x,y,w,h = cv2.boundingRect(cnts[i])
-                     cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0),2)
-                     if w > 5 and h > 5 and frame_count > 8:
+                     cv2.rectangle(frame, (x,y), (x+w, y+h), (255,255,255),2)
+                     if w > 2 and h > 2 and frame_count > 8 and (x > 1 and y > 1):
                         real_cnts.append([x,y,w,h])
-                        self.motion_cnts.append([frame_count,len(cnts),x,y,w,h])
-               if len(real_cnts) >= 1 and frame_count > 3:
+               if len(real_cnts) >= 1 and frame_count > 60:
+                  #self.motion_cnts.append([frame_count,len(cnts),x,y,w,h])
+                  cnt_group.append([frame_count,len(cnts),x,y,w,h])
+                  self.cx = (self.cx + x)/frame_count
+                  self.cy = (self.cx + x)/frame_count
                   self.motion = 1
                   self.total_motion = self.total_motion + 1
                   self.xs.append(x)
                   self.ys.append(y)
+                  self.points.append((x,y))
                   self.frame_data.append([frame_count, len(real_cnts),x,y,w,h])
                   if self.prev_motion == 1:
                      self.cons_motion = self.cons_motion + 1
                   else:
+                     # startng a new event here
                      self.motion_events = self.motion_events + 1
+                     print ("Event Started")
+
                   if self.motion == 1:
                      self.prev_motion = 1
                   else:
                      self.prev_motion = 0
-                  self.motion_frames.append(frame_count)
+                  #self.motion_frames.append(frame_count)
+                  self.events.append(frame_count)
                else:
+                  if self.prev_motion == 1:
+                     print ("EVENT ENDED.")
+                     self.motion_frames.append((self.events))
+                     self.event_cnts.append(cnt_group)
+                     self.events = []
+                     cnt_group = []
                   real_cnts = []
                   self.frame_data.append([frame_count, len(real_cnts),0,0,0,0])
                   self.motion = 0
@@ -358,9 +859,90 @@ class ProcessVideo:
                   with_stars = self.draw_stars(np_stacked_image)
                   if len(np_stacked_image.shape) > 0 :
                      #stacked_image_small = cv2.resize(with_stars, (0,0), fx=0.5, fy=0.5) 
-                     stacked_image_small = cv2.resize(np_stacked_image, (0,0), fx=0.5, fy=0.5) 
+                     #stacked_image_small = cv2.resize(np_stacked_image, (0,0), fx=0.5, fy=0.5) 
+                     stacked_image_small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
                      cv2.imshow('pepe', stacked_image_small)
                      cv2.waitKey(1)
+
+      end_time = int(time.time())
+      elapsed = end_time - start_time
+      print("Processed ", frame_count, "frames. in ", elapsed, "seconds" )
+      cap.release()
+      self.cleanup_process()
+      #self.analyze_stack()
+
+   def roi_video(self, roi_mn_y, roi_mx_y, roi_mn_x, roi_mx_x):
+      frame_count = 0
+      print(len(self.frames))
+      hits = []
+      total_sum = 0
+      for frame in self.frames:
+         if frame is not None:
+            frame_count = frame_count + 1
+            roi_frame = frame[roi_mn_y:roi_mx_y, roi_mn_x:roi_mx_x]
+            roi_frame = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2GRAY)
+            _, roi_thresh = cv2.threshold(roi_frame, 20, 255, cv2.THRESH_BINARY)
+            print(roi_frame.shape)
+
+            max_px = np.max(roi_thresh)
+            avg_px = np.average(roi_thresh)
+            sum_px = np.sum(roi_thresh)
+            total_sum = total_sum + sum_px
+            avg_sum = total_sum / frame_count 
+            print(frame_count, avg_px, max_px, avg_sum, sum_px)
+            if (sum_px > (avg_sum * 1.2)):
+               print ("HIT!")
+            #cv2.imshow('pepe', roi_frame)
+            cv2.imshow('pepe', roi_thresh)
+            cv2.waitKey(10)
+
+
+   def analyze_stack(self):
+      np_stacked_image = cv2.cvtColor(np.asarray(self.stacked_image), cv2.COLOR_BGR2GRAY)
+      np_stacked_diff = cv2.absdiff(self.image_acc.astype(np_stacked_image.dtype), np_stacked_image,)
+      _, diff_thresh = cv2.threshold(np_stacked_diff, 20, 255, cv2.THRESH_BINARY)
+      points = []
+      diff_thresh[400:480, 0:640] = [0]
+      (_, cnts, xx) = cv2.findContours(diff_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      if len(cnts) > 0:
+         for (i,c) in enumerate(cnts):
+            x,y,w,h = cv2.boundingRect(cnts[i])
+            if w > 1 and h > 1:
+               print("CNTS: ", i, w,h)
+               points.append((x,y))
+               cv2.rectangle(diff_thresh, (x,y), (x+w+5, y+h+5), (255),2)
+         objects = self.find_objects(0, points)
+ 
+         mx = []
+         my = []
+         print (objects)
+         for object in objects:
+            for dist,angle,(x1,y1),(x2,y2) in object:
+               print (dist,angle,x1,y1,x2,y2)
+               mx.append(x1)
+               mx.append(x2)
+               my.append(y1)
+               my.append(y2)
+
+         print ("OBJECTS FOUND: ", len(objects))
+         if len(mx) > 0:
+            roi_mx_x = np.max(mx) + 15
+            roi_mn_x = np.min(mx) - 15
+            roi_mx_y = np.max(my) + 15
+            roi_mn_y = np.min(my) - 15
+            print("ROI: ", roi_mn_y, roi_mx_y, roi_mn_x, roi_mx_x)
+            self.roi_video(roi_mn_y, roi_mx_y, roi_mn_x, roi_mx_x)
+            cv2.rectangle(diff_thresh, (roi_mn_x,roi_mn_y), (roi_mx_x, roi_mx_y), (255,255,255),2)
+         
+
+      #cv2.imshow('pepe', np_stacked_image)
+      #cv2.waitKey(2000)
+      cv2.imshow('pepe', np_stacked_diff)
+      cv2.waitKey(5000)
+      cv2.imshow('pepe', diff_thresh)
+      cv2.waitKey(10000)
+      return(0)
+
 
    def draw_stars(self, img):
       for (x,y,w,h,avg_flux,max_flux,total_flux) in self.starlist:
@@ -380,16 +962,24 @@ class ProcessVideo:
          sf = 0 
          mf = int(xl/2)
          ef = xl - 1
-         self.straight_line = self.compute_straight_line(self.xs[sf],self.ys[sf],self.xs[mf],self.ys[mf],self.xs[ef],self.ys[ef])
+         #self.straight_line = self.compute_straight_line(self.xs[sf],self.ys[sf],self.xs[mf],self.ys[mf],self.xs[ef],self.ys[ef])
 
-         if self.straight_line < 1 and self.sun_status != 'day':
+         rg = self.examine_cnts()
+         if rg >= 1:
+            self.straight_line = self.is_straight(self.points)
+         else:
+            self.straight_line = 0
+ 
+
+         if self.straight_line == 1 and self.sun_status != 'day' and self.cons_motion < 200 and len(self.motion_frames) < 25:
             self.meteor_yn = "Y"
          else:
             self.meteor_yn = "N"
      
  
-          
+      #print("STACK", self.stacked_image)          
       np_stacked_image = np.asarray(self.stacked_image)
+
       np_star_image = np.asarray(self.star_image_gray)
       #cleaned_stack = morphology.remove_small_objects(np_stacked_image, min_size=2, connectivity=12)
 
@@ -404,30 +994,41 @@ class ProcessVideo:
       print ("Writing:", self.stacked_image_fn)
       
       #print(np_stacked_image)
-
-      cv2.imwrite(self.stacked_image_fn, np_stacked_image)
-      report = "File:" + self.orig_video_file + "\n"
-      report = report + "Total Frames:" + str(self.frame_count) + "\n"
-      report = report + "FPS:" + str(self.frame_count/60) + "\n"
-      report = report + "Sun Status:" + self.sun_status + "\n"
-      report = report + "Total Stars:" + str(self.total_stars) + "\n"
-      report = report + "Star List:" + str(self.starlist) + "\n"
-      report = report + "Total Motion:" + str(self.total_motion) + "\n"
+      print ("NP", np_stacked_image)
+      print (np_stacked_image.shape)
+      print (np_stacked_image.dtype)
+      if len(np_stacked_image.shape) >  0:
+         cv2.imwrite(self.stacked_image_fn, np_stacked_image)
+      report = "orig_video_file=\"" + self.orig_video_file + "\"\n"
+      report = report + "frame_count=" + str(self.frame_count) + "\n"
+      report = report + "fps=" + str(self.frame_count/60) + "\n"
+      report = report + "sun_status=\"" + self.sun_status + "\"\n"
+      report = report + "total_stars=" + str(self.total_stars) + "\n"
+      report = report + "star_list=" + str(self.starlist) + "\n"
+      report = report + "total_motion=" + str(self.total_motion) + "\n"
       if self.total_motion >= 1:
-         report = report + "Motion Frames:" + str(self.motion_frames) + "\n"
-         report = report + "Contours:" + str(self.motion_cnts) + "\n"
-         report = report + "Straight Line:" + str(self.straight_line) + "\n"
-         report = report + "Meteor Y/N:" + str(self.meteor_yn) + "\n"
-         report = report + "Motion Events:" + str(self.motion_events) + "\n"
-         report = report + "Consecutive Motion:" + str(self.cons_motion) + "\n"
-         report = report + "Frame Data:" + str(self.frame_data) + "\n"
+         report = report + "xs=" + str(self.xs) + "\n"
+         report = report + "ys=" + str(self.ys) + "\n"
+         report = report + "motion_frames=" + str(self.motion_frames) + "\n"
+         report = report + "straight_line=" + str(self.straight_line) + "\n"
+         report = report + "meteor_yn=\"" + str(self.meteor_yn) + "\"\n"
+         report = report + "motion_events=" + str(self.motion_events) + "\n"
+         report = report + "event_cnts=" + str(self.event_cnts) + "\n"
+         #report = report + "motion_cnts=" + str(self.motion_cnts) + "\n"
+         report = report + "cons_motion=" + str(self.cons_motion) + "\n"
+         report = report + "frame_data=" + str(self.frame_data) + "\n"
       # Write out report file.
       print ("Writing: ", self.report_fn)
       fp = open(self.report_fn, "w")
       fp.write(report)
       fp.close()
-      print (report)
+      #print (report)
+      print ("Motion Frames:", str(self.motion_frames))
+      print ("Motion Events:" + str(self.motion_events))
+      print ("Event CNTS:" + str(self.event_cnts))
 
+      cx = (self.min_x + self.max_x) / 2
+      cy = (self.min_y + self.max_y) / 2
 
       #self.file_classes = ['day', 'day_motion', 'day_nomotion', 'night', 'night_motion', 'night_nomotion', 'dist', 'calvid', 'meteor']
       if self.meteor_yn == "Y":
@@ -665,21 +1266,42 @@ class ProcessVideo:
       else:
          self.sun_status = "day"
 
+   def parse_date (self, this_file):
+
+      el = this_file.split("/")
+      file_name = el[-1]
+      file_name = file_name.replace("_", "-")
+      file_name = file_name.replace(".", "-")
+      print ("MIKE", this_file, file_name)
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
+      cam_num = xcam_num.replace("cam", "")
+      self.SetCamNum(cam_num)
+      self.chk_dirs()
+
+      date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
+      self.capture_date = date_str
+      return(cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec)
+
    def parse_file_date(self):
       print(self.orig_video_file)
       if ".mp4" in self.orig_video_file:
          self.stacked_image_fn = self.orig_video_file.replace(".mp4", "-stack.jpg") 
          self.star_image_fn = self.orig_video_file.replace(".mp4", "-stars.jpg") 
          self.report_fn = self.orig_video_file.replace(".mp4", "-report.txt") 
+
+         self.trim_file = self.orig_video_file.replace(".mp4", "-trim.mp4")
+
       else:
          self.stacked_image_fn = self.orig_video_file.replace(".avi", "-stack.jpg") 
+         self.trim_file = self.orig_video_file.replace(".avi", "-trim.avi")
          self.star_image_fn = self.orig_video_file.replace(".avi", "-stars.jpg") 
          self.report_fn = self.orig_video_file.replace(".avi", "-report.txt") 
       el = self.orig_video_file.split("/") 
       file_name = el[-1]
+      file_name = file_name.replace("-cat", "")
       file_name = file_name.replace("_", "-")
       file_name = file_name.replace(".", "-")
-      print (file_name)
+      print ("FILE IS:", file_name)
       xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
       cam_num = xcam_num.replace("cam", "")
       self.SetCamNum(cam_num)
