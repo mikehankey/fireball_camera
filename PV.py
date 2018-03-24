@@ -1,5 +1,6 @@
 #!/usr/bin/python3 
 import glob
+import ephem
 from pathlib import Path
 import sys
 import ProcessVideo as PV
@@ -7,6 +8,47 @@ import time
 import os
 import subprocess
 import time
+from amscommon import read_config
+conf = read_config("conf/config-1.txt")
+
+def day_or_night(config, capture_date):
+
+   obs = ephem.Observer()
+
+   obs.pressure = 0
+   obs.horizon = '-0:34'
+   obs.lat = config['device_lat']
+   obs.lon = config['device_lng']
+   obs.date = capture_date
+
+   sun = ephem.Sun()
+   sun.compute(obs)
+
+   (sun_alt, x,y) = str(sun.alt).split(":")
+
+   saz = str(sun.az)
+   (sun_az, x,y) = saz.split(":")
+   print ("SUN", sun_alt)
+   if int(sun_alt) < -1:
+      sun_status = "night"
+   else:
+      sun_status = "day"
+   return(sun_status)
+
+
+def parse_date (this_file):
+   el = this_file.split("/")
+   file_name = el[-1]
+   file_name = file_name.replace("_", "-")
+   file_name = file_name.replace(".", "-")
+   print ("MIKE", this_file, file_name)
+   xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
+   cam_num = xcam_num.replace("cam", "")
+
+   date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
+   capture_date = date_str
+   return(cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec)
+
 
 video_dir = "/mnt/ams2/SD"
 arg = sys.argv[1]
@@ -55,14 +97,23 @@ if arg == 'batch':
          skip = 1
 
       if tdiff > 1.1 and skip == 0:
-
-         cmd = "./fast_frames2.py " + file 
-         #cmd = "./PV.py " + file + " x"
-         start_time = int(time.time())
-         os.system(cmd)
-         end_time = int(time.time())
-         elapsed = end_time - start_time
-         print ("PROCESSED FILE IN: ", elapsed)
+         (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = parse_date(file)
+         sun_status = day_or_night(conf, date_str)
+         print (date_str, sun_status)
+         if sun_status == "day":
+            el = file.split("/")
+            file_name = el[-1]
+            cmd = "mv " +  file + " /mnt/ams2/SD/proc/daytime/" + file_name
+            print(cmd)
+            os.system(cmd)
+         else:
+            cmd = "./fast_frames2.py " + file 
+            #cmd = "./PV.py " + file + " x"
+            start_time = int(time.time())
+            os.system(cmd)
+            end_time = int(time.time())
+            elapsed = end_time - start_time
+            print ("PROCESSED FILE IN: ", elapsed)
          #vid = PV.ProcessVideo()
          #vid.orig_video_file = file
          #vid.show_video = 1
