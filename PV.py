@@ -1,5 +1,6 @@
 #!/usr/bin/python3 
 import glob
+from pathlib import Path
 import sys
 import ProcessVideo as PV
 import time
@@ -36,7 +37,8 @@ if arg == 'batch':
    #do batch for 1 cam
    cam_num = sys.argv[2]
    #files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
-   files = glob.glob(video_dir + "/*.mp4")
+   #2018-03-23_02
+   files = glob.glob(video_dir + "/2018-03-23*cam1*.mp4")
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    for file in sorted(files):
@@ -46,14 +48,28 @@ if arg == 'batch':
       tdiff = cur_time - mtime
       tdiff = tdiff / 60 
       print (file, tdiff)
-      if tdiff > 1.1:
-         vid = PV.ProcessVideo()
-         vid.orig_video_file = file
-         vid.show_video = 1 
-         vid.detect_stars = 0
-         vid.detect_motion = 1 
-         vid.make_stack = 1 
-         vid.ProcessVideo()
+      stack_file = file.replace(".mp4", "-stack.jpg")
+      file_exists = Path(stack_file)
+      skip = 0
+      if (file_exists.is_file()):
+         skip = 1
+
+      if tdiff > 1.1 and skip == 0:
+
+         cmd = "./fast_frames2.py " + file 
+         #cmd = "./PV.py " + file + " x"
+         start_time = int(time.time())
+         os.system(cmd)
+         end_time = int(time.time())
+         elapsed = end_time - start_time
+         print ("PROCESSED FILE IN: ", elapsed)
+         #vid = PV.ProcessVideo()
+         #vid.orig_video_file = file
+         #vid.show_video = 1
+         #vid.detect_stars = 0
+         #vid.detect_motion = 1 
+         #vid.make_stack = 1 
+         #vid.ProcessVideo()
          #vid.StackVideo()
 
 elif arg == 'crop':
