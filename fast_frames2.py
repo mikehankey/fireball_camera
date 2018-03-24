@@ -129,26 +129,27 @@ def stack_loop(stack_queue, file):
             break
       else:
          frame = stack_queue.get()
-         if cc % 1 == 0:
-            frame_pil = Image.fromarray(frame)
-            if stacked_image is None:
-               stacked_image = frame_pil
-            else: 
-               stacked_image=ImageChops.lighter(stacked_image,frame_pil)
+         if frame is not None:
+            if cc % 1 == 0:
+               frame_pil = Image.fromarray(frame)
+               if stacked_image is None:
+                  stacked_image = frame_pil
+               else: 
+                  stacked_image=ImageChops.lighter(stacked_image,frame_pil)
 
 
-            # stack image here!
-            if cc % 100 == 0:
-               print ('stack image', cc)
-         cc = cc + 1
-         skip = 0
+               # stack image here!
+               if cc % 100 == 0:
+                  print ('stack image', cc)
+            cc = cc + 1
+            skip = 0
    end_time = int(time.time())
    elapsed = end_time - start_time
    print ("PROCESSED STACK IN: ", elapsed)
-   if stack_queue.empty():   
+   if stacked_image is not None:   
       stacked_image.save(stack_file, "JPEG")
-   else:
-      wait
+   else: 
+      print("Failed.")
 
    #np_stacked_image = np.asarray(stacked_image) 
    #np_stacked_image = cv2.cvtColor(np_stacked_image, cv2.COLOR_BGR2GRAY)
@@ -192,13 +193,20 @@ def cam_loop(stack_queue, file):
     print ('initializing cam')
     go = 1
     fc = 0
+    fail = 0
     cap = cv2.VideoCapture(file)
     while go == 1:
        hello, frame = cap.read()
        if frame is None:
           print ("Frame is NONE")
-          go = 0
-          break
+          fail = fail + 1
+          if fail > 10 and fc <= 10: 
+             stack_queue.put(frame)
+             go = 0
+             break
+          else:
+             go = 0
+             break
        else:
           #frames.append(frame)
           if fc % 2 == 0:   
@@ -206,7 +214,7 @@ def cam_loop(stack_queue, file):
              #queue_from_cam.put(frame)
              stack_queue.put(frame)
           fc = fc + 1
-    print ("PROCESSED CAPTURE " )
+    print ("PROCESSED FILE CAPTURE ", file )
 
 file = sys.argv[1]
 

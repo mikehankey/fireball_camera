@@ -38,7 +38,7 @@ if arg == 'batch':
    cam_num = sys.argv[2]
    #files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
    #2018-03-23_02
-   files = glob.glob(video_dir + "/2018-03-23*cam1*.mp4")
+   files = glob.glob(video_dir + "/*.mp4")
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    for file in sorted(files):
