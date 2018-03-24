@@ -132,12 +132,14 @@ pip3 install scipy
 pip3 install sklearn
 pip3 install --upgrade google-api-python-client
 pip3 install wand
-pip install netifaces
-pip install numpy
-pip install pathlib
-pip install pyephem
-pip install pytesseract
-
+pip3 install netifaces
+pip3 install numpy
+pip3 install pathlib
+pip3 install pyephem
+pip3 install pytesseract
+pip3 install opencv-python
+pip3 install pycrypto
+apt-get install python3-pil.imagetk
 # clone fireball camera code
 # configurations...
 # setup webserver vhost
