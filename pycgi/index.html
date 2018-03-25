@@ -1,0 +1,75 @@
+<html>
+<head>
+<style>
+div {
+    width: 512;
+    height: 384;
+    padding: 5; /* Change this till it fits the dimensions of your video */
+    position: relative;
+    float: left
+}
+
+crapdiv crapiframe {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+}
+</style>
+
+<script language="JavaScript">
+function point_it(event){
+	pos_x = event.offsetX?(event.offsetX):event.pageX-document.getElementById("pointer_div").offsetLeft;
+	pos_y = event.offsetY?(event.offsetY):event.pageY-document.getElementById("pointer_div").offsetTop;
+	document.getElementById("cross").style.left = (pos_x-12.5) ;
+	document.getElementById("cross").style.top = (pos_y-12.5) ;
+	document.getElementById("cross").style.visibility = "visible" ;
+	document.pointform.form_x.value = pos_x ;
+	document.pointform.form_y.value = pos_y ;
+}
+</script>
+</head>
+<body>
+
+<h1>AllSky6 Control Panel</h1>
+<UL>
+<LI><a href=py/system_status.py>System Status</a></LI>
+<LI><a href=py/latest_view.py>Latest View</a></LI>
+<LI>Time Lapse Videos</LI>
+<LI>Fireballs</LI>
+<LI><a href="py/motion_events.py">Motion Events</A></LI>
+<LI>Video Archive</LI>
+<LI>Calibration</LI>
+<LI>Focus App</LI>
+<LI>Configuration</LI>
+<!--
+<form name="pointform" method="post">
+<div id="pointer_div" onclick="point_it(event)" style = "background-image:url('/out/latest1.jpg?xx');width:640px;height:480px;">
+<img src="point-sm.png" id="cross" style="position:relative;visibility:hidden;z-index:2;"></div>
+You pointed on x = <input type="text" name="form_x" size="4" /> - y = <input type="text" name="form_y" size="4" />
+</form>
+-->
+
+<!--
+<h2>Live View</h2>
+<div>
+<iframe src="http://ams1:5001" width="660" height="500" frameborder=0></iframe>
+</div>
+<div>
+<iframe src="http://ams1:5002" width="660" height="500" frameborder=0></iframe>
+</div>
+<div>
+<iframe src="http://ams1:5003" width="660" height="500" frameborder=0></iframe>
+</div>
+<div>
+<iframe src="http://ams1:5004" width="660" height="500" frameborder=0></iframe>
+</div>
+<div>
+<iframe src="http://ams1:5005" width="660" height="500" frameborder=0></iframe>
+</div>
+<div>
+<iframe src="http://ams1:5006" width="660" height="500" frameborder=0></iframe>
+</div>
+-->
