@@ -26,7 +26,7 @@ def brightness_loop(queue_for_brightness, file):
    while True:
       if queue_for_brightness.empty():   
          skip = skip + 1
-         if skip > 5000 or cc > 1499:
+         if skip > 50000 or cc > 1499:
             print ("brightness process done")
             break
       else:
@@ -124,7 +124,7 @@ def stack_loop(stack_queue, file):
    while True:
       if stack_queue.empty():   
          skip = skip + 1
-         if skip > 10000 or cc > 1499:
+         if skip > 2000 or cc > 1499:
             print ("stack process done")
             break
       else:
@@ -136,7 +136,6 @@ def stack_loop(stack_queue, file):
                   stacked_image = frame_pil
                else: 
                   stacked_image=ImageChops.lighter(stacked_image,frame_pil)
-
 
                # stack image here!
                if cc % 100 == 0:
@@ -200,13 +199,14 @@ def cam_loop(stack_queue, file):
        if frame is None:
           print ("Frame is NONE")
           fail = fail + 1
-          if fail > 10 and fc <= 10: 
-             stack_queue.put(frame)
+          print ("Fail: ", fail)
+          if fail > 10 : 
+             #stack_queue.put(frame)
              go = 0
              break
-          else:
-             go = 0
-             break
+          #else:
+          #   go = 0
+          #   break
        else:
           #frames.append(frame)
           if fc % 2 == 0:   
@@ -215,6 +215,7 @@ def cam_loop(stack_queue, file):
              stack_queue.put(frame)
           fc = fc + 1
     print ("PROCESSED FILE CAPTURE ", file )
+    cap.release()
 
 file = sys.argv[1]
 
@@ -225,6 +226,9 @@ stack_process = multiprocessing.Process(target=stack_loop,args=(stack_queue, fil
 cam_process.start()
 #gray_process.start()
 stack_process.start()
+#time.sleep(10)
+#stack_process.terminate()
+
 #brightness_process.start()
 
 

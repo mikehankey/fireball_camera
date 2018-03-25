@@ -107,7 +107,7 @@ if arg == 'batch':
             print(cmd)
             os.system(cmd)
          else:
-            cmd = "./fast_frames2.py " + file 
+            cmd = "./fast_frames3.py " + file 
             #cmd = "./PV.py " + file + " x"
             start_time = int(time.time())
             os.system(cmd)
