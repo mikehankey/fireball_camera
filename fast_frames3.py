@@ -8,14 +8,14 @@ import multiprocessing
 import cv2
 import sys
 import numpy as np
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 #queue_from_cam = multiprocessing.Queue()
 stack_queue = multiprocessing.Queue()
 #queue_for_brightness = multiprocessing.Queue()
 
 
 def stack_loop(stack_queue, file):
-   print ("STACK LOOP!")
    start_time = int(time.time())
    cc = 0
    skip = 0
@@ -41,6 +41,7 @@ def stack_loop(stack_queue, file):
    elapsed = end_time - start_time
    print ("PROCESSED STACK IN: ", elapsed)
    if stacked_image is not None:   
+      print("saving", stack_file)
       stacked_image.save(stack_file, "JPEG")
    else: 
       print("Failed.")
@@ -63,9 +64,9 @@ def cam_loop(stack_queue, file):
     while go == 1:
        hello, frame = cap.read()
        if frame is None:
-          print ("Frame is NONE")
+          #print ("Frame is NONE")
           fail = fail + 1
-          print ("Fail: ", fail)
+          #print ("Fail: ", fail)
           if fail > 10 : 
              #stack_queue.put(frame)
              go = 0
@@ -81,7 +82,8 @@ def cam_loop(stack_queue, file):
              stack_queue.put(frame)
           fc = fc + 1
     stack_queue.put("STOP")
-    print ("PROCESSED FILE CAPTURE ", file )
+    print ("VIDEO FILE", file )
+    print ("FRAMES:", fc)
     cap.release()
 
 file = sys.argv[1]

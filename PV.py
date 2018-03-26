@@ -28,7 +28,6 @@ def day_or_night(config, capture_date):
 
    saz = str(sun.az)
    (sun_az, x,y) = saz.split(":")
-   print ("SUN", sun_alt)
    if int(sun_alt) < -1:
       sun_status = "night"
    else:
@@ -41,7 +40,6 @@ def parse_date (this_file):
    file_name = el[-1]
    file_name = file_name.replace("_", "-")
    file_name = file_name.replace(".", "-")
-   print ("MIKE", this_file, file_name)
    xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
    cam_num = xcam_num.replace("cam", "")
 
@@ -56,7 +54,6 @@ cam_num = sys.argv[2]
 def check_running(cam_num):
    #cmd = "ps -aux |grep \"PV.py batch + " + cam_num + " \" | grep -v grep | wc -l"
    cmd = "ps -aux |grep \"PV.py\" | grep -v grep | wc -l"
-   print(cmd)
    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    output = int(output.replace("\n", ""))
    return(output)
@@ -71,16 +68,14 @@ if arg == 'find_HD':
 if arg == 'batch':
    already_running = check_running(cam_num)
    print (already_running)
-   if int(already_running) > 2:
+   if int(already_running) > 12:
       print ("already running")
       exit()
-   else:
-      print ("not running")
    #do batch for 1 cam
    cam_num = sys.argv[2]
-   #files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
+   files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
    #2018-03-23_02
-   files = glob.glob(video_dir + "/*.mp4")
+   #files = glob.glob(video_dir + "/*.mp4")
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    for file in sorted(files):
@@ -89,8 +84,7 @@ if arg == 'batch':
       mtime = st.st_mtime
       tdiff = cur_time - mtime
       tdiff = tdiff / 60 
-      print (file, tdiff)
-      stack_file = file.replace(".mp4", "-stack.jpg")
+      stack_file = file.replace(".mp4", "-stacked.jpg")
       file_exists = Path(stack_file)
       skip = 0
       if (file_exists.is_file()):
@@ -104,7 +98,7 @@ if arg == 'batch':
             el = file.split("/")
             file_name = el[-1]
             cmd = "mv " +  file + " /mnt/ams2/SD/proc/daytime/" + file_name
-            print(cmd)
+            print("MIKE: ", cmd)
             os.system(cmd)
          else:
             cmd = "./fast_frames3.py " + file 

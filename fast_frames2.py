@@ -197,7 +197,7 @@ def cam_loop(stack_queue, file):
     while go == 1:
        hello, frame = cap.read()
        if frame is None:
-          print ("Frame is NONE")
+          #print ("Frame is NONE")
           fail = fail + 1
           print ("Fail: ", fail)
           if fail > 10 : 

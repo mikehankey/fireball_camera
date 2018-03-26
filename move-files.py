@@ -106,18 +106,20 @@ def move_processed_SD_files():
          os.system("mkdir " + date_dir) 
       if sun_status == "day":
          cmd = "mv " +  file + " /mnt/ams2/SD/proc/daytime/" + file_name
-         #os.system(cmd) 
+         print(cmd)
+         os.system(cmd) 
          cmd = "mv " +  video_file + " /mnt/ams2/SD/proc/daytime/" + video_file_name
-         #os.system(cmd) 
+         print(cmd)
+         os.system(cmd) 
       else:
          if "-stacked" not in file_name:
             file_name = file_name.replace("stack", "stacked")
          cmd = "mv " +  file + " " + date_dir + "/" + file_name
-         #print(cmd)
+         print(cmd)
          os.system(cmd) 
 
          cmd = "mv " +  video_file + " " + date_dir + "/" + video_file_name
-         #print(cmd)
+         print(cmd)
          os.system(cmd) 
    
 

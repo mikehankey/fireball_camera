@@ -17,7 +17,6 @@ def caldate(caldate):
    return(caldate)
 
 def read_config(config_file = ""):
-    print ("Reading: ", config_file)
     config = {}
     if config_file == "":
        file = open("/home/pi/fireball_camera/config.txt", "r")
