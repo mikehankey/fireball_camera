@@ -160,3 +160,6 @@ mkdir /var/www/html/out/maybe
 mkdir /var/www/html/out/cal
 chown -R ams:ams /var/www
 ln -s /home/ams/fireball_camera/pycgi /var/www/html/pycgi
+
+# to fix autocomplete in shell 
+# https://stackoverflow.com/questions/23418831/command-line-auto-complete-tab-key-not-work-in-terminal-for-ubuntu
