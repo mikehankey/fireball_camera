@@ -1,4 +1,4 @@
-
+from random import randint
 from skimage import morphology
 import subprocess
 import requests
@@ -267,6 +267,7 @@ class ProcessVideo:
       self.config = read_config(self.config_file)
 
    def move_all_files(self,dest_dir):
+      return(0)
       if "HD" in self.orig_video_file:
          print ("HD FILE!")
 
@@ -553,9 +554,85 @@ class ProcessVideo:
       print ("USING LAST LIMIT", tlimit)
       time.sleep(5)
       return(int(tlimit))
-     
 
-   def find_best_thresh(self, tlimit):
+   def mask_bright_areas(self, blur_med, current_image):
+      print("BM:", blur_med)
+      blur_med = cv2.cvtColor(blur_med, cv2.COLOR_BGR2GRAY)
+      current_image = cv2.cvtColor(current_image, cv2.COLOR_BGR2GRAY)
+      masks = []
+      # find bright areas in median and mask them out of the current image
+      _, median_thresh = cv2.threshold(blur_med, 40, 255, cv2.THRESH_BINARY)
+
+      (_, cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+      hit = 0
+      real_cnts = []
+      if len(cnts) < 1000:
+         for (i,c) in enumerate(cnts):
+            x,y,w,h = cv2.boundingRect(cnts[i])
+            if True:
+               w = w + 10
+               h = h + 10
+               x = x - 10
+               y = y - 10
+               if x < 0:
+                  x = 0
+               if y < 0:
+                  y = 0
+               if x+w > current_image.shape[1]:
+                  x = current_image.shape[1]-1
+               if y+h > current_image.shape[0]:
+                  y = current_image.shape[0]-1
+            if w > 0 and h > 0:
+               mask = current_image[y:y+h, x:x+w]
+               masks.append((x,y,w,h))
+               for xx in range(0, mask.shape[1]):
+                  for yy in range(0, mask.shape[0]):
+                     mask[yy,xx] = randint(0,6)
+               blur_mask = cv2.GaussianBlur(mask, (5, 5), 0)
+               current_image[y:y+h,x:x+w] =blur_mask
+               blur_med[y:y+h,x:x+w] =mask
+      return(current_image, blur_med, masks) 
+  
+   def find_best_thresh(self, image, thresh_limit):
+      go = 1
+      thresh_limit = 8  
+      if len(image.shape) > 2:
+         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+      for i in range (0,50):
+         frame = self.frames[i]
+         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+         frame = cv2.GaussianBlur(frame, (21, 21), 0) 
+         if self.image_acc is None:
+            self.image_acc = np.empty(np.shape(frame))
+
+         image_diff = cv2.absdiff(self.image_acc.astype(frame.dtype), frame,)
+         alpha = .1 
+         hello = cv2.accumulateWeighted(frame, self.image_acc, alpha)
+
+
+
+      while go == 1:
+         _, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
+         (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+         if len(cnts) > 5:
+            thresh_limit = thresh_limit + 1
+         else:
+            bad = 0
+            for (i,c) in enumerate(cnts):
+               x,y,w,h = cv2.boundingRect(cnts[i])
+               if w == image.shape[1]:
+                  bad = 1
+            if bad == 0:
+               go = 0
+            else:
+               thresh_limit = thresh_limit + 1
+         print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
+      #exit()
+      return(thresh_limit)
+
+
+   def find_best_thresh_old(self, tlimit):
       noise = 0 
       go = 1
       attempts = 0
@@ -605,6 +682,7 @@ class ProcessVideo:
 
       print ("noise at this limit is :", tlimit, noise)
       return(noise, tlimit)
+
    def ProcessVideo(self):
       # determine sun status for video
       # play the video frame by frame 
@@ -630,7 +708,7 @@ class ProcessVideo:
          #self.move_all_files("day")
          mod_skip = 25 
       else:
-         mod_skip = 3
+         mod_skip = 1 
          if "HD" in self.orig_video_file:
             mod_skip = 1
 
@@ -683,12 +761,20 @@ class ProcessVideo:
       best_limit = self.load_best_thresh()
       print ("TOTAL FRAMES: ", len(self.frames))
       if len(self.frames) > 100:
-         noise, best_limit = self.find_best_thresh(best_limit)
+         median_img = np.median(np.array(self.frames[0:25]), axis=0)
+         median = np.uint8(median_img)
+         median_img = median
+         masked_median, masked_current,masks = self.mask_bright_areas(median_img, self.frames[0])
+         cv2.imshow('pepe', masked_median)
+         cv2.waitKey(1000)
+         cv2.imshow('pepe', masked_current)
+         cv2.waitKey(1000)
+         best_limit = self.find_best_thresh(masked_current, best_limit)
       else: 
          best_limit = 10 
          noise = 1 
-      if (noise == 0):
-         best_limit = best_limit - 2
+      #if (noise == 0):
+      #   best_limit = best_limit - 2
 
       cnt_group = []
       self.event_cnts = []
@@ -696,6 +782,14 @@ class ProcessVideo:
          frame_count = frame_count + 1
          print(frame_count)
          self.frame_count = frame_count
+
+         #mask bright areas
+         if len(masks) > 0:
+            for mx,my,mw,mh in masks:
+               if len(frame.shape) > 2:
+                  frame[my:my+mh,mx:mx+mw] = [4,4,4]
+               else:
+                  frame[my:my+mh,mx:mx+mw] = 4
  
 
          # main video loop
@@ -969,9 +1063,10 @@ class ProcessVideo:
             self.straight_line = self.is_straight(self.points)
          else:
             self.straight_line = 0
- 
 
-         if self.straight_line == 1 and self.sun_status != 'day' and self.cons_motion < 200 and len(self.motion_frames) < 25:
+         print("STRAIGHT:", self.straight_line) 
+
+         if self.straight_line == 1 and self.sun_status != 'day' and self.cons_motion < 200 and len(self.motion_frames) < 75:
             self.meteor_yn = "Y"
          else:
             self.meteor_yn = "N"
@@ -989,16 +1084,16 @@ class ProcessVideo:
       #cv2.imwrite(self.stacked_image_fn, np_stacked_image)
       if self.sun_status != 'day' and self.detect_stars == 1: 
          print ("Writing:", self.star_image_fn)
-         cv2.imwrite(self.star_image_fn, np_star_image)
+         #cv2.imwrite(self.star_image_fn, np_star_image)
       #cv2.imwrite(self.star_image_fn, cleaned_stars)
       print ("Writing:", self.stacked_image_fn)
       
       #print(np_stacked_image)
-      print ("NP", np_stacked_image)
-      print (np_stacked_image.shape)
-      print (np_stacked_image.dtype)
-      if len(np_stacked_image.shape) >  0:
-         cv2.imwrite(self.stacked_image_fn, np_stacked_image)
+      #print ("NP", np_stacked_image)
+      #print (np_stacked_image.shape)
+      #print (np_stacked_image.dtype)
+      #if len(np_stacked_image.shape) >  0:
+         #cv2.imwrite(self.stacked_image_fn, np_stacked_image)
       report = "orig_video_file=\"" + self.orig_video_file + "\"\n"
       report = report + "frame_count=" + str(self.frame_count) + "\n"
       report = report + "fps=" + str(self.frame_count/60) + "\n"
@@ -1276,7 +1371,7 @@ class ProcessVideo:
       xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
       cam_num = xcam_num.replace("cam", "")
       self.SetCamNum(cam_num)
-      self.chk_dirs()
+      #self.chk_dirs()
 
       date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
       self.capture_date = date_str
@@ -1305,7 +1400,7 @@ class ProcessVideo:
       xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = file_name.split("-")
       cam_num = xcam_num.replace("cam", "")
       self.SetCamNum(cam_num)
-      self.chk_dirs() 
+      #self.chk_dirs() 
     
       date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
       self.capture_date = date_str

@@ -142,6 +142,7 @@ def find_objects(index, points):
    line_segments = []
    stars = []
    obj_points = []
+   big_cnts = []
    count = 0
    x1,y1,w1,h1 = points[index]
    print ("Total Points found in image: ", len(points))
@@ -167,7 +168,7 @@ def find_objects(index, points):
          dist = calc_dist(x1,y1,x2,y2)
          angle = find_angle(x1,y1,x2,y2)
          if x1 != x2 and y1 != y2:
-            if used_pts[key] == 0 and used_pts[key2] == 0:
+            if used_pts[key] == 0 and used_pts[key2] == 0 :
                #print("Closest Point:", (int(dist),int(angle),int(x1),int(y1),int(x2),int(y2)))
                closest.append((int(dist),int(angle),int(x1),int(y1),int(x2),int(y2)))
 
@@ -180,28 +181,33 @@ def find_objects(index, points):
             #else:
             #   print ("this point has already been used")
          count = count + 1
-      # find the closest point and make a line segment and add that to the line segments list
+      # of all the close points, make sure that at least 2 points < 25 px dist exist.  
+      conf_closest = []
+      for cls in closest:
+         if cls[0] < 100:
+            conf_closest.append(cls)
       if len(closest) > 0:
          distsort = np.unique(closest, axis=0)
          dist,angle,x1,y1,x2,y2 = distsort[0]
-         if dist < 50:
+         if dist < 50 and len(conf_closest) > 1:
             line_segments.append((int(dist),int(angle),int(x1),int(y1),int(x2),int(y2)))
-            obj_points.append((int(x1),int(y1)))
+            obj_points.append((int(x1),int(y1), int(w1), int(h1)))
          else: 
-            possible_stars.append((int(x1),int(y1)))
+            possible_stars.append((int(x1),int(y1),int(w1),int(h1)))
          
          #print("CLOSEST LINE SEGMENT FOR PT: ", distsort[0])
-      else: 
-         print("ERROR! no close points to this one!", x1,y1)
-      if w1 > 10 or h1 > 10:
-         print ("BIG!!! We have a big object here likely containing many line segments.")
+      #else: 
+         #print("ERROR! no close points to this one!", x1,y1)
+      if w1 > 15 or h1 > 15:
+      #   print ("BIG!!! We have a big object here likely containing many line segments.")
+         big_cnts.append((int(x1),int(y1),int(w1),int(h1)))
 
    for star in possible_stars:
       close = 0
       for line in line_segments: 
          dist,angle,x1,y1,x2,y2 = line 
          star_dist = calc_dist(star[0], star[1], x1,y1)
-         print ("STARDIST: ", star_dist, star[0], star[1], x1,y1)
+         #print ("STARDIST: ", star_dist, star[0], star[1], x1,y1)
          if star_dist < 60:
             close = 1
  
@@ -262,13 +268,13 @@ def find_objects(index, points):
    #print ("Confirm the line segments are all part of the same group", len(line_groups))
 
 
-   print ("TOTAL POINTS: ", len(points))
-   print ("TOTAL LINE GROUPS: ", len(line_groups))
-   print ("ORPHAN GROUPS: ", len(orphan_lines))
+   #print ("TOTAL POINTS: ", len(points))
+   #print ("TOTAL LINE GROUPS: ", len(line_groups))
+   #print ("ORPHAN GROUPS: ", len(orphan_lines))
 
 
-   for point in points:
-      print ("POINT: ", point)
+   #for point in points:
+      #print ("POINT: ", point)
 
 
    gc = 1
@@ -276,7 +282,7 @@ def find_objects(index, points):
       for line_group in line_groups:
          lc = 1
          for line in line_group:
-            print("LINE:", line)
+            #print("LINE:", line)
             dist,ang,x1,y1,x2,y2 = line
             #confirm_angle = find_angle(x1,y1,x2,y2)
             #print ("GROUP", gc, lc, line, ang, confirm_angle) 
@@ -284,7 +290,7 @@ def find_objects(index, points):
          gc = gc + 1
    #else:
  
-   return(line_groups, orphan_lines, stars, obj_points)
+   return(line_groups, orphan_lines, stars, obj_points, big_cnts)
 
 def clean_line_groups(line_groups, orphan_lines):
 
@@ -333,19 +339,28 @@ def find_best_thresh(image, thresh_limit):
    while go == 1: 
       _, thresh = cv2.threshold(image, thresh_limit, 255, cv2.THRESH_BINARY)
       (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      if len(cnts) > 45:
-         thresh_limit = thresh_limit + 2
+      if len(cnts) > 80:
+         thresh_limit = thresh_limit + 1 
       else: 
-         go = 0
-      print ("BEST THRESH:", thresh_limit)
+         bad = 0
+         for (i,c) in enumerate(cnts):
+            x,y,w,h = cv2.boundingRect(cnts[i])
+            if w == image.shape[1]: 
+               bad = 1
+         if bad == 0: 
+            go = 0
+         else:
+            thresh_limit = thresh_limit + 1 
+      print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
    return(thresh_limit)
 
 
 def find_objects2(timage, tag, current_image, filename):
    stars = []
+   big_cnts = []
    obj_points = []
    image = timage
-   thresh_limit = 25 
+   thresh_limit = 10 
    thresh_limit = find_best_thresh(image, thresh_limit)
    # find best thresh limit code here!
    line_objects = []
@@ -360,7 +375,7 @@ def find_objects2(timage, tag, current_image, filename):
       for (i,c) in enumerate(cnts):
          x,y,w,h = cv2.boundingRect(cnts[i])
          if w > 1 and h > 1:
-            if (w < 25 and h <25):
+            if (w < 10 and h <10):
                nothing = 0
               # cv2.rectangle(image, (x,y), (x+w+5, y+h+5), (255),1)
                #cv2.circle(image, (x,y), 20, (120), 1)
@@ -374,7 +389,7 @@ def find_objects2(timage, tag, current_image, filename):
                if w < 600 and h < 400:
                   crop_points = find_points_in_crop(crop,x,y,w,h)
                   for x,y,w,h in crop_points:
-                  #print("adding some points",x,y,w,h)
+                     print("adding some points",x,y,w,h)
                      points.append((x,y,w,h))
       
 
@@ -385,6 +400,8 @@ def find_objects2(timage, tag, current_image, filename):
    else: 
       print ("WAY TO MANY CNTS:", len(cnts))
       thresh_limit = thresh_limit + 5
+
+   return(points)
 
    # find line objects
    if (len(objects) + len(points)) > 0:
@@ -604,19 +621,6 @@ def find_objects2(timage, tag, current_image, filename):
    for x,y in stars:
       cv2.circle(blend, (x,y), 5, (255), 1)
 
-   cv2.imshow('pepe', blend)
-
-
-
-   if len(final_groups) >= 1:
-      while(1):
-         k = cv2.waitKey(33)
-         if k == 32:
-            break 
-         if k == 27:
-            exit() 
-   else:
-      cv2.waitKey(100)
 
 
 
@@ -754,26 +758,26 @@ def find_points_in_crop(crop,x,y,w,h):
    canvas[y:y+h,x:x+w] = crop
    for i in range(x,x+w):
       for j in range(y,y+w): 
-         if i % 10 == 0:
-            canvas[0:480,i:i+5] = 0
-         if j % 10 == 0:
-            canvas[j:j+5,0:640] = 0
-   print ("CROP", crop.shape[0])
+         if i % 5 == 0:
+            canvas[0:480,i:i+3] = 0
+         if j % 5 == 0:
+            canvas[j:j+3,0:640] = 0
+   #print ("CROP", crop.shape[0])
    #if crop.shape[0] > 25:
-   #   cv2.imshow('pepe', canvas)
-   #   cv2.waitKey(1000)
+      #cv2.imshow('pepe', canvas)
+      #cv2.waitKey(1000)
             
 
 
+   last_cnts = []
    while go == 1:
      _, thresh = cv2.threshold(canvas, thresh_limit, 255, cv2.THRESH_BINARY)
      (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
      cnt_limit = int((w + h) / 20)
      if cnt_limit < 5:
         cnt_limit = 5
-     if cnt_limit > 10:
-        cnt_limit = 10
+     if cnt_limit > 25:
+        cnt_limit = 25 
      #print ("CNTS at thresh:", len(cnts), thresh_limit)
      thresh_limit = thresh_limit - 2
      if len(cnts) >= cnt_limit:
@@ -781,11 +785,20 @@ def find_points_in_crop(crop,x,y,w,h):
            x,y,w,h = cv2.boundingRect(cnts[i])
            if w > 1 and h > 1:
               cnt_pts.append((x,y,w,h))
+     if len(last_cnts) >= len(cnt_pts) and len(last_cnts) > cnt_limit:
+        #cnt_pts = last_cnts
         go = 0
-     if thresh_limit < 10:
+     if thresh_limit < 5:
+        cnt_pts = last_cnts
         go = 0
+     if len(cnts) > 70:
+        go = 0
+     print ("CNTS: ", len(cnts))
+     print ("LAST CNTS: ", len(last_cnts))
+     print ("THRESH LIMIT: ", thresh_limit)
      #cv2.imshow('pepe', thresh)
      #cv2.waitKey(100)
+     last_cnts = cnt_pts
 
    return(cnt_pts) 
 
@@ -831,10 +844,10 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
       for (i,c) in enumerate(cnts):
          x,y,w,h = cv2.boundingRect(cnts[i])
          if True:
-            w = w + 5 
-            h = h + 5 
-            x = x - 5
-            y = y - 5
+            w = w + 10 
+            h = h + 10 
+            x = x - 10 
+            y = y - 10 
             if x < 0: 
                x = 0
             if y < 0: 
@@ -862,20 +875,65 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
 
    cur_med_diff =- median
 
-   line_groups, points, clusters = find_objects2(blend, "Current Median Diff Blend",  current_image, filename)
+   #line_groups, points, clusters = find_objects2(blend, "Current Median Diff Blend",  current_image, filename)
 
-   return(line_groups, points)
+   return(blend, current_image, filename)
+   #return(line_groups, points)
 
 def inspect_image(med_stack_all, background, median, before_image, current_image, after_image, avg_cnt,avg_tot,avg_pts,filename):
    rois = []
+   big_cnts = []
+   line_groups = []
+   orphan_lines = []
+   obj_points = []
+   stars = []
    image_diff = cv2.absdiff(current_image.astype(current_image.dtype), background,)
    orig_image = current_image
    current_image = image_diff
-   line_groups, points = diff_all(med_stack_all, background, median, before_image, current_image, after_image,filename)
-   if len(line_groups) >= 1:
-      return(1, line_groups, points)
-   else:
-      return(0,line_groups, points)
+   blend, current_image, filename = diff_all(med_stack_all, background, median, before_image, current_image, after_image,filename)
+
+   points = find_objects2(blend, "Current Median Diff Blend",  current_image, filename)
+   if len(points) > 2:
+      line_groups, orphan_lines, stars, obj_points, big_cnts = find_objects(0, points)
+   if len(obj_points) > 2:
+      line_groups, orphan_lines, stars2, obj_points, big_cnts = find_objects(0, obj_points)
+      stars = stars + stars2
+
+   print ("---FINAL ANALYSIS---")
+   print ("File: ", filename)
+   print ("Total Points: ", len(points))
+   print ("Line Groups: ", len(line_groups))
+   lg_points = 0
+   lg = 1
+   for line in line_groups:
+      print ("   Group " + str(lg) + ": " + str(len(line)))
+      lg = lg + 1
+      lg_points = lg_points + len(line)
+   print ("Total Line Group Points: ", lg_points)
+   print ("Orphan Lines: ", len(line_groups))
+   print ("Stars: ", len(stars))
+   print ("Obj Points: ", len(obj_points))
+   print ("Big CNTS: ", len(big_cnts))
+
+
+   for x,y,w,h in big_cnts:
+      cv2.rectangle(blend, (x,y), (x+w+5, y+h+5), (255),1)
+
+   for x,y,w,h in obj_points:
+      if w > 25 or h > 25:
+         cv2.rectangle(blend, (x,y), (x+w+5, y+h+5), (255),1)
+      else:
+         cv2.circle(blend, (x,y), 20, (120), 1)
+   for x,y,w,h in stars:
+      if w > 25 or h > 25:
+         cv2.rectangle(blend, (x,y), (x+w+5, y+h+5), (255),1)
+      else:
+         cv2.circle(blend, (x,y), 5, (120), 1)
+
+
+
+   return(blend, points, line_groups, stars, obj_points, big_cnts)
+
 
 
 def parse_file_date(orig_video_file):
@@ -883,7 +941,7 @@ def parse_file_date(orig_video_file):
    if ".mp4" in orig_video_file:
       stacked_image_fn = orig_video_file.replace(".mp4", "-stack.jpg") 
       star_image_fn = orig_video_file.replace(".mp4", "-stars.jpg")
-      report_fn = orig_video_file.replace(".mp4", "-report.txt")
+      report_fn = orig_video_file.replace(".mp4", "-stack-report.txt")
 
       trim_file = orig_video_file.replace(".mp4", "-trim.mp4")
 
@@ -891,7 +949,7 @@ def parse_file_date(orig_video_file):
       stacked_image_fn = orig_video_file.replace(".avi", "-stack.jpg") 
       trim_file = orig_video_file.replace(".avi", "-trim.avi")
       star_image_fn = orig_video_file.replace(".avi", "-stars.jpg")
-      report_fn = orig_video_file.replace(".avi", "-report.txt")
+      report_fn = orig_video_file.replace(".avi", "-stack-report.txt")
       el = orig_video_file.split("/")
       file_name = el[-1]
       file_name = file_name.replace("_", "-")
@@ -936,6 +994,9 @@ def diff_stills(sdate, cam_num):
    config = read_config("conf/config-1.txt")
    video_dir = "/mnt/ams2/SD/"
    images = []
+   images_orig = []
+   images_blend = []
+   images_info = []
    count = 0
    last_image = None
    last_thresh_sum = 0
@@ -961,7 +1022,6 @@ def diff_stills(sdate, cam_num):
       ms.close()
       mask_exists = 1
       (sm_min_x, sm_max_x, sm_min_y, sm_max_y) = still_mask
-
    diffs = 0
    image_list = []
    file_list = []
@@ -978,6 +1038,9 @@ def diff_stills(sdate, cam_num):
    sorted_list = sorted(file_list)
    for filename in sorted_list:
       open_cv_image = cv2.imread(filename,0)
+      orig_image = open_cv_image
+      images_orig.append(orig_image)
+      print(filename)
       open_cv_image[440:480, 0:640] = [0]
       if mask_exists == 1:
          open_cv_image[sm_min_y:sm_max_y, sm_min_x:sm_max_x] = [0]
@@ -1035,9 +1098,19 @@ def diff_stills(sdate, cam_num):
          for i in range (0,10):
             background = cv2.addWeighted(background, .8, images[count-i], .2,0)
  
+      img_rpt_file = filename.replace("-stacked.jpg", "-stack-report.txt")
+      img_report = open(img_rpt_file, "w")
  
 
-      result, line_groups, points = inspect_image(med_stack_all, background, median, before_image, this_image, after_image, avg_cnt,avg_tot,avg_pts, filename) 
+      (blend, points, line_groups, stars, obj_points, big_cnts) = inspect_image(med_stack_all, background, median, before_image, this_image, after_image, avg_cnt,avg_tot,avg_pts, filename) 
+      img_report.write("points=" + str(points) + "\n")
+      img_report.write("line_groups=" + str(line_groups) + "\n")
+      img_report.write("stars=" + str(stars) + "\n")
+      img_report.write("obj_points=" + str(obj_points) + "\n")
+      img_report.write("big_cnts=" + str(big_cnts) + "\n")
+      img_report.close()
+      images_blend.append(blend)
+      images_info.append((points, line_groups, stars, obj_points, big_cnts)) 
       # block out the detections in the master image to remove it from the running mask
       last_line_group = line_groups
       last_points = points 
@@ -1046,18 +1119,68 @@ def diff_stills(sdate, cam_num):
    
    
       count = count + 1
-      hits = hits + result
+      if len(big_cnts) > 0 or len(obj_points) >= 3:
+         hits = hits + 1
+      cv2.imshow('pepe', blend)
+      if len(line_groups) >= 1 or len(obj_points) > 3 or len(big_cnts) > 0:
+         cv2.waitKey(100)
+      #   while(1):
+      #      k = cv2.waitKey(33)
+      #      if k == 32:
+      #         break 
+      #      if k == 27:
+      #         exit() 
+      else:
+         cv2.waitKey(10)
+      data = filename + "," + str(len(line_groups)) + "," + str(len(obj_points)) + "," + str(len(big_cnts)) + "\n"
+      fp.write(data)
+
    print ("TOTAL: ", len(file_list))
-   print ("DIFFS: ", diffs)
    print ("HITS: ", hits)
    fp.close()
    
    
-   for file in diffed_files:
+   hits = 1 
+   for count in range(0, len(sorted_list) - 1):
+      file = sorted_list[count]
       el = file.split("/")
       st = el[-1]
-      report_str = st.replace("-stack.jpg", "-report.txt")
-      video_str = st.replace("-stack.jpg", ".mp4")
+      report_str = st.replace("-stacked.jpg", "-report.txt")
+      video_str = st.replace("-stacked.jpg", ".mp4")
+      video_file = file.replace("-stacked.jpg", ".mp4")
+      (points, line_groups, stars, obj_points, big_cnts) = images_info[count]
+      if len(obj_points) > 3 or len(big_cnts) > 0:
+         for bc in big_cnts:
+            (x,y,w,h) = bc
+            obj_points.append((x,y,5,5))
+            obj_points.append((x+w,y+h,5,5))
+         np_obj_points = np.array(obj_points)
+         max_x = np.max(np_obj_points[:,0])
+         max_y = np.max(np_obj_points[:,1])
+         min_x = np.min(np_obj_points[:,0])
+         min_y = np.min(np_obj_points[:,1])
+         myimg = cv2.imread(sorted_list[count],0)
+         cv2.rectangle(myimg, (min_x,min_y), (max_x, max_y), (255),1)
+         cv2.imshow('pepe', myimg)
+         cv2.waitKey(1000)
+         print ("-------")
+         print ("Count:", count)
+         print ("Hit:", hits)
+         print ("File:", sorted_list[count])
+         print ("Points:", str(len(points)))
+         print ("Line Groups:", str(len(line_groups)))
+         print ("Stars:", str(len(stars)))
+         print ("Obj Points:", str(len(obj_points)))
+         print ("Big Cnts:", str(len(big_cnts)))
+         print ("Min/Max X/Y:", str(min_x), str(min_y), str(max_x), str(max_y))
+         print ("-------")
+         hits = hits + 1
+         print("./PV.py " + video_file + " " + cam_num)
+         os.system("./PV.py " + video_file + " " + cam_num)
+      else : 
+         min_x = min_y = max_x = max_y = 0
+      
+
       #cmd = "grep \"Motion Frames:\" `find /mnt/ams2/SD/"  + str(cam_num) + " |grep " + report_str + "`" 
       #output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    

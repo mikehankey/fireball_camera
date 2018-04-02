@@ -46,11 +46,17 @@ def get_files_for_day_cam(day, cam):
 
 def browse_day(day, cam):
    print ("<h2>Browse Day</h2>")
-
+   report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
+   rpts = open(report_file, "r")
    files = get_files_for_day_cam(day, cam)
-   for file in files:
+   #for file in files:
+   for line in rpts:
+      file, lg, op, bc = line.split(",")
       jpg = file.replace(".mp4", "-stacked.jpg") 
-      print ("<a href=" + file + "><img src=" + jpg + "></a><BR>")
+      if int(lg) > 0 or int(op) > 3 or int(bc) > 0:
+         print ("<a href=clip_detail.py?file=" + file + "&day=" +str(day) + "&cam=" +str(cam) + "><img src=" + jpg + "></a><BR>")
+      else:
+         print ("<a href=" + file + "><img width=320 height=240 src=" + jpg + "></a><BR>")
 
 
 def main():
