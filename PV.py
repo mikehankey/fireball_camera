@@ -73,12 +73,14 @@ if arg == 'batch':
       exit()
    #do batch for 1 cam
    cam_num = sys.argv[2]
-   files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
+   #files = glob.glob(video_dir + "/*cam" + cam_num + "*.mp4")
+   files = glob.glob(video_dir + "/*.mp4")
    #2018-03-23_02
    #files = glob.glob(video_dir + "/*.mp4")
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    for file in sorted(files):
+      
       cur_time = int(time.time())
       st = os.stat(file)
       mtime = st.st_mtime

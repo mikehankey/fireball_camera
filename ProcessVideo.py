@@ -1,3 +1,4 @@
+
 from random import randint
 from skimage import morphology
 import subprocess
@@ -151,7 +152,11 @@ class ProcessVideo:
    def examine_cnts(self):
       gc = 1 
       real_groups = 0
+      opoints = []
+      straight_cnts = []
+      straight_cnts_ang = []
       for cnt_group in self.event_cnts:
+         gp_pts = []
          print ("Contour Group:", gc)
          rc = 0
          if len(cnt_group) >3:
@@ -161,41 +166,86 @@ class ProcessVideo:
 
                else:
                   print ("CG:", frame_count, tot_cnts, x,y,w,h)
+                  gp_pts.append((x,y)) 
                   rc = rc + 1
          else:
             print("group too small, skipping.")
-         if rc < 4:
+            for (frame_count,tot_cnts,x,y,w,h) in cnt_group:
+               opoints.append((x,y)) 
+         if rc < 5:
             print ("There are not enough 'real' contours in this group.")
+            for (frame_count,tot_cnts,x,y,w,h) in cnt_group:
+               opoints.append((x,y)) 
          else:
             print ("Maybe this is a real group, we can eval further")
             real_groups = real_groups + 1
+            # see if this group's points are straight. 
+            self.straight_line, ang_groups = self.is_straight(gp_pts)
+            print ("STRAIGHT?: ", self.straight_line)
+            if self.straight_line == 1:
+               print ("Straight CNT group!: ", cnt_group)
+               straight_cnts.append(cnt_group)
+               straight_cnts_ang.append(ang_groups)
+               print("ANG GROUPS:", ang_groups)
+          
          gc = gc + 1
-         return(real_groups)
+      if len(opoints) > 0:
+
+         opst, op_angles = self.is_straight(opoints)
+         print ("ORPHAN POINTS STRAIGHT?: ", opst)
+         print ("ORPHAN POINTS STRAIGHT?: ", opoints)
+         print ("ORPHAN ANGLES", op_angles)
+
+      ct = 0
+      #for st_gp in straight_cnts:
+      #   print (ct, "STRAIGHT GROUP LENGTH:", len(st_gp), len(straight_cnts_ang[ct]))
+      #   print (ct, "STRAIGHT GROUP ANGLES:", straight_cnts_ang[ct])
+      #   angle = 0
+      #   angle = np.median(np.array(straight_cnts_ang[0][0]), axis=0)
+      #   for ang_group in op_angles:
+      #      print ("STRAIGHT GROUP ANGLE VS OP ANGLE: ", angle, np.median(np.array(ang_group), axis=0))
+      #   ct = ct + 1
+
+      return(straight_cnts)
       
 
    def is_straight(self, points):
+      points = np.unique(np.array(points), axis=0)
       last_angle = None
       total = len(points)
-      print ("TP", total)
+      #print ("TP", total)
       passed = 0
-      for i in range(1,total):
-         print(i)
-         angle = self.find_angle(points[0][0], points[0][1], points[i][0], points[i][1])
-         print (points[0][0], points[0][1], points[i][0], points[i][1], angle)
+      angles = []
+      angle_groups = []
+      angle_group = []
+      print ("CHECKING IF POINTS IN THIS GROUP ARE STRAIGHT:", points) 
+      for i in range(0,total-1):
+         #print(i)
+         #angle = self.find_angle(points[0][0], points[0][1], points[i][0], points[i][1])
+         angle = self.find_angle(points[i][0], points[i][1], points[i+1][0], points[i+1][1])
+         print ("ANGLE:", points[i][0], points[i][1], points[i+1][0], points[i+1][1], angle)
          if last_angle is not None:
-            if (last_angle - 1) < angle < (last_angle + 1):
+            if (last_angle - 10) < angle < (last_angle + 10):
                passed = passed + 1
-               print("passed")
+               angle_group.append(angle)
+               print("passed", angle, last_angle)
             else:
-               print("failed")
+               if len(angle_group) > 1:
+                  angle_groups.append(angle_group)
+                  angle_group = []
+               #print("failed")
 
          last_angle = angle
-
-      match_percent = passed / (total - 2)
-      if match_percent > .6:
-         return(1) 
+      if total > 1:
+         match_percent = passed / (total - 1)
+         print ("MATCH % ", match_percent, passed, total -1)
       else:
-         return(0) 
+         match_percent = 0 
+
+      if match_percent >= .5:
+         return(1, angle_groups) 
+      else:
+         return(0, angle_groups) 
 
    def find_angle(self, x1,x2,y1,y2):
       if x2 - x1 != 0:
@@ -272,7 +322,7 @@ class ProcessVideo:
          print ("HD FILE!")
 
          for event in self.motion_frames:
-            if len(event) > 3:
+            if 3 < len(event) < 175:
                start = int(event[0]) - 50
                cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 50) + " " + str( event[-1]+50)
                print (cmd)
@@ -302,7 +352,7 @@ class ProcessVideo:
 
       if dest_dir == "meteor":
          print ("TRIM: ", self.motion_frames[0] - 25, self.motion_frames[-1]+25)
-         #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+25)
+         #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+50)
          cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 50) + " " + str( self.motion_frames[-1]+50)
          #print (cmd)
          #os.system(cmd)
@@ -416,17 +466,26 @@ class ProcessVideo:
             crop_frame = frame[min_y:max_y, min_x:max_x]
             print(crop_frame.shape)
             out.write(crop_frame)
-            cv2.imshow('pepe', crop_frame)
-            cv2.waitKey(1)
+            #cv2.imshow('pepe', crop_frame)
+            #cv2.waitKey(1)
          frame_count = frame_count + 1
       out.release()
 
    def trimVideo(self, start, end):
+      input_file = self.orig_video_file
+      out_file = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".avi")
+      second_start = int(int(start) / 25)
+      num_frames = int(end) - int(start)
+      cmd = "ffmpeg -ss " + str(second_start) + " -i " + input_file + " -frames:v " + str(num_frames) + " -vcodec copy " + out_file 
+      print (cmd)
+      os.system(cmd)
+
+   def trimVideoOld(self, start, end):
       if self.show_video == 1:
          cv2.namedWindow('pepe')
       if int(start) < 0:
          start = 0
-      outfile = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".mp4")
+      outfile = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".avi")
       self.trim_file = outfile
       if os.path.isfile(self.orig_video_file) is False:
          print("This file does not exist. Exiting.")
@@ -435,7 +494,13 @@ class ProcessVideo:
       fourcc = cv2.VideoWriter_fourcc(*'H264')
       _ , frame = cap.read()
       height, width, x = frame.shape
-      out = cv2.VideoWriter(outfile,fourcc, 25, (width,height),1)
+      print ("WRITING TO:", outfile)
+      print ("W,H:", width, height)
+      print (frame.shape)
+      if len(frame.shape) == 3:
+         out = cv2.VideoWriter(outfile,fourcc, 25, (width,height),True)
+      else:
+         out = cv2.VideoWriter(outfile,fourcc, 25, (width,height),False)
       go = True
       self.frame_count = 0
       while go is True:
@@ -443,9 +508,9 @@ class ProcessVideo:
          if frame is None:
             go = False
          if int(start) < self.frame_count < int(end):
-            print ("Write: ", self.frame_count)
+            print ("Write: ", start, self.frame_count, end)
             out.write(frame)
-            if self.show_video == 1:
+            if self.show_video == 1 and frame is not None:
                cv2.imshow('pepe', frame)
          #else: 
             #print ("Skip: ", self.frame_count)
@@ -561,6 +626,7 @@ class ProcessVideo:
       current_image = cv2.cvtColor(current_image, cv2.COLOR_BGR2GRAY)
       masks = []
       # find bright areas in median and mask them out of the current image
+      #mt = find_best_thresh(blur_med, 40)
       _, median_thresh = cv2.threshold(blur_med, 40, 255, cv2.THRESH_BINARY)
 
       (_, cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -615,7 +681,7 @@ class ProcessVideo:
       while go == 1:
          _, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
          (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-         if len(cnts) > 5:
+         if len(cnts) > 2:
             thresh_limit = thresh_limit + 1
          else:
             bad = 0
@@ -766,9 +832,9 @@ class ProcessVideo:
          median_img = median
          masked_median, masked_current,masks = self.mask_bright_areas(median_img, self.frames[0])
          cv2.imshow('pepe', masked_median)
-         cv2.waitKey(1000)
+         cv2.waitKey(1)
          cv2.imshow('pepe', masked_current)
-         cv2.waitKey(1000)
+         cv2.waitKey(1)
          best_limit = self.find_best_thresh(masked_current, best_limit)
       else: 
          best_limit = 10 
@@ -778,10 +844,13 @@ class ProcessVideo:
 
       cnt_group = []
       self.event_cnts = []
+      no_motion = 0
+      event_started = 0
       for frame in self.frames:
          frame_count = frame_count + 1
          print(frame_count)
          self.frame_count = frame_count
+
 
          #mask bright areas
          if len(masks) > 0:
@@ -851,12 +920,16 @@ class ProcessVideo:
                if len(cnts) > 0:
                   for (i,c) in enumerate(cnts):
                      x,y,w,h = cv2.boundingRect(cnts[i])
+                     print (x,y,w,h)
                      cv2.rectangle(frame, (x,y), (x+w, y+h), (255,255,255),2)
-                     if w > 2 and h > 2 and frame_count > 8 and (x > 1 and y > 1):
+                     if w > 2 and h > 2 and frame_count > 8 and (x > 1 or y > 1):
                         real_cnts.append([x,y,w,h])
+               print ("REAL CNTS: ", len(real_cnts))
                if len(real_cnts) >= 1 and frame_count > 60:
                   #self.motion_cnts.append([frame_count,len(cnts),x,y,w,h])
+                  
                   cnt_group.append([frame_count,len(cnts),x,y,w,h])
+                  print ("CNT GRP LEN", len(cnt_group))
                   self.cx = (self.cx + x)/frame_count
                   self.cy = (self.cx + x)/frame_count
                   self.motion = 1
@@ -871,24 +944,32 @@ class ProcessVideo:
                      # startng a new event here
                      self.motion_events = self.motion_events + 1
                      print ("Event Started")
+                     event_started = 1
 
                   if self.motion == 1:
                      self.prev_motion = 1
+                     print ("adding frame to event", frame_count)
+                     print ("event length", len(self.events))
+                     self.events.append(frame_count)
+                     no_motion = 0
                   else:
                      self.prev_motion = 0
-                  #self.motion_frames.append(frame_count)
-                  self.events.append(frame_count)
+                     no_motion = no_motion + 1
                else:
-                  if self.prev_motion == 1:
+                  if no_motion >= 5 and event_started == 1:
                      print ("EVENT ENDED.")
                      self.motion_frames.append((self.events))
                      self.event_cnts.append(cnt_group)
                      self.events = []
                      cnt_group = []
+                     event_started = 0
+                  elif event_started == 1:
+                     self.events.append(frame_count)
                   real_cnts = []
                   self.frame_data.append([frame_count, len(real_cnts),0,0,0,0])
                   self.motion = 0
                   self.prev_motion = 0
+                  no_motion = no_motion + 1
 
 
             if self.make_stack != 0:
@@ -1032,9 +1113,9 @@ class ProcessVideo:
       #cv2.imshow('pepe', np_stacked_image)
       #cv2.waitKey(2000)
       cv2.imshow('pepe', np_stacked_diff)
-      cv2.waitKey(5000)
+      cv2.waitKey(5)
       cv2.imshow('pepe', diff_thresh)
-      cv2.waitKey(10000)
+      cv2.waitKey(1)
       return(0)
 
 
@@ -1058,18 +1139,31 @@ class ProcessVideo:
          ef = xl - 1
          #self.straight_line = self.compute_straight_line(self.xs[sf],self.ys[sf],self.xs[mf],self.ys[mf],self.xs[ef],self.ys[ef])
 
-         rg = self.examine_cnts()
-         if rg >= 1:
-            self.straight_line = self.is_straight(self.points)
+         straight_cnts  = self.examine_cnts()
+         if 1 <= len(straight_cnts) <= 5:
+            #for group in rg: 
+            print ("STRAIGHT GROUPS:", straight_cnts)
+            #self.straight_line = self.is_straight(self.points)
          else:
+            print ("NO STRAIGHT GROUPS:", straight_cnts)
             self.straight_line = 0
 
          print("STRAIGHT:", self.straight_line) 
 
-         if self.straight_line == 1 and self.sun_status != 'day' and self.cons_motion < 200 and len(self.motion_frames) < 75:
-            self.meteor_yn = "Y"
-         else:
-            self.meteor_yn = "N"
+         self.meteor_yn = "N"
+         if 1 <= len(straight_cnts) <= 5:
+            for st_cnt_gp in straight_cnts:
+               if self.straight_line == 1 and self.sun_status != 'day' and len(st_cnt_gp) < 75 and len(self.motion_frames) < 10:
+                  self.meteor_yn = "Y"
+                  trim_start = st_cnt_gp[0][0] - 25
+                  trim_end = st_cnt_gp[-1][0] + 100
+                  if trim_start < 0:
+                     trim_start = 0
+                  if trim_end >= len(self.frames) :
+                     trim_end =len(self.frames) 
+                  print ("Trim Start & End", trim_start, trim_end)
+                  cmd = "./trim_video.py " + self.orig_video_file + " " + str(trim_start) + " " + str(trim_end)
+                  os.system(cmd)
      
  
       #print("STACK", self.stacked_image)          

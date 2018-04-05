@@ -21,7 +21,7 @@ def check_running(cam_num, type):
 def start_capture(cam_num):
    running = check_running(cam_num, "HD")
    if running == 0:
-      cmd = "/usr/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_0 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/HD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
+      cmd = "/usr/bin/ffmpeg -i rtsp://192.168.76.7" + cam_num + "/av0_0 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/HD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
       print(cmd)
    
       os.system(cmd)
@@ -30,7 +30,7 @@ def start_capture(cam_num):
 
    running = check_running(cam_num, "SD")
    if running == 0:
-      cmd = "/usr/bin/ffmpeg -i rtsp://192.168.176.7" + cam_num + "/av0_1 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/SD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
+      cmd = "/usr/bin/ffmpeg -i rtsp://192.168.76.7" + cam_num + "/av0_1 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/SD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
       print(cmd)
       os.system(cmd)
    else: 
@@ -101,4 +101,4 @@ if (cmd == "purge_all"):
 
 
 
-#ffmpeg -i rtsp://192.168.176.71/av0_1 -c copy -map 0 -f segment -segment_time 60 -segment_format mp4 "1/capture-1-%03d.mp4" &
+#ffmpeg -i rtsp://192.168.76.71/av0_1 -c copy -map 0 -f segment -segment_time 60 -segment_format mp4 "1/capture-1-%03d.mp4" &

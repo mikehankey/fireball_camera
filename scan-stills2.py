@@ -29,6 +29,25 @@ from collections import deque
 
 video_dir = "/mnt/ams2/SD/"
 
+
+def compute_straight_line(x1,y1,x2,y2,x3,y3):
+   print ("COMP STRAIGHT", x1,y1,x2,y2,x3,y3)
+   if x2 - x1 != 0:
+      a = (y2 - y1) / (x2 - x1)
+   else:
+      a = 0
+   if x3 - x1 != 0:
+      b = (y3 - y1) / (x3 - x1)
+   else:
+      b = 0
+   straight_line = a - b
+   if (straight_line < 1):
+      straight = "Y"
+   else:
+      straight = "N"
+   return(straight_line)
+
+
 def crop_center(img,cropx,cropy):
     y,x = img.shape
     startx = x//2-(cropx//2) +12
@@ -289,7 +308,78 @@ def find_objects(index, points):
             lc = lc + 1
          gc = gc + 1
    #else:
+
+   #make sure the obj points are not false positives, if so move to stars.
+   (line_groups, orphan_lines, stars, obj_points, big_cnts) = conf_objs(line_groups, orphan_lines, stars, obj_points, big_cnts)
+
  
+   return(line_groups, orphan_lines, stars, obj_points, big_cnts)
+
+def conf_objs(line_groups, orphan_lines, stars, obj_points, big_cnts):
+   print ("CONF OBJS")
+   print ("LINE GROUPS", len(line_groups))
+   print ("OBJ POINTS", len(obj_points))
+   conf_line_groups = []
+
+   mx = []
+   my = []
+   mw = [] 
+   mh = []
+   #first lets check the line groups and make sure at least 3 points are straight
+   for line_group in line_groups:
+      mx = []
+      my = []
+      mw = [] 
+      mh = []
+      lgc = 0
+      for dist,ang,x1,y1,x2,y2 in line_group:
+         mx.append(x1)
+         my.append(y1)
+         print (dist, ang, x1,y1,x2,y2)
+         print (lgc, "adding MX", x1, mx)
+         print (lgc, "adding MYs", y1, my)
+         #mx.append(x2)
+         #my.append(y2)
+         lgc = lgc + 1
+      if len(mx) > 2:
+         print ("MXs", mx)
+         print ("MYs", my)
+         st = compute_straight_line(mx[0],my[0],mx[1],my[1],mx[2],my[2])
+      else: 
+         st = 100
+      if st <= 1:
+         print ("This group is straight")    
+         conf_line_groups.append(line_group)
+      else:
+         print ("This group is NOT straight")    
+         orphan_lines.append(line_group)
+
+   cc = 0 
+
+   mx = []
+   my = []
+   mw = [] 
+   mh = []
+
+   for x,y,h,w in obj_points:
+      mx.append(x)
+      my.append(y)
+      mw.append(w)
+      mh.append(h)
+      cc = cc + 1
+
+   if len(mx) > 2:
+      st = compute_straight_line(mx[0],my[0],mx[1],my[1],mx[2],my[2])
+   else: 
+      st = 100 
+
+   if st <= 1: 
+      print ("At least 3 of these are straight, we can continue.", st)
+   else:
+      print ("These 3 objects are not straight, and thus false!", st)
+      for x,y,h,w in obj_points:
+         stars.append((x,y,h,w))
+      obj_points = [] 
    return(line_groups, orphan_lines, stars, obj_points, big_cnts)
 
 def clean_line_groups(line_groups, orphan_lines):
@@ -334,24 +424,31 @@ def confirm_cnts(crop):
    #cv2.waitKey(100)
    return(np.sum(crop_thresh)) 
 
-def find_best_thresh(image, thresh_limit):
+def find_best_thresh(image, thresh_limit, type):
    go = 1
    while go == 1: 
       _, thresh = cv2.threshold(image, thresh_limit, 255, cv2.THRESH_BINARY)
       (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-      if len(cnts) > 80:
+      if type == 0:
+         cap = 80
+      else:
+         cap = 100
+      if len(cnts) > cap:
          thresh_limit = thresh_limit + 1 
+      
       else: 
          bad = 0
          for (i,c) in enumerate(cnts):
             x,y,w,h = cv2.boundingRect(cnts[i])
             if w == image.shape[1]: 
                bad = 1
+            if type == 0 and (w >= 10 or h > 10): 
+               bad = 1
          if bad == 0: 
             go = 0
          else:
             thresh_limit = thresh_limit + 1 
-      print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
+      #print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
    return(thresh_limit)
 
 
@@ -361,14 +458,14 @@ def find_objects2(timage, tag, current_image, filename):
    obj_points = []
    image = timage
    thresh_limit = 10 
-   thresh_limit = find_best_thresh(image, thresh_limit)
+   thresh_limit = find_best_thresh(image, thresh_limit, 0)
    # find best thresh limit code here!
    line_objects = []
    points = []
    orphan_lines = []
    _, thresh = cv2.threshold(image, thresh_limit, 255, cv2.THRESH_BINARY)
    (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-   print ("CNTS:", len(cnts))
+   #print ("CNTS:", len(cnts))
    hit = 0
    objects = []
    if len(cnts) < 500:
@@ -793,9 +890,9 @@ def find_points_in_crop(crop,x,y,w,h):
         go = 0
      if len(cnts) > 70:
         go = 0
-     print ("CNTS: ", len(cnts))
-     print ("LAST CNTS: ", len(last_cnts))
-     print ("THRESH LIMIT: ", thresh_limit)
+     #print ("CNTS: ", len(cnts))
+     #print ("LAST CNTS: ", len(last_cnts))
+     #print ("THRESH LIMIT: ", thresh_limit)
      #cv2.imshow('pepe', thresh)
      #cv2.waitKey(100)
      last_cnts = cnt_pts
@@ -835,19 +932,23 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
    blur_med = cv2.GaussianBlur(median, (5, 5), 0)
 
    # find bright areas in median and mask them out of the current image
-   _, median_thresh = cv2.threshold(blur_med, 40, 255, cv2.THRESH_BINARY)
+   tm = find_best_thresh(blur_med, 30, 1)
+   _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
+   #cv2.imshow('pepe', median_thresh)
+   #cv2.waitKey(1000)
 
    (_, cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
    hit = 0
    real_cnts = []
+   print ("CNTS: ", len(cnts))
    if len(cnts) < 1000:
       for (i,c) in enumerate(cnts):
          x,y,w,h = cv2.boundingRect(cnts[i])
          if True:
-            w = w + 10 
-            h = h + 10 
-            x = x - 10 
-            y = y - 10 
+            w = w + 20 
+            h = h + 20 
+            x = x - 20 
+            y = y - 20 
             if x < 0: 
                x = 0
             if y < 0: 
@@ -863,8 +964,8 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
                for yy in range(0, mask.shape[0]):
                   mask[yy,xx] = randint(0,6)
             blur_mask = cv2.GaussianBlur(mask, (5, 5), 0)
-            current_image[y:y+h,x:x+w] =blur_mask 
-            median[y:y+h,x:x+w] =mask 
+            current_image[y:y+h,x:x+w] = blur_mask 
+            median[y:y+h,x:x+w] =blur_mask 
 
    # find the diff between the masked median and the masked current image
    blur_cur = cv2.GaussianBlur(current_image, (5, 5), 0)
@@ -942,6 +1043,7 @@ def parse_file_date(orig_video_file):
       stacked_image_fn = orig_video_file.replace(".mp4", "-stack.jpg") 
       star_image_fn = orig_video_file.replace(".mp4", "-stars.jpg")
       report_fn = orig_video_file.replace(".mp4", "-stack-report.txt")
+      video_report = orig_video_file.replace(".mp4", "-report.txt")
 
       trim_file = orig_video_file.replace(".mp4", "-trim.mp4")
 
@@ -985,7 +1087,7 @@ def day_or_night(config, capture_date):
       sun_status = "night"
    else:
       sun_status = "day"
-   return(sun_status)
+   return(sun_status, sun_alt)
 
 def diff_stills(sdate, cam_num):
    med_last_objects = []
@@ -1030,10 +1132,12 @@ def diff_stills(sdate, cam_num):
    fp = open(report_file, "w")
    for filename in (glob.glob(glob_dir)):
        capture_date = parse_file_date(filename)
-       sun_status = day_or_night(config, capture_date)
-       if sun_status != 'day':
+       sun_status, sun_alt = day_or_night(config, capture_date)
+       if sun_status != 'day' and int(sun_alt) <= -5:
           #print("NIGHTTIME", capture_date, filename, sun_status)
           file_list.append(filename)
+       else: 
+          print ("This is a daytime or dusk file")
    
    sorted_list = sorted(file_list)
    for filename in sorted_list:
@@ -1123,7 +1227,7 @@ def diff_stills(sdate, cam_num):
          hits = hits + 1
       cv2.imshow('pepe', blend)
       if len(line_groups) >= 1 or len(obj_points) > 3 or len(big_cnts) > 0:
-         cv2.waitKey(100)
+         cv2.waitKey(1)
       #   while(1):
       #      k = cv2.waitKey(33)
       #      if k == 32:
@@ -1131,7 +1235,7 @@ def diff_stills(sdate, cam_num):
       #      if k == 27:
       #         exit() 
       else:
-         cv2.waitKey(10)
+         cv2.waitKey(1)
       data = filename + "," + str(len(line_groups)) + "," + str(len(obj_points)) + "," + str(len(big_cnts)) + "\n"
       fp.write(data)
 
@@ -1162,21 +1266,33 @@ def diff_stills(sdate, cam_num):
          myimg = cv2.imread(sorted_list[count],0)
          cv2.rectangle(myimg, (min_x,min_y), (max_x, max_y), (255),1)
          cv2.imshow('pepe', myimg)
-         cv2.waitKey(1000)
+         cv2.waitKey(1)
+
          print ("-------")
          print ("Count:", count)
          print ("Hit:", hits)
          print ("File:", sorted_list[count])
          print ("Points:", str(len(points)))
          print ("Line Groups:", str(len(line_groups)))
+         gc = 1
+         for line_group in line_groups:
+            for dist, ang, x1,y1,w1,h1 in line_group:
+               print ("GROUP: ", gc, dist, ang, x1,y1,w1,h1)
+            gc = gc + 1
          print ("Stars:", str(len(stars)))
          print ("Obj Points:", str(len(obj_points)))
          print ("Big Cnts:", str(len(big_cnts)))
          print ("Min/Max X/Y:", str(min_x), str(min_y), str(max_x), str(max_y))
          print ("-------")
+
          hits = hits + 1
-         print("./PV.py " + video_file + " " + cam_num)
-         os.system("./PV.py " + video_file + " " + cam_num)
+         video_report = video_file.replace(".mp4", "-report.txt")
+         file_exists = Path(video_report)
+         if (file_exists.is_file()):
+            print ("Already processed the video.")
+         else:
+            print("./PV.py " + video_file + " " + cam_num)
+            os.system("./PV.py " + video_file + " " + cam_num)
       else : 
          min_x = min_y = max_x = max_y = 0
       

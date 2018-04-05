@@ -16,5 +16,6 @@ vid = PV.ProcessVideo()
 vid.orig_video_file = file
 vid.show_video = 1
 vid.trimVideo(start, end)
+#vid.trimVideoOld(start, end)
 #vid.cropVideo(start, end)
 
