@@ -68,7 +68,7 @@ if arg == 'find_HD':
 if arg == 'batch':
    already_running = check_running(cam_num)
    print (already_running)
-   if int(already_running) > 12:
+   if int(already_running) >= 2 :
       print ("already running")
       exit()
    #do batch for 1 cam

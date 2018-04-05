@@ -116,6 +116,7 @@ def purge_hd_files():
       tdiff = tdiff / 60 / 60 / 24
       if sun_status == 'day' and tdiff > 3:
          print ("File is daytime and this many days old", tdiff, file)
+         print("rm " + file)
          os.system("rm " + file)
       #else:
       #   print ("File is nighttime and this many days old", tdiff, file)
@@ -124,7 +125,7 @@ def purge_hd_files():
 def move_processed_SD_files():
 
    files = glob.glob(video_dir + "*.jpg")
-   print("SUN:", sun_status)
+   #print("SUN:", sun_status)
    
    for file in files:
       el = file.split("/")
@@ -167,6 +168,6 @@ def move_processed_SD_files():
 
 
 conf = read_config("conf/config-1.txt")
-#move_processed_SD_files()
-#purge_hd_files()
+purge_hd_files()
 purge_sd_files()
+move_processed_SD_files()
