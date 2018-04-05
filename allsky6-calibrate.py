@@ -44,7 +44,6 @@ def set_setting(config, setting, value):
    r = requests.get(url)
    return(r.text)
 
-<<<<<<< HEAD
 def focus(config_file, cam_num) :
    config = {}
    cv2.namedWindow('pepe')
@@ -96,8 +95,6 @@ def focus(config_file, cam_num) :
             cv2.waitKey(1)
 
 
-=======
->>>>>>> a61f7a7d9aa22a11d30f2a2ab8f4c9d7755295e2
 def read_noise(config_file, cam_num) :
    #cv2.namedWindow('pepe')
 
@@ -148,8 +145,9 @@ def read_noise(config_file, cam_num) :
                else:
                   new_brightness = new_brightness - 2
                set_setting(config, "Brightness", new_brightness)
-               print ("New Brightness", new_brightness)
-               #exit()
+               print ("New Brightness", new_brightness) 
+               if new_brightness < 60:
+                  exit()
             else: 
                print ("not enough noise, increase brightness")
                new_brightness = new_brightness + 5

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import time
 import glob
 import ephem
 import subprocess
@@ -16,10 +17,16 @@ def parse_date (this_file):
    file_name = file_name.replace("_", "-")
    file_name = file_name.replace(".", "-")
    fnel = file_name.split("-")
+   #print("FILE:", file_name, len(fnel))
+   if len(fnel) == 11:
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,fst,xext = fnel
+   if len(fnel) == 10:
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,xext = fnel
    if len(fnel) == 9:
-      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,xext = fnel
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype, xext = fnel
    if len(fnel) == 8:
       xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = fnel
+
    cam_num = xcam_num.replace("cam", "")
 
    date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
@@ -80,9 +87,44 @@ def move_old_school_files():
          os.system(cmd) 
       print (cmd)
 
+
+def purge_sd_files():
+   files = glob.glob(video_dir + "proc/daytime/*")
+   for file in files:
+      (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = parse_date(file)
+      sun_status = day_or_night(conf, date_str)
+      st = os.stat(file)
+      cur_time = int(time.time())
+      mtime = st.st_mtime
+      tdiff = cur_time - mtime
+      tdiff = tdiff / 60 / 60 / 24
+      if sun_status == 'day' and tdiff > 3:
+         print ("File is daytime and this many days old", tdiff, file)
+         os.system("rm " + file)
+      #else:
+      #   print ("File is nighttime and this many days old", tdiff, file)
+
+def purge_hd_files():
+   files = glob.glob(hd_video_dir + "*")
+   for file in files:
+      (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = parse_date(file)
+      sun_status = day_or_night(conf, date_str)
+      st = os.stat(file)
+      cur_time = int(time.time())
+      mtime = st.st_mtime
+      tdiff = cur_time - mtime
+      tdiff = tdiff / 60 / 60 / 24
+      if sun_status == 'day' and tdiff > 3:
+         print ("File is daytime and this many days old", tdiff, file)
+         os.system("rm " + file)
+      #else:
+      #   print ("File is nighttime and this many days old", tdiff, file)
+
+
 def move_processed_SD_files():
 
    files = glob.glob(video_dir + "*.jpg")
+   print("SUN:", sun_status)
    
    for file in files:
       el = file.split("/")
@@ -125,4 +167,6 @@ def move_processed_SD_files():
 
 
 conf = read_config("conf/config-1.txt")
-move_processed_SD_files()
+#move_processed_SD_files()
+#purge_hd_files()
+purge_sd_files()
