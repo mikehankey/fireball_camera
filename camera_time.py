@@ -31,8 +31,8 @@ cur_datetime = datetime.datetime.now()
 req_str = "year=" + str(cur_datetime.strftime("%Y")) + "&" + "month=" + str(cur_datetime.strftime("%m")) + "&" + "day=" + str(cur_datetime.strftime("%d")) + "&" + "hour=" + str(cur_datetime.strftime("%H")) + "&" + "minute=" + str(cur_datetime.strftime("%M")) + "&" + "second=" + str(cur_datetime.strftime("%S"))
 
 
-print ("Set timezone and NTP server.")
-url = "http://" + str(cam_ip) + "/cgi-bin/date_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&timezone=14&ntpHost=clock.isc.org"
+print ("Set datetime, timezone and NTP server.")
+url = "http://" + str(cam_ip) + "/cgi-bin/date_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&timezone=14&ntpHost=clock.isc.org&" + req_str
 print (url)
 r = requests.get(url)
 print (r.text)
