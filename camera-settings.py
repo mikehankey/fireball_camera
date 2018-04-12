@@ -147,6 +147,8 @@ max_nighttime_brightness = 120
 
 sun = read_sun()
 
+os.system("/home/pi/fireball_camera/camera_time.py " + cam_num)
+
 print (sun['status'])
 
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
