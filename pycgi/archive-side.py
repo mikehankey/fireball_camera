@@ -28,7 +28,7 @@ def make_archive_links():
       for cn in range(1,7):
          if cn != 1:
             html = html + " - "
-         html = html + "<a href=archive2.py?cmd=browse_day&day=" + day + "&cam_num=" + str(cn) + ">" + str(cn) + "</a>" + "\n"
+         html = html + "<a href=archive-side.py?cmd=browse_day&day=" + day + "&cam_num=" + str(cn) + ">" + str(cn) + "</a>" + "\n"
       html = html + "<P>"
       d = d + 1
    return(html)
@@ -52,7 +52,8 @@ def browse_day(day, cam):
       jpg = file.replace(".mp4", "-stacked.jpg") 
       blend = file.replace(".mp4", "-blend.jpg") 
       diff = file.replace(".mp4", "-diff.jpg") 
-      print ("<table><tr><td><a href=clip_detail.py?file=" + file + "&day=" +str(day) + "&cam=" +str(cam) + "><img src=" + jpg + "></a><BR></td><td><img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
+      #print ("<table><tr><td><a href=clip_detail.py?file=" + file + "&day=" +str(day) + "&cam=" +str(cam) + "><img src=" + jpg + "></a><BR></td><td><img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
+      print ("<table><tr><td><a href=" + file + "><img src=" + jpg + "></a><BR></td><td><img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
 
 
 def main():
