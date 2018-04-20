@@ -80,17 +80,38 @@ if arg == 'batch':
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    for file in sorted(files):
-      
+        
       cur_time = int(time.time())
       st = os.stat(file)
+      size = st.st_size
+      print ("SIZE:", size)
       mtime = st.st_mtime
       tdiff = cur_time - mtime
       tdiff = tdiff / 60 
       stack_file = file.replace(".mp4", "-stacked.jpg")
+      fail_file = file.replace(".mp4", "-fail.txt")
+      wild_card = file.replace(".mp4", "*.*")
       file_exists = Path(stack_file)
       skip = 0
+     
+      # Remove bad file if they exist 
+      if size <= 50000:
+         skip = 1
+         cmd = "rm " + wild_card
+         os.system(cmd)
+         print(cmd)
+
       if (file_exists.is_file()):
          skip = 1
+
+      file_exists = Path(fail_file)
+      if (file_exists.is_file()):
+         skip = 1
+         cmd = "rm " + wild_card
+         os.system(cmd)
+         print(cmd)
+
+
 
       if tdiff > 1.1 and skip == 0:
          (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = parse_date(file)

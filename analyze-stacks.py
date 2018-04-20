@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+# next steps. save off a cache of the diffs,so we can save time on multiple re-runs. 
+# do a crop cnt confirm. 
+
+# script to make master stacks per night and hour from the 1 minute stacks
+
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure 
 
@@ -83,6 +88,141 @@ def fig2data ( fig ):
     buf = np.roll ( buf, 3, axis = 2 )
     return buf
 
+def kmeans_cluster2(points, num_clusters):
+   #print (points)
+   #points = np.array((points)) 
+   points =  sorted(points, key=lambda x: x[1])
+   clusters = []
+   cluster_points = []
+
+   # group points in 3 clusters first
+   est = KMeans(n_clusters=num_clusters)
+   est.fit(points)
+   ({i: np.where(est.labels_ == i)[0] for i in range(est.n_clusters)})
+   for i in set(est.labels_):
+      index = est.labels_ == i
+      cluster_idx = np.where(est.labels_ == i)
+      for idxg in cluster_idx:
+         for idx in idxg:
+            idx = int(idx)
+            point = points[idx]
+            #print ("IDX:",i, idx, point)
+            cluster_points.append(point)
+      clusters.append(cluster_points)
+      cluster_points = []
+   # find distance from each cluster to the other. If close group together. 
+
+   lcx = None
+   lcy = None
+   cn = 1
+ 
+   new_clusters, clust_d, dst_ot = cluster_dist(clusters)
+   #print ("NUM CLUSTERS / CLUSTERS OVER DIST THRESH", num_clusters, dst_ot)
+   if dst_ot < num_clusters -1 and num_clusters > 1:
+      clusters, clust_d = kmeans_cluster2(points, num_clusters -1)      
+   if dst_ot > num_clusters and num_clusters > 1:
+      clusters, clust_d = kmeans_cluster2(points, num_clusters -1)      
+
+   clust_d = sorted(clust_d, key=lambda x: x[1])
+   #print (clust_d) 
+   new_clusters, clust_d, dst_ot = cluster_dist(clusters)
+
+   print ("CLUSTERS", clusters)
+   print ("NEW CLUSTERS", new_clusters)
+
+   return(new_clusters, clust_d)
+
+def cluster_center(cluster):
+   npc = np.array(cluster)
+   cx = np.average(npc[:,1])
+   cy = np.average(npc[:,0])
+   mx = np.max(npc[:,1])
+   my = np.max(npc[:,0])
+   mnx = np.min(npc[:,1])
+   mny = np.min(npc[:,0])
+   return(cx,cy,mx,my,mnx,mny)
+
+def merge_clusters(clusters):
+   print ("YO")
+
+def cluster_dist ( clusters):
+   cluster_dist = []
+   cn = 0
+   dst_ot = 0
+   unmerged_clusters = []
+   merged_clusters = []
+   new_clusters = []
+   for i in range(0,len(clusters)) :
+      merged = 0 
+      cluster = clusters[i]
+      cx,cy,mx,my,mnx,mny = cluster_center(cluster)
+      print ("CLUSTER ", i, " POINTS: ", len(cluster), cx,cy)
+      for j in range(i+1,len(clusters)) :
+         cluster2 = clusters[j]
+         ccx, ccy, mx2,my2,mnx2,mny2 = cluster_center(cluster2)
+         dist = calc_dist(cx, cy, ccx,ccy)
+         dist_mn_mx = calc_dist(mx, my, mnx2,mny2)
+         print ("Distance between cluster ", i, " and ", j, " is ", dist)
+         if dist < 50:
+            print ("Cluster ", j, " is close and should be merged.")
+            #temp = merge_clusters(cluster, cluster2) 
+            merged_clusters.append(i)
+            merged_clusters.append(j)
+            merged = 1
+         else:
+            dst_ot += 1
+         cluster_dist.append ((cx, cy, ccx,ccy, dist))
+
+      #if merged == 0:
+      #   unmerged_clusters.append((i))
+     
+   print ("Merged Clusters:", merged_clusters) 
+
+   for cc in range(0, len(clusters)):
+      merge = 0
+      for mc in merged_clusters:
+         if (cc == mc):
+            print ("Cluster ", cc, " should be merged.")
+            merge = 1
+      if merge == 0 and cc not in merged_clusters: 
+         print ("Cluster ", cc, " should not be merged.")
+         unmerged_clusters.append((cc))
+      
+      if cc in merged_clusters: 
+         print ("Cluster ", cc, " was already merged.")
+
+   new_clusters = []
+   merged = []
+   for cid in merged_clusters:
+      print ("MERGED CID: ", cid, len(merged_clusters))
+      for x,y in clusters[cid]:
+         merged.append((x,y)) 
+   if len(merged) > 0:
+      new_clusters.append(merged)
+   print ("NEW CLUSTERS STEP 1:", new_clusters)
+
+   for cid in unmerged_clusters:
+      print ("UNMERGED CID: ", cid, len(unmerged_clusters))
+      new_clusters.append(clusters[cid])
+
+   print ("Merged Clusters: ", merged_clusters)
+   print ("Unmerged Clusters: ", unmerged_clusters)
+   print ("New Clusters: ", new_clusters)
+
+   print("Original Clusters", len(clusters))
+   print("New Clusters", len(new_clusters))
+
+   return (clusters, cluster_dist, dst_ot)   
+
+def merge_clusters(c1,c2):
+   new_cluster = []
+   for x,y in c1:
+      pt = (x,y)
+      new_cluster.append((pt))
+   for x,y in c2:
+      new_cluster.append((x,y))
+   return(new_cluster)
+
 def kmeans_cluster(points, num_clusters):
    points = np.array(points) 
    print(points)
@@ -91,6 +231,18 @@ def kmeans_cluster(points, num_clusters):
    colors = ('r', 'g', 'b')
    est = KMeans(n_clusters=num_clusters)
    est.fit(points)
+   ({i: np.where(est.labels_ == i)[0] for i in range(est.n_clusters)})
+   for i in set(est.labels_):
+      index = est.labels_ == i
+      cluster_idx = np.where(est.labels_ == i)
+      for idxg in cluster_idx:
+         for idx in idxg:
+            idx = int(idx)
+            point = points[idx]
+            #print ("IDX:",i, idx, point)
+            cluster_points.append(point)
+      clusters.append(cluster_points)
+      cluster_points = []
 
 
 
@@ -503,8 +655,8 @@ def find_objects2(timage, tag, current_image, filename):
 
             points.append((x,y,w,h))
             #objects.append((x,y,w,h))
-         else:
-            image[y:y+h,x:x+w] = [0]
+         #else:
+            #image[y:y+h,x:x+w] = [0]
    else: 
       print ("WAY TO MANY CNTS:", len(cnts))
       thresh_limit = thresh_limit + 5
@@ -930,53 +1082,53 @@ def best_fit(X, Y):
 
 def diff_all(med_stack_all, background, median, before_image, current_image, after_image,filename ):
 
-   before_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
-   after_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
-   before_after_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
+   #before_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
+   #after_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
+   #before_after_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
 
-   median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
+   #median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
    median = np.uint8(median)
-   median_sum = np.sum(median)
+   #median_sum = np.sum(median)
 
-   median_diff = cv2.absdiff(median_three.astype(current_image.dtype), median,)
+   #median_diff = cv2.absdiff(median_three.astype(current_image.dtype), median,)
 
    blur_med = cv2.GaussianBlur(median, (5, 5), 0)
 
    # find bright areas in median and mask them out of the current image
    tm = find_best_thresh(blur_med, 30, 1)
    _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
-   #cv2.imshow('pepe', median_thresh)
-   #cv2.waitKey(1000)
+   tm = find_best_thresh(blur_med, 30, 1)
+   _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
 
    (_, cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
    hit = 0
    real_cnts = []
-   print ("CNTS: ", len(cnts))
-   if len(cnts) < 1000:
-      for (i,c) in enumerate(cnts):
-         x,y,w,h = cv2.boundingRect(cnts[i])
-         if True:
-            w = w + 20 
-            h = h + 20 
-            x = x - 20 
-            y = y - 20 
-            if x < 0: 
-               x = 0
-            if y < 0: 
-               y = 0
-            if x+w > current_image.shape[1]: 
-               x = current_image.shape[1]-1
-            if y+h > current_image.shape[0]: 
-               y = current_image.shape[0]-1
-         if w > 0 and h > 0:
-            mask = current_image[y:y+h, x:x+w]
+   #print ("CNTS: ", len(cnts))
+   #if len(cnts) < 1000:
+      #for (i,c) in enumerate(cnts):
+         #x,y,w,h = cv2.boundingRect(cnts[i])
+         #if True:
+           # w = w + 20
+           # h = h + 20
+           # #x = x - 20
+           # y = y - 20
+           # if x < 0:
+           #    x = 0
+            #if y < 0:
+               #y = 0
+            #if x+w > current_image.shape[1]:
+               #x = current_image.shape[1]-1
+#            if y+h > current_image.shape[0]:
+#               y = current_image.shape[0]-1
+#         if w > 0 and h > 0:
+#            mask = current_image[y:y+h, x:x+w]
             #cv2.rectangle(current_image, (x,y), (x+w+5, y+h+5), (255),1)
-            for xx in range(0, mask.shape[1]):
-               for yy in range(0, mask.shape[0]):
-                  mask[yy,xx] = randint(0,6)
-            blur_mask = cv2.GaussianBlur(mask, (5, 5), 0)
-            current_image[y:y+h,x:x+w] = blur_mask 
-            median[y:y+h,x:x+w] =blur_mask 
+            #for xx in range(0, mask.shape[1]):
+               #for yy in range(0, mask.shape[0]):
+               #   mask[yy,xx] = randint(0,6)
+#            blur_mask = cv2.GaussianBlur(mask, (5, 5), 0)
+            #current_image[y:y+h,x:x+w] = blur_mask
+            #median[y:y+h,x:x+w] =blur_mask
 
    # find the diff between the masked median and the masked current image
    blur_cur = cv2.GaussianBlur(current_image, (5, 5), 0)
@@ -985,12 +1137,10 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
 
    blend = cv2.addWeighted(current_image, .5, cur_med_diff, .5,0)
 
-   cur_med_diff =- median
+   #cur_med_diff =- median
 
-   #line_groups, points, clusters = find_objects2(blend, "Current Median Diff Blend",  current_image, filename)
 
    return(blend, current_image, filename)
-   #return(line_groups, points)
 
 def inspect_image(med_stack_all, background, median, before_image, current_image, after_image, avg_cnt,avg_tot,avg_pts,filename):
    rois = []
@@ -1002,7 +1152,7 @@ def inspect_image(med_stack_all, background, median, before_image, current_image
    image_diff = cv2.absdiff(current_image.astype(current_image.dtype), background,)
    orig_image = current_image
    current_image = image_diff
-   blend, current_image, filename = diff_all(med_stack_all, background, median, before_image, current_image, after_image,filename)
+   blend, current_image, filename = diff_all(None, background, median, before_image, current_image, after_image,filename)
 
    points = find_objects2(blend, "Current Median Diff Blend",  current_image, filename)
    if len(points) > 2:
@@ -1094,13 +1244,296 @@ def day_or_night(config, capture_date):
    saz = str(sun.az)
    (sun_az, x,y) = saz.split(":")
    #print ("SUN", sun_alt)
-   if int(sun_alt) < -1:
+   if int(sun_alt) <= -4:
       sun_status = "night"
    else:
       sun_status = "day"
    return(sun_status, sun_alt)
 
+def find_closest_cnts(sx,sy,cnts): 
+   close = 0
+   for (i,c) in enumerate(cnts):
+      x,y,w,h = cv2.boundingRect(cnts[i])
+      dist = calc_dist(sx,sy,x,y)
+      if 5 < dist < 30: 
+         close = close + 1
+   return(close)    
+
+def sort_cnts(cnts, method="left-to-right"):
+	# initialize the reverse flag and sort index
+	reverse = False
+	i = 0
+ 
+	# handle if we need to sort in reverse
+	if method == "right-to-left" or method == "bottom-to-top":
+		reverse = True
+ 
+	# handle if we are sorting against the y-coordinate rather than
+	# the x-coordinate of the bounding box
+	if method == "top-to-bottom" or method == "bottom-to-top":
+		i = 1
+ 
+	# construct the list of bounding boxes and sort them from top to
+	# bottom
+	boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+	(cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
+		key=lambda b:b[1][i], reverse=reverse))
+ 
+	# return the list of sorted contours and bounding boxes
+	return (cnts, boundingBoxes)
+      
+def find_noisy_cnts(image):
+   #cv2.imshow('pepe', image)
+   #cv2.waitKey(1000)
+   noise = 0
+   (_, noisy_cnts, xx) = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   for (i,c) in enumerate(noisy_cnts):
+      #x,y,w,h = cv2.boundingRect(noisy_cnts[i])
+      x,y,w,h = cv2.boundingRect(c)
+      convex = cv2.isContourConvex(c)  
+      peri = cv2.arcLength(c, True)
+      approx = cv2.approxPolyDP(c, 0.01 * peri, True)
+      #print ("NOISE:", len(noisy_cnts), int(peri), len(approx), convex)
+
+      if w <= 1 and h <= 1:
+         noise = noise + 1
+         image[y:y+h,x:x+w] = [0]
+      if len(approx) > 10 and convex is False  :
+         # this is a cloud or a plane, so mute it out. 
+         #print ("DELETE!")
+         image[y:y+h,x:x+w] = [0]
+
+      if peri > 100 and convex is False :
+         # this is a cloud or a plane, so mute it out. 
+
+         ny = y - 10
+         nx = x - 10
+         if ny < 0: 
+            ny = 0
+         if nx < 0: 
+            nx = 0
+
+         image[ny:y+h+10,nx:x+w+10] = [0]
+         noise = noise + 1
+         #print ("removing big cnt:", x,y,w,h,convex,peri,len(approx))
+
+   return(noise, image)
+
+def find_cnts(image):
+   last_angle = -1000
+   angle = 0
+   dist = 0
+   (_, cnts_by_area, xx) = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   cnts_by_area = sorted(cnts_by_area, key = cv2.contourArea, reverse = True)[:25]
+   print ("CNT BY AREA LENGTH: ", len(cnts_by_area))
+   # Mute out the big non-convex cnts
+   for (i,c) in enumerate(cnts_by_area):
+      x,y,w,h = cv2.boundingRect(cnts_by_area[i])
+      #cv2.rectangle(image, (x,y), (x+w+5, y+h+5), (255),1)
+      #cv2.imshow('pepe', image)
+      #cv2.waitKey(1000)
+      #print ("Mute: ", w,h)
+      peri = cv2.arcLength(c, True)
+      approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+      convex = cv2.isContourConvex(c)  
+      close = find_closest_cnts(x,y,cnts_by_area)
+      if peri > 100 and convex == False or (close <= 2):
+         # This is a cloud or plane some other non meteor object
+         #print ("BAD CNT!!! MUTE IT!", peri, convex)
+         ny = y - 10
+         nx = x - 10
+         if ny < 0: 
+            ny = 0
+         if nx < 0: 
+            nx = 0
+         #image[ny:y+h+10,nx:x+w+10] = [0]
+
+
+
+   color = 255
+   good = 0
+   bad = 0
+   good_angles = 0
+   (_, cnts_by_loc, xx) = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   cnts_by_loc = sorted(cnts_by_loc, key = cv2.contourArea, reverse = True)[:25]
+   if len(cnts_by_loc) > 3:
+      cnts_by_loc,bb = sort_cnts(cnts_by_loc, method="left-to-right")
+   good_points = []
+   for (i,c) in enumerate(cnts_by_loc):
+      x,y,w,h = cv2.boundingRect(cnts_by_loc[i])
+      peri = cv2.arcLength(c, True)
+      approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+      convex = cv2.isContourConvex(c)  
+      # how many cnts are close to this one? 
+      close = find_closest_cnts(x,y,cnts_by_loc)
+      if peri > 100 and convex == False:
+         # This is a cloud or plane some other non meteor object
+         #image[y-10:y+h+10,x-10:x+w+10] = [0]
+         good = good - 1
+
+      if i > 0:
+         last_angle = angle
+         angle = find_angle(x,y,last_x,last_y)
+         #print ("FIND ANGLE FOR: ", x,y,last_x,last_y, angle, last_angle)
+         dist = calc_dist(x,y,last_x,last_y)
+      else:
+         first_x = x
+         first_y = y 
+
+      # if this is the last cnt in the group
+      if i == len(cnts_by_loc) - 1:
+         last_angle = angle
+         angle = find_angle(first_x, first_y, x, y)
+         dist = calc_dist(first_x, first_y, x, y)
+
+      # if this angle agrees with the last angle
+      if (angle - 10 < last_angle < angle + 10) and (1 < close < 10) and (w > 1 and h > 1):
+         good_angles = good_angles + 1
+         cv2.circle(image, (x,y), 20, (255), 1)
+         good_points.append((x,y,w,h))
+
+
+      if len(approx) > 0 and peri > 0 and w > 1 and h > 1 and close > 0 and close < 10:
+         print ("Peri:", str(i), x,y,w,h, str(int(peri)), str(len(approx)), str(int(angle)), str(int(last_angle)), str(int(dist)), convex, close)
+         cv2.putText(image, "PA " + str(i) + " " + str(int(peri)) + " " + str(len(approx)) + " " + str(int(angle)) + " " + str(last_angle) + " " + str(int(dist)) + " " + str(convex) + " " + str(close),  (100,10+(i*15)), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+         cv2.putText(image, str(i),  (x+10,y+10), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+         if len(approx) < 3 :
+            color = 50
+         elif 3 <= len(approx) < 5:
+            color = 155 
+         elif 5 <= len(approx) < 15:
+            color = 255
+         elif len(approx) > 15:
+            color = 75
+         if peri > 100:
+            color = 75
+
+      if peri > 100 and convex == False:
+         # This is a cloud or plane some other non meteor object
+         #image[y-10:y+h+10,x-10:x+w+10] = [0]
+         good = good - 1
+      else: 
+         good = good + 1
+         rect = cv2.minAreaRect(c)
+         box = cv2.boxPoints(rect)
+         box = np.int0(box)
+         image = cv2.drawContours(image, [box], 0,(color),1)
+
+        
+
+         #if len(approx) >= 5:
+         #   elp = cv2.fitEllipse(c)
+         #   image = cv2.ellipse(image,elp,(0,255,0),2)
+ 
+         #cv2.rectangle(image, (x,y), (x+w+5, y+h+5), (color),1)
+      last_x = x
+      last_y = y
+  
+   # ok we should be left with just 'good cnts'
+   # lets run some tests on the 'good cnts'
+   # test to make sure they can form a line or share a similar angle
+   if len(good_points) >= 3:
+      line_groups, orphan_lines, stars, obj_points, big_cnts = find_objects(0, good_points)
+      print("Line Groups:", len(line_groups))
+      print("Orphan Lines:", len(orphan_lines))
+      print("Stars:", len(stars))
+      print("Obj Points:", len(obj_points))
+
+
+   return(good, good_angles, image)
+
+def get_points(image):
+   points = []
+   xypoints = []
+   (_, cnt_points, xx) = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   if len(cnt_points) > 2:
+      cnt_points = sorted(cnt_points, key = cv2.contourArea, reverse = True)[:100]
+      cnts_points,bb = sort_cnts(cnt_points, method="left-to-right")
+   for (i,c) in enumerate(cnt_points):
+      x,y,w,h = cv2.boundingRect(cnt_points[i])
+
+      if y > 1 or h > 1:
+
+         peri = cv2.arcLength(c, True)
+         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+         convex = cv2.isContourConvex(c)
+
+         points.append((x,y,w,h,peri,approx,convex))
+         xypoints.append((x,y))
+   return(points, xypoints)
+
+def find_orphan_points(points):
+   #print ("----CLASSIFY POINTS----")
+   #print ("Total Points: ", len(points))
+   closest_points = []
+   no_points = []
+   o_points = []
+   point_index = {}
+   all_points = {}
+   for (x,y,w,h,peri,approx,convex) in points:
+      key = str(x) + ":" + str(y)
+      point_index['x'] = x
+      point_index['y'] = y
+      point_index['w'] = w
+      point_index['h'] = h
+      point_index['used'] = 0
+      point_index['peri'] = peri
+      point_index['approx'] = len(approx)
+      point_index['convex'] = convex
+      all_points[key] = point_index
+      point_index = {}
+ 
+   for (vx,vy,vw,vh,vperi,vapprox,vconvex) in points:
+      idx = str(vx) + ":" + str(vy)
+      point_index = all_points[idx]
+      #print ("PI1: ", idx, point_index)
+      for (x2,y2,w2,h2,peri2,approx2,convex2) in points: 
+       
+         idx2 = str(x2) + ":" + str(y2)
+         point_index2 = all_points[idx]
+         dist = int(calc_dist(vx,vy,x2,y2))
+         angle = int(find_angle(vx,vy,x2,y2))
+         if dist > 2 and dist < 50 and point_index['used'] == 0 and w > 1 and h > 1 and w2 > 1 and h2 > 1:
+            closest_points.append((x2,y2,dist,angle))
+            #print ("Adding Close Points: ",idx, point_index['used'])
+         #print ("Close point len", len(closest_points))
+
+      #print ("Close Points: ", len(points))
+      point_index['closest_points'] = sorted(closest_points, key=lambda x: x[2])
+      # find #1 closest and block it from re-use
+      point_index['used'] = 1
+      all_points[idx] = point_index
+
+      if len(closest_points) > 0:
+         cx,cy,cd,ca = point_index['closest_points'][0]
+         idx2 = str(cx) + ":" + str(cy)
+         point_index = all_points[idx2]
+         point_index['used'] = 1
+         all_points[idx2] = point_index
+
+      closest_points = []
+
+
+   print ("POINTS IN THIS IMAGE:", len(all_points))
+   #for idx, value in all_points.items():
+   #   print ("KEY/VALUE:", idx, value)
+ 
+   return(all_points)
+   
+
+def cluster_size(cluster):
+   np_cluster = np.array(cluster)
+   min_x = np.min(np_cluster[:,0])
+   min_y = np.min(np_cluster[:,1])
+   max_x = np.max(np_cluster[:,0])
+   max_y = np.max(np_cluster[:,1])
+   width = max_x - min_x
+   height = max_y - min_y
+   return(width,height)
+
 def diff_stills(sdate, cam_num):
+   file_list = []
+   image_thresh = []
    med_last_objects = []
    last_objects = deque(maxlen=5) 
    diffed_files = []
@@ -1119,216 +1552,151 @@ def diff_stills(sdate, cam_num):
    avg_pts = 0
    count = 0
 
-   glob_dir = video_dir + "proc/" + sdate + "/" + "*cam" + str(cam_num) + "-stacked.jpg"
+   cv2.namedWindow('pepe')
+
+   glob_dir = video_dir + "proc/" + sdate + "/" + "*cam" + str(cam_num) + "-diff.jpg"
    report_file = video_dir + "proc/" + sdate + "/" + sdate + "-cam" + str(cam_num) + "-report.txt"
    master_stack_file = video_dir + "proc/" + sdate + "/" + sdate + "-cam" + str(cam_num) + "-master_stack.jpg"
 
-   #cv2.namedWindow('pepe')
-   mask_file = "conf/mask-" + str(cam_num) + ".txt"
-   file_exists = Path(mask_file)
-   mask_exists = 0
-   still_mask = [0,0,0,0]
-   if (file_exists.is_file()):
-      print("File found.")
-      ms = open(mask_file)
-      for lines in ms:
-         line, jk = lines.split("\n")
-         exec(line)
-      ms.close()
-      mask_exists = 1
-      (sm_min_x, sm_max_x, sm_min_y, sm_max_y) = still_mask
-   diffs = 0
-   image_list = []
-   file_list = []
-   sorted_list = []
-   print ("Loading still images from ", glob_dir)
-   fp = open(report_file, "w")
    for filename in (glob.glob(glob_dir)):
        capture_date = parse_file_date(filename)
        sun_status, sun_alt = day_or_night(config, capture_date)
-       if sun_status != 'day' and int(sun_alt) <= -5:
+       if sun_status != 'day' and int(sun_alt) < -4:
           #print("NIGHTTIME", capture_date, filename, sun_status)
           file_list.append(filename)
        else: 
-          print ("This is a daytime or dusk file")
+          print ("This is a daytime or dusk file", filename)
    
    sorted_list = sorted(file_list)
+   print ("Loading Images...")
    for filename in sorted_list:
       open_cv_image = cv2.imread(filename,0)
-      orig_image = open_cv_image
-      images_orig.append(orig_image)
-      print(filename)
+      orig_filename = filename.replace("diff", "stacked") 
+      orig_image = cv2.imread(orig_filename,0)
       open_cv_image[440:480, 0:640] = [0]
-      if mask_exists == 1:
-         open_cv_image[sm_min_y:sm_max_y, sm_min_x:sm_max_x] = [0]
+      images_orig.append(orig_image)
       images.append(open_cv_image)
-   
-   #exit()
-   #time.sleep(5)
-   height , width =  open_cv_image.shape
-   master_stack = None 
-   # Define the codec and create VideoWriter object
-   #fourcc = cv2.VideoWriter_fourcc(*'H264')
-   #out = cv2.VideoWriter(outfile,fourcc, 5, (width,height),1)
-   #med_stack_all = np.median(np.array(images[50:150]), axis=0)
-   med_stack_all = np.median(np.array(images), axis=0)
-   #cv2.imshow('pepe', cv2.convertScaleAbs(med_stack_all))
-   #cv2.waitKey(1000)
-   objects = None
-   last_line_groups = []
-   last_points = []
-   for filename in sorted_list:
-      hit = 0
-      detect = 0
-      el = filename.split("/")
-      fn = el[-1]
-      #this_image = cv2.imread(filename,1)
-      this_image = images[count]
-   
-   
-      if count >= 1:
-         before_image = images[count-1]
-      else:
-         before_image = images[count+2]
-   
-      if count >= len(file_list)-1:
-         after_image = images[count-2]
-      else:
-         after_image = images[count+1]
-   
-      if count < 25:
-         median = np.median(np.array(images[0:count+25]), axis=0)
+
+
+   images_with_points = 0
+   count = 0
+   for image in images:
+      print ("---------START IMAGE----------")
+      points,xypoints = get_points(image)
+      #print ("POINTS:", len(points))
+      clusters = []
+      if len(points) > 2:
+         num_c = int(len(points) / 3)
+         if num_c < 2:
+            num_c = 2
+         if num_c > 10:
+            num_c = 10 
+         clusters,cluster_d = kmeans_cluster2(xypoints, num_c)
+         if len(clusters) > 2:
+            clusters =  sorted(clusters, key=lambda x: x[0])
+         #print ("CLUSTERS: ", clusters)
+
+         # first lets get rid of anything where there is only 1 cluster and the 
+         # the cluster's max size is < 25x25 px
+         if len(clusters) == 1:
+            cw,ch = cluster_size(clusters[0])
+            if cw < 25 or ch < 25:
+               print ("Cluster rejected too small.", cw, ch)
+               clusters = [] 
+            else :
+               print ("Cluster w,h.", cw, ch)
+               
+         # next lets get rid of anything that has less than 4 points and 2 clusters 
+         if len(points) <= 4 and len(clusters) <= 2:
+            print ("Clusters rejected not enough points.", len(points))
+            clusters = []
+        
+          
          
-      elif len(images) - count < 25:
-         median = np.median(np.array(images[count-25:count]), axis=0)
-      else:
-         median = np.median(np.array(images[count-25:count]), axis=0)
+
+         cn = 0
+         for cluster in clusters:
+            np_cluster = np.array(cluster)
+            min_x = np.min(np_cluster[:,0])
+            min_y = np.min(np_cluster[:,1])
+            max_x = np.max(np_cluster[:,0])
+            max_y = np.max(np_cluster[:,1])
 
 
-     
-      if count < 10:
-         background = images[count+1] 
-         for i in range (0,10):
-            background = cv2.addWeighted(background, .8, images[count+i], .2,0)
-      else:
-         background = images[count-1] 
-         for i in range (0,10):
-            background = cv2.addWeighted(background, .8, images[count-i], .2,0)
- 
-      img_rpt_file = filename.replace("-stacked.jpg", "-stack-report.txt")
-      img_report = open(img_rpt_file, "w")
- 
+            par = np.polyfit(np_cluster[:,0], np_cluster[:,1], 1, full=True)
+            slope = par[0][0]
+            intercept = par[0][1]
+            x1 = [min(np_cluster[:,0]), max(np_cluster[:,0])]
+            y1 = [int(slope*xx + intercept) for xx in x1]
 
-      (blend, points, line_groups, stars, obj_points, big_cnts) = inspect_image(med_stack_all, background, median, before_image, this_image, after_image, avg_cnt,avg_tot,avg_pts, filename) 
-      master_stack = stack_stack(blend, master_stack)
-      img_report.write("points=" + str(points) + "\n")
-      img_report.write("line_groups=" + str(line_groups) + "\n")
-      img_report.write("stars=" + str(stars) + "\n")
-      img_report.write("obj_points=" + str(obj_points) + "\n")
-      img_report.write("big_cnts=" + str(big_cnts) + "\n")
-      img_report.close()
-      images_blend.append(blend)
-      images_info.append((points, line_groups, stars, obj_points, big_cnts)) 
-      # block out the detections in the master image to remove it from the running mask
-      last_line_group = line_groups
-      last_points = points 
-      for x,y,w,h in last_points:
-         images[count][y:y+h,x:x+w] = 5
-   
-   
-      count = count + 1
-      if len(big_cnts) > 0 or len(obj_points) >= 3:
-         hits = hits + 1
-      #cv2.imshow('pepe', blend)
-      #if len(line_groups) >= 1 or len(obj_points) > 3 or len(big_cnts) > 0:
-         #cv2.waitKey(1)
-      #   while(1):
-      #      k = cv2.waitKey(33)
-      #      if k == 32:
-      #         break 
-      #      if k == 27:
-      #         exit() 
-      #else:
-         #cv2.waitKey(1)
-      data = filename + "," + str(len(line_groups)) + "," + str(len(obj_points)) + "," + str(len(big_cnts)) + "\n"
-      fp.write(data)
+            cw,ch = cluster_size(cluster)
 
-   print ("TOTAL: ", len(file_list))
-   print ("HITS: ", hits)
-   fp.close()
+            print ("Slope, Intercept", slope, intercept)
+            print ("Cluster W,H", cw, ch)
 
-   if master_stack is not None:
-      print("saving", master_stack_file)
-      master_stack.save(master_stack_file, "JPEG")
-   else:
-      print("Failed.")
+            cv2.line(image, (x1[0],y1[0]), (x1[1],y1[1]), (200), 1)    
 
-   
-   
-   hits = 1 
-   for count in range(0, len(sorted_list) - 1):
-      file = sorted_list[count]
-      el = file.split("/")
-      st = el[-1]
-      report_str = st.replace("-stacked.jpg", "-report.txt")
-      video_str = st.replace("-stacked.jpg", ".mp4")
-      video_file = file.replace("-stacked.jpg", ".mp4")
-      (points, line_groups, stars, obj_points, big_cnts) = images_info[count]
-      if len(obj_points) > 3 or len(big_cnts) > 0:
-         for bc in big_cnts:
-            (x,y,w,h) = bc
-            obj_points.append((x,y,5,5))
-            obj_points.append((x+w,y+h,5,5))
-         np_obj_points = np.array(obj_points)
-         max_x = np.max(np_obj_points[:,0])
-         max_y = np.max(np_obj_points[:,1])
-         min_x = np.min(np_obj_points[:,0])
-         min_y = np.min(np_obj_points[:,1])
-         myimg = cv2.imread(sorted_list[count],0)
-         cv2.rectangle(myimg, (min_x,min_y), (max_x, max_y), (255),1)
-         #cv2.imshow('pepe', myimg)
-         #cv2.waitKey(1)
+            cv2.putText(image, "Cluster " + str(cn),  (min_x,min_y), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
 
-         print ("-------")
-         print ("Count:", count)
-         print ("Hit:", hits)
-         print ("File:", sorted_list[count])
-         print ("Points:", str(len(points)))
-         print ("Line Groups:", str(len(line_groups)))
-         gc = 1
-         for line_group in line_groups:
-            for dist, ang, x1,y1,w1,h1 in line_group:
-               print ("GROUP: ", gc, dist, ang, x1,y1,w1,h1)
-            gc = gc + 1
-         print ("Stars:", str(len(stars)))
-         print ("Obj Points:", str(len(obj_points)))
-         print ("Big Cnts:", str(len(big_cnts)))
-         print ("Min/Max X/Y:", str(min_x), str(min_y), str(max_x), str(max_y))
-         print ("-------")
+            cv2.rectangle(image, (min_x,min_y), (max_x, max_y), (255),1)
+            cn = cn + 1
 
-         hits = hits + 1
-         video_report = video_file.replace(".mp4", "-report.txt")
-         file_exists = Path(video_report)
-         if (file_exists.is_file()):
-            print ("Already processed the video.")
-         #else:
-         #   print("./PV.py " + video_file + " " + cam_num)
-         #   os.system("./PV.py " + video_file + " " + cam_num)
-      else : 
-         min_x = min_y = max_x = max_y = 0
-      
+      if len(points) > 2:
+         images_with_points = images_with_points + 1
+         all_points = find_orphan_points(points)
+      last_angle = None 
 
-      #cmd = "grep \"Motion Frames:\" `find /mnt/ams2/SD/"  + str(cam_num) + " |grep " + report_str + "`" 
-      #output = subprocess.check_output(cmd, shell=True).decode("utf-8")
-   
-      #output = output.replace("Motion Frames:", "motion_frames=")
-      #print (output)
-      #exec(output)
-      #if len(motion_frames) > 14:
-      #   cmd = "find /mnt/ams2/SD/"  + str(cam_num) + " |grep " + video_str 
-      #   video_file = subprocess.check_output(cmd, shell=True).decode("utf-8")
-      #   print("This is probably a real event?")
-      #   print(video_file)
+      cv2.putText(image, "Total Points:" + str(len(points)),  (25,440), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+      cv2.putText(image, "Total Clusters:" + str(len(clusters)),  (25,460), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+      if len(points) > 2:
+         count = 0 
+         gcount = 0 
+         for idx, value in all_points.items():
+            good_angles = 0
+            cpc = 0
+            x = value['x']
+            y = value['y']
+            w = value['w']
+            h = value['h']
+            #if len(value['closest_points']) > 1:
+            #   cv2.circle(image, (x+ int(w/2),y + int(h/2)), 7, (100), 1)
+            #print ("CLOSEST POINTS: ", value['closest_points'])
+            if len(value['closest_points']) > 0:
+               (xx,yy,dd,aa) = value['closest_points'][0]
+               #cv2.putText(image, "Point:" + str(value['x']) + "," + str(value['y']) + " " + str(xx) + "," + str(yy) + " " + str(dd) + " " + str(aa),  (360,460 - (gcount*20)), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+            #   cv2.circle(image, (x+ int(w/2),y + int(h/2)), 15, (255), 1)
+               gcount = gcount + 1
+               if last_angle is None:
+                  last_angle = -1000
+               if (aa - 5 < last_angle < aa + 5) and dd <= 55: 
+                  #print ("ANG:", last_angle, aa, dd)
+                  #cv2.circle(image, (xx,yy), 20, (200), 1)
+                  cv2.line(image, (value['x'],value['y']), (xx,yy), (200), 1)    
+                  good_angles = good_angles + 1
+               last_angle = aa
+            #else: 
+            #   print ("There are no close points to this one this point.") 
+            count = count + 1 
+         if good_angles >= 3:
+           print ("This is good.", good_angles)
+          
+
+         print ("---------END IMAGE ----------")
+         cv2.imshow('pepe', image)
+         if len(clusters) >= 1:
+            while(1):
+               k = cv2.waitKey(33)
+               if k == 32:
+                  break
+               if k == 27:
+                  exit()
+         else:
+            cv2.waitKey(1)
+         count = count + 1
+         print ("")
+
+   print ("Total Images Analyzed:", len(images))
+   print ("Total Images With Points:", images_with_points)
        
 sdate = sys.argv[1]
 cam_num = sys.argv[2]

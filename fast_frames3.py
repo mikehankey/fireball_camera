@@ -45,6 +45,9 @@ def stack_loop(stack_queue, file):
       stacked_image.save(stack_file, "JPEG")
    else: 
       print("Failed.")
+      failed_file = stack_file.replace("stacked.jpg", "fail.txt")
+      fp = open(failed_file, "w")
+      fp.close()
 
    #np_stacked_image = np.asarray(stacked_image) 
    #np_stacked_image = cv2.cvtColor(np_stacked_image, cv2.COLOR_BGR2GRAY)
