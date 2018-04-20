@@ -108,7 +108,7 @@ mv index-4118.fits /usr/local/astrometry/data
 wget http://broiler.astrometry.net/~dstn/4100/index-4119.fits
 mv index-4119.fits /usr/local/astrometry/data
 
-
+apt-get install python3-dev
 
 #PIP
 wget https://bootstrap.pypa.io/get-pip.py
