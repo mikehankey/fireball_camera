@@ -939,11 +939,12 @@ def best_fit(X, Y):
 
 def diff_all(med_stack_all, background, median, before_image, current_image, after_image,filename ):
 
-   #before_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
-   #after_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
-   #before_after_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
+   before_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
+   after_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
+   before_after_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
 
-   #median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
+   median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
+   median_three = np.uint8(median_three)
    median = np.uint8(median)
    #median_sum = np.sum(median)
 
@@ -988,14 +989,17 @@ def diff_all(med_stack_all, background, median, before_image, current_image, aft
             #median[y:y+h,x:x+w] =blur_mask
 
    # find the diff between the masked median and the masked current image
+   blur_med_three = cv2.GaussianBlur(median_three, (5, 5), 0)
    blur_cur = cv2.GaussianBlur(current_image, (5, 5), 0)
    blur_med = cv2.GaussianBlur(median, (5, 5), 0)
-   cur_med_diff = cv2.absdiff(blur_cur.astype(blur_cur.dtype), blur_med,)
 
-   blend = cv2.addWeighted(current_image, .5, cur_med_diff, .5,0)
+   #cur_med_diff = cv2.absdiff(blur_cur.astype(blur_cur.dtype), blur_med,)
+   cur_med_diff = cv2.absdiff(blur_cur.astype(blur_med_three.dtype), blur_med,)
+
+   #blend = cv2.addWeighted(current_image, .5, cur_med_diff, .5,0)
    #blend = cur_med_diff
 
-   #cur_med_diff =- median
+   blend = cur_med_diff 
 
 
    return(blend, current_image, filename)
@@ -1213,24 +1217,24 @@ def diff_stills(sdate, cam_num):
          else:
             after_image = images[count+1]
    
-         if count < 25:
-            median = np.median(np.array(images[0:count+25]), axis=0)
+         if count < 50:
+            median = np.median(np.array(images[0:count+50]), axis=0)
          
-         elif len(images) - count < 25:
-            median = np.median(np.array(images[count-25:count]), axis=0)
+         elif len(images) - count < 50:
+            median = np.median(np.array(images[count-50:count]), axis=0)
          else:
-            median = np.median(np.array(images[count-25:count]), axis=0)
+            median = np.median(np.array(images[count-50:count]), axis=0)
 
 
-     
-         if count < 10:
+         #image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
+         if count < 15:
             background = images[count+1] 
-            for i in range (0,10):
-               background = cv2.addWeighted(background, .8, images[count+i], .2,0)
+            for i in range (0,15):
+               background = cv2.addWeighted(background, .94, images[count+i], .06,0)
          else:
             background = images[count-1] 
-            for i in range (0,10):
-               background = cv2.addWeighted(background, .8, images[count-i], .2,0)
+            for i in range (0,15):
+               background = cv2.addWeighted(background, .94, images[count-i], .06,0)
  
          img_rpt_file = filename.replace("-stacked.jpg", "-stack-report.txt")
          img_report = open(img_rpt_file, "w")
@@ -1238,7 +1242,7 @@ def diff_stills(sdate, cam_num):
          current_image = this_image
          image_diff = cv2.absdiff(current_image.astype(current_image.dtype), background,)
          orig_image = current_image
-         current_image = image_diff
+         #current_image = image_diff
          print ("working on: ", filename)
          blend, current_image, filename = diff_all(None, background, median, before_image, current_image, after_image,filename)
          blend_file = filename.replace('stacked', 'blend')

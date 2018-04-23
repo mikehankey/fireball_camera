@@ -1297,6 +1297,7 @@ def find_cnts(image):
 
 
 def diff_stills(sdate, cam_num):
+   cv2.namedWindow('pepe')
    image_thresh = []
    med_last_objects = []
    last_objects = deque(maxlen=5) 
@@ -1428,6 +1429,11 @@ def diff_stills(sdate, cam_num):
          _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
          (_, median_cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
          image_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
+         aft_image_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
+         bef_aft_image_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
+         median_three = np.median((image_diff, aft_image_diff, bef_aft_image_diff), axis=0)
+         #median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
+         median_three = np.uint8(median_three)
 
          for (i,c) in enumerate(median_cnts):
             x,y,w,h = cv2.boundingRect(median_cnts[i])
@@ -1451,7 +1457,8 @@ def diff_stills(sdate, cam_num):
          thresh_limit = md + (av /1)
 
 
-         _, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
+         #_, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
+         _, thresh = cv2.threshold(median_three, thresh_limit, 255, cv2.THRESH_BINARY)
          this_thresh = thresh.copy()
          cnts = []
          real_cnt = 0
@@ -1478,6 +1485,8 @@ def diff_stills(sdate, cam_num):
             cv2.putText(this_thresh, str(before_filename),  (5,460), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
             cv2.putText(this_thresh, str(current_filename),  (5,470), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
 
+         cv2.imshow('pepe', this_thresh)
+         cv2.waitKey(100)
          cv2.imwrite(thresh_file, this_thresh)
 
          image_thresh.append(this_thresh)
