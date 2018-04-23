@@ -123,6 +123,22 @@ def purge_hd_files():
          print("rm " + file)
          os.system("rm " + file)
 
+def purge_SD_proc_dir():
+   files = glob.glob(video_dir + "proc/*")
+
+   for file in files:
+      st = os.stat(file)
+      cur_time = int(time.time())
+      mtime = st.st_mtime
+      tdiff = cur_time - mtime
+      tdiff = tdiff / 60 / 60 / 24
+      print (file, tdiff)
+      if tdiff >= 25 and file != 'daytime':
+         print ("We should delete this dir in the archive. it is this many days old:", tdiff) 
+         cmd = "rm -rf " + file
+         os.system(cmd)
+         print(cmd)
+
 
 def move_processed_SD_files():
 
@@ -170,6 +186,7 @@ def move_processed_SD_files():
 
 
 conf = read_config("conf/config-1.txt")
-purge_hd_files()
-purge_sd_files()
-move_processed_SD_files()
+#purge_hd_files()
+#purge_sd_files()
+#move_processed_SD_files()
+purge_SD_proc_dir()

@@ -1,5 +1,6 @@
 #!/usr/bin/python3 
 
+import subprocess
 import datetime
 import os
 from amscommon import read_config
@@ -16,48 +17,35 @@ def ping_cam(cam_num):
       print ("Cam is down!")
       return(1)
 
-os.system("tail -10 /tmp/noise.log > /tmp/x")
-
-restarted = []
-fp = open("/tmp/x", "r")
-for line in fp:
-   line = line.replace("\n", "")
-   data = line.split("|")
-   if len(data) == 5:
-      print (line)
-      (cam_num, noise_ratio, log_date, latency, xxx) = data
-      print (latency)
-      if latency != "" and int(float(latency)) > 100:
-         print ("Latency: ", line)
-         print (restarted)
-         if cam_num not in restarted:
-            dist_time = datetime.datetime.now()
-            log_entry = "Restarting " + str(cam_num) + "|" + str(dist_time) + "|" + str(latency) + "|"
-            cmd = "/bin/echo \"" + log_entry + "\" >> /tmp/restart.log"
-            print(cmd)
-            os.system(cmd)
-
-            cmd = "touch /home/ams/fireball_camera/norun" + cam_num
-            print(cmd)
-            os.system(cmd)
-
-            cmd = "/home/ams/fireball_camera/allsky6-status.py stop " + cam_num
-            print(cmd)
-            os.system(cmd)
+def check_files_exist(cam_num):
+   bad = 0
+   cmd = "find /mnt/ams2/SD -amin -5 |grep cam" + str(cam_num) + " |wc -l"
+   output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+   output.replace("\n", "")
+   if int(output) > 0:
+      print ("SD cam ", str(cam_num), " is good", output)
+   else:
+      print ("SD cam ", str(cam_num), " is bad. Restart.", output)
+      bad = bad + 1
+   cmd = "find /mnt/ams2/HD -amin 5 |grep cam" + str(cam_num) + " |wc -l"
+   output = subprocess.check_output(cmd, shell=True).decode("utf-8")
+   output.replace("\n", "")
+   if int(output) > 0:
+      print ("HD cam ", str(cam_num), " is good", output)
+   else:
+      print ("HD cam ", str(cam_num), " is bad. Restart.", output)
+      bad = bad + 1
 
 
-            cmd = "/home/ams/fireball_camera/allsky6-status.py restart_cam " + cam_num
-            print(cmd)
-            os.system(cmd)
 
-            #while ping_cam(cam_num) == 0:
-            #   print ("host is down")
-            #   time.sleep(50)
-        
-            # wait for ping back after cam reboot 
+   return(bad)
 
-            cmd = "rm /home/ams/fireball_camera/norun" + cam_num
-            print(cmd)
-            os.system(cmd)
-            restarted.append(cam_num)
-
+bad = 0
+for i in range (1,7):
+   res = check_files_exist(i)
+   if res == 1:
+      bad = bad + res
+print ("Total bad:", bad)
+if bad >= 1:
+   print ("need to stop and restart ffmpeg processes")
+   os.system("./ffmpeg_record.py stop 1")
