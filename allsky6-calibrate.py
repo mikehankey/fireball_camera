@@ -135,10 +135,10 @@ def read_noise(config_file, cam_num) :
             nrc = 0
             nrfc = 0
             cc = 0
-            if .05 <= nr <= .15: 
+            if .1 <= nr <= .2: 
                print ("brightness is good.", new_brightness)   
                return()
-            if nr > .05:
+            if nr > .1:
                print ("Too much noise, lower brightness")
                if nr > .4:
                   new_brightness = new_brightness - 10
