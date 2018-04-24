@@ -186,7 +186,7 @@ def move_processed_SD_files():
 
 
 conf = read_config("conf/config-1.txt")
-#purge_hd_files()
-#purge_sd_files()
-#move_processed_SD_files()
+purge_hd_files()
+purge_sd_files()
+move_processed_SD_files()
 purge_SD_proc_dir()
