@@ -139,7 +139,14 @@ pip3 install pyephem
 pip3 install pytesseract
 pip3 install opencv-python
 pip3 install pycrypto
-apt-get install python3-pil.imagetk
+sudo apt-get install python3-pil.imagetk
+apt-get install scikit-image
+
+pip3 install scipy
+pip3 uninstall scipy
+pip3 install python-imaging-tk
+pip3 install pillow
+pip3 install astride
 # clone fireball camera code
 # configurations...
 # setup webserver vhost
