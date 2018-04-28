@@ -19,7 +19,7 @@ def ping_cam(cam_num):
 
 def check_files_exist(cam_num):
    bad = 0
-   cmd = "find /mnt/ams2/SD -amin -5 |grep cam" + str(cam_num) + " |wc -l"
+   cmd = "find /mnt/ams2/SD -amin -5 |grep mp4 | grep cam" + str(cam_num) + " |wc -l"
    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    output.replace("\n", "")
    if int(output) > 0:
@@ -27,7 +27,7 @@ def check_files_exist(cam_num):
    else:
       print ("SD cam ", str(cam_num), " is bad. Restart.", output)
       bad = bad + 1
-   cmd = "find /mnt/ams2/HD -amin 5 |grep cam" + str(cam_num) + " |wc -l"
+   cmd = "find /mnt/ams2/HD -amin -5 |grep cam" + str(cam_num) + " |wc -l"
    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    output.replace("\n", "")
    if int(output) > 0:
