@@ -317,14 +317,13 @@ class ProcessVideo:
       self.config = read_config(self.config_file)
 
    def move_all_files(self,dest_dir):
-      return(0)
       if "HD" in self.orig_video_file:
          print ("HD FILE!")
 
          for event in self.motion_frames:
             if 3 < len(event) < 175:
                start = int(event[0]) - 50
-               cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 50) + " " + str( event[-1]+50)
+               cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 75) + " " + str( event[-1]+50)
                print (cmd)
                os.system(cmd)
                self.xs = []
@@ -343,6 +342,7 @@ class ProcessVideo:
          #cmd = "./PV.py crop " + str(self.orig_video_file)
          #os.system(cmd)
          exit()
+      return(0)
       if ".avi" in self.orig_video_file:
          wild_card = self.orig_video_file.replace(".avi", "*") 
       else:
@@ -533,7 +533,7 @@ class ProcessVideo:
          print ("Skipping daytime files for now.")
          #self.drop_frame()
          #self.move_all_files("day")
-         mod_skip = 50
+         mod_skip = 2
          #return(0)
       else:
          mod_skip = 1 
@@ -681,7 +681,7 @@ class ProcessVideo:
       while go == 1:
          _, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
          (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-         if len(cnts) > 2:
+         if len(cnts) > 0:
             thresh_limit = thresh_limit + 1
          else:
             bad = 0
@@ -772,7 +772,7 @@ class ProcessVideo:
          #print ("Skipping daytime files for now.")
          #self.drop_frame()
          #self.move_all_files("day")
-         mod_skip = 25 
+         mod_skip = 2
       else:
          mod_skip = 1 
          if "HD" in self.orig_video_file:
@@ -831,10 +831,10 @@ class ProcessVideo:
          median = np.uint8(median_img)
          median_img = median
          masked_median, masked_current,masks = self.mask_bright_areas(median_img, self.frames[0])
-         cv2.imshow('pepe', masked_median)
-         cv2.waitKey(1)
-         cv2.imshow('pepe', masked_current)
-         cv2.waitKey(1)
+         #cv2.imshow('pepe', masked_median)
+         #cv2.waitKey(1)
+         #cv2.imshow('pepe', masked_current)
+         #cv2.waitKey(1)
          best_limit = self.find_best_thresh(masked_current, best_limit)
       else: 
          best_limit = 10 
@@ -940,7 +940,7 @@ class ProcessVideo:
                   self.frame_data.append([frame_count, len(real_cnts),x,y,w,h])
                   if self.prev_motion == 1:
                      self.cons_motion = self.cons_motion + 1
-                  else:
+                  elif event_started == 0 :
                      # startng a new event here
                      self.motion_events = self.motion_events + 1
                      print ("Event Started")
@@ -1027,8 +1027,8 @@ class ProcessVideo:
                      star_image_small = cv2.resize(np.asarray(self.star_image_gray), (0,0), fx=0.5, fy=0.5) 
                   else:
                      star_image_small = frame
-                  cv2.imshow('pepe', star_image_small)
-                  cv2.waitKey(1)
+                  #cv2.imshow('pepe', star_image_small)
+                  #cv2.waitKey(1)
                else:
                   np_stacked_image = np.asarray(nice_frame)
                   with_stars = self.draw_stars(np_stacked_image)
@@ -1036,8 +1036,8 @@ class ProcessVideo:
                      #stacked_image_small = cv2.resize(with_stars, (0,0), fx=0.5, fy=0.5) 
                      #stacked_image_small = cv2.resize(np_stacked_image, (0,0), fx=0.5, fy=0.5) 
                      stacked_image_small = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
-                     cv2.imshow('pepe', stacked_image_small)
-                     cv2.waitKey(1)
+                     #cv2.imshow('pepe', stacked_image_small)
+                     #cv2.waitKey(1)
 
       end_time = int(time.time())
       elapsed = end_time - start_time
@@ -1068,7 +1068,7 @@ class ProcessVideo:
             if (sum_px > (avg_sum * 1.2)):
                print ("HIT!")
             #cv2.imshow('pepe', roi_frame)
-            cv2.imshow('pepe', roi_thresh)
+            #cv2.imshow('pepe', roi_thresh)
             cv2.waitKey(10)
 
 
@@ -1112,10 +1112,10 @@ class ProcessVideo:
 
       #cv2.imshow('pepe', np_stacked_image)
       #cv2.waitKey(2000)
-      cv2.imshow('pepe', np_stacked_diff)
-      cv2.waitKey(5)
-      cv2.imshow('pepe', diff_thresh)
-      cv2.waitKey(1)
+      #cv2.imshow('pepe', np_stacked_diff)
+      #cv2.waitKey(5)
+      #cv2.imshow('pepe', diff_thresh)
+      #cv2.waitKey(1)
       return(0)
 
 
@@ -1150,13 +1150,13 @@ class ProcessVideo:
 
          print("STRAIGHT:", self.straight_line) 
 
-         self.meteor_yn = "N"
+         self.meteor_yn = "Y"
          if 1 <= len(straight_cnts) <= 5:
             for st_cnt_gp in straight_cnts:
                if self.straight_line == 1 and self.sun_status != 'day' and len(st_cnt_gp) < 75 and len(self.motion_frames) < 10:
                   self.meteor_yn = "Y"
-                  trim_start = st_cnt_gp[0][0] - 25
-                  trim_end = st_cnt_gp[-1][0] + 100
+                  trim_start = st_cnt_gp[0][0] - 76
+                  trim_end = st_cnt_gp[-1][0] + 76
                   if trim_start < 0:
                      trim_start = 0
                   if trim_end >= len(self.frames) :
