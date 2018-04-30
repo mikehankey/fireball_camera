@@ -118,7 +118,7 @@ def purge_hd_files():
          print ("File is daytime and this many days old", tdiff, file)
          print("rm " + file)
          os.system("rm " + file)
-      elif tdiff > 7:
+      elif tdiff > 5:
          print ("File is nighttime and this many days old will be purged.", tdiff, file)
          print("rm " + file)
          os.system("rm " + file)
