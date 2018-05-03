@@ -316,13 +316,52 @@ class ProcessVideo:
       self.config_file = "conf/config-" + str(self.cam_num) + ".txt"
       self.config = read_config(self.config_file)
 
+   def parse_date2 (self, this_file):
+
+      el = this_file.split("/")
+      file_name = el[-1]
+      file_name = file_name.replace("_", "-")
+      file_name = file_name.replace(".", "-")
+      fnel = file_name.split("-")
+      if len(fnel) == 11:
+         xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,fst,xext = fnel
+      if len(fnel) == 10:
+         xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,xext = fnel
+      if len(fnel) == 9:
+         xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype, xext = fnel
+      if len(fnel) == 8:
+         xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, xext = fnel
+
+      cam_num = xcam_num.replace("cam", "")
+
+      date_str = xyear + "-" + xmonth + "-" + xday + " " + xhour + ":" + xmin + ":" + xsec
+      capture_date = date_str
+      return(cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec)
+
+   def upload_allsky6(self, file, trim_file, stack_file, summary_file, event_datetime, cam_num):
+      print ("UPLOAD TRIM FILE!")
+      cmd = "./upload_allsky6.py " + file + " " + trim_file + " " + stack_file + " " + summary_file + " " + "\"" + event_datetime + "\" " + cam_num
+      print(cmd)
+      os.system(cmd)
+      (cam_num, date_str, xyear, xmonth, xday, xhour, xmin, xsec) = self.parse_date2(file)
+
+      wild_card = file.replace(".mp4", "*")
+      date_dir = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday
+      file_exists = Path(date_dir)
+      skip = 0
+      if (file_exists.is_dir() is False):
+         os.system("mkdir " + date_dir)
+      cmd = "cp " + wild_card + " " + date_dir
+      os.system(cmd)
+
+
    def move_all_files(self,dest_dir):
       if "HD" in self.orig_video_file:
          print ("HD FILE!")
 
          for event in self.motion_frames:
             if 3 < len(event) < 175:
-               start = int(event[0]) - 50
+               start = int(event[0]) - 76
                cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 75) + " " + str( event[-1]+50)
                print (cmd)
                os.system(cmd)
@@ -335,7 +374,7 @@ class ProcessVideo:
                         print ("ADD X,Ys")
                         self.xs.append(x)
                         self.ys.append(y)
-               self.start_frame = event[0] - 50
+               self.start_frame = event[0] - 76
                print("XSYS", self.xs, self.ys)
                self.trim_file = self.orig_video_file.replace(".mp4", "-trim-" + str(start) + ".mp4")
                self.cropVideo()
@@ -353,7 +392,9 @@ class ProcessVideo:
       if dest_dir == "meteor":
          print ("TRIM: ", self.motion_frames[0] - 25, self.motion_frames[-1]+25)
          #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+50)
-         cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 50) + " " + str( self.motion_frames[-1]+50)
+         cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 76) + " " + str( self.motion_frames[-1]+50)
+         self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
+         # upload video 
          #print (cmd)
          #os.system(cmd)
 
@@ -1164,6 +1205,8 @@ class ProcessVideo:
                   print ("Trim Start & End", trim_start, trim_end)
                   cmd = "./trim_video.py " + self.orig_video_file + " " + str(trim_start) + " " + str(trim_end)
                   os.system(cmd)
+                  self.trim_file = self.trim_file.replace("-trim.mp4", "-trim-" + str(trim_start) + ".avi")
+                  self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
      
  
       #print("STACK", self.stacked_image)          
@@ -1474,7 +1517,7 @@ class ProcessVideo:
    def parse_file_date(self):
       print(self.orig_video_file)
       if ".mp4" in self.orig_video_file:
-         self.stacked_image_fn = self.orig_video_file.replace(".mp4", "-stack.jpg") 
+         self.stacked_image_fn = self.orig_video_file.replace(".mp4", "-stacked.jpg") 
          self.star_image_fn = self.orig_video_file.replace(".mp4", "-stars.jpg") 
          self.report_fn = self.orig_video_file.replace(".mp4", "-report.txt") 
 
