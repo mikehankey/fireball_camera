@@ -1,14 +1,16 @@
 #!/usr/bin/python3
+from collections import defaultdict
 import glob
 import subprocess 
 import cgi
 import cgitb
 import os
 video_dir = "/mnt/ams2/SD/"
+from pathlib import Path
 
 #cgi.enable()
 print ("Content-type: text/html\n\n")
-
+print (" <style> .active { background: #ff0000; } .inactive { background: #ffffff; } </style>")
 
 def get_days():
    days = []
@@ -44,16 +46,58 @@ def get_files_for_day_cam(day, cam):
    files = glob.glob(glob_dir)
    return(sorted(files))
 
+def mark_tag(word, tags):
+   if word in tags:
+      return("active")
+   else:
+      return("inactive")
+
+
 def browse_day(day, cam):
+   form = cgi.FieldStorage()
+   debug = form.getvalue('debug')
+   print("<script src=/pycgi/tag_pic.js></script>")
    print ("<h2>Browse Day</h2>")
    report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
    files = get_files_for_day_cam(day, cam)
+   file_dict = defaultdict()
+   for file in files:
+      file_dict[file] = {}
+      file_dict[file]['tags'] = ""
+
+   tag_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + "tags-cam" + str(cam) + ".txt"
+   file_exists = Path(tag_file)
+   if (file_exists.is_file()):
+      file_dict = parse_tags(tag_file, file_dict) 
+
    for file in files:
       jpg = file.replace(".mp4", "-stacked.jpg") 
       blend = file.replace(".mp4", "-blend.jpg") 
       diff = file.replace(".mp4", "-diff.jpg") 
-      #print ("<table><tr><td><a href=clip_detail.py?file=" + file + "&day=" +str(day) + "&cam=" +str(cam) + "><img src=" + jpg + "></a><BR></td><td><img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
-      print ("<table><tr><td><a href=" + file + "><img src=" + jpg + "></a><BR></td><td><img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
+      tags = file_dict[file]['tags']
+      print ("<table><tr><td><a href=" + file + "><img src=" + jpg + "></a><BR>")
+      cls = mark_tag("meteor", tags)
+      print ("<input type=button name=tag value=\"meteor\" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
+      cls = mark_tag("plane", tags)
+      print ("<input type=button name=tag value=\"plane\" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" >")
+      cls = mark_tag("sat", tags)
+      print ("<input type=button name=tag value=\"sat\" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" >")
+      cls = mark_tag("cloud", tags)
+      print ("<input type=button name=tag value=\"cloud\" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" >")
+      cls = mark_tag("notsure", tags)
+      print ("<input type=button name=tag value=\"notsure\" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" >")
+      cls = mark_tag("interesting", tags)
+      print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" >")
+      cls = mark_tag("other", tags)
+      print ("<input type=button name=tag value=\"other\" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" >")
+
+
+
+      print("</td><td>")
+      if debug is not None:
+         print("<img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
+      else:
+         print("</td><td></td></tr></table> ")
 
 
 def main():
@@ -62,8 +106,9 @@ def main():
    day = form.getvalue('day')
 
    cmd = form.getvalue('cmd')
+   # for testn
    #cmd = "browse_day"
-   #day = "2018-03-06"
+   #day = "2018-05-02"
    #cam_num = 1
 
    archive_links = make_archive_links()
@@ -76,42 +121,17 @@ def main():
     
       browse_day(day, cam_num)  
 
+def parse_tags(tag_file, file_dict):
+   fp = open(tag_file, "r");
+   for line in fp:
+      line = line.replace("\n", "")
+      (cmd, tag, file) = line.split(",")
+      if cmd == 'add':
+         file_dict[file]['tags'] = file_dict[file]['tags'] + "," + tag
+      else:
+         file_dict[file]['tags'].replace(tag+",", "")
+   return(file_dict)   
 
 main()
 
 
-#if cmd is None:
-#   days = get_days()
-   #scmd = "find /mnt/ams2/SD/" + str(cam_num) + "/time_lapse/ | grep " + str(sdate) 
-   #output = subprocess.check_output(scmd, shell=True).decode("utf-8")
-#   #files = output.split("\n")
-#   report_file = "/mnt/ams2/SD/" + str(cam_num) + "/time_lapse/" + str(sdate) + ".txt"
-#   rpts = open(report_file, "r")
-#   last_sum_diff = 0 
-#   for line in rpts:
-#      line = line.replace("\n", "")
-#      file,hit,sum_diff = line.split(",")
-#      if int(last_sum_diff) > 0 and (int(sum_diff) / int(last_sum_diff) > 1.5):
-#         hit = 1
-#      if int(hit) == 0:
-#         style = "style='opacity: 0.5'"
-#      else:
-#         style = ""
-#      print ("<a target=_blank href=archive.py?cmd=vid&file=" + str(file) + "&cam_num=" + str(cam_num) + "><img "+ style + " src=/mnt/ams2/SD/" + cam_num + "/time_lapse/" + str(file) + "></a>")
-#      last_sum_diff = int(sum_diff)
-#
-#if cmd == "vid":
-#   file = form.getvalue('file')
-#   el = file.split("/")
-#   fn = el[-1]
-#   tr = fn.split("cam")
-#   sdate = tr[0]
-#   scmd = "find ../mnt/ams2/SD/" + str(cam_num) + "/ | grep " + str(sdate) + " |grep mp4"
-#   output = subprocess.check_output(scmd, shell=True).decode("utf-8")
-#   video = output.split("\n")
-#  # print ("<BR>" + output)
-#   print ("Location: " + str(video[0]) + "\n\n")
-#
-#
-#
-#
