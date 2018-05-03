@@ -126,10 +126,10 @@ def parse_tags(tag_file, file_dict):
    for line in fp:
       line = line.replace("\n", "")
       (cmd, tag, file) = line.split(",")
-    #  if cmd == 'add':
-      file_dict[file]['tags'] = file_dict[file]['tags'] + "," + tag
-    #  else:
-    #     file_dict[file]['tags'].replace(tag+",", "")
+      if cmd == 'add':
+         file_dict[file]['tags'] = file_dict[file]['tags'] + "," + tag
+      else:
+         file_dict[file]['tags'] = file_dict[file]['tags'].replace(tag, "")
    return(file_dict)   
 
 main()
