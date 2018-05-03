@@ -79,17 +79,17 @@ def browse_day(day, cam):
       cls = mark_tag("meteor", tags)
       print ("<input type=button name=tag value=\"meteor\" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
       cls = mark_tag("plane", tags)
-      print ("<input type=button name=tag value=\"plane\" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" >")
+      print ("<input type=button name=tag value=\"plane\" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" class='" + cls + "'>")
       cls = mark_tag("sat", tags)
-      print ("<input type=button name=tag value=\"sat\" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" >")
+      print ("<input type=button name=tag value=\"sat\" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" class='" + cls + "'>")
       cls = mark_tag("cloud", tags)
-      print ("<input type=button name=tag value=\"cloud\" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" >")
+      print ("<input type=button name=tag value=\"cloud\" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
       cls = mark_tag("notsure", tags)
-      print ("<input type=button name=tag value=\"notsure\" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" >")
+      print ("<input type=button name=tag value=\"notsure\" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" class='" + cls + "'>")
       cls = mark_tag("interesting", tags)
-      print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" >")
+      print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" class='" + cls + "'>")
       cls = mark_tag("other", tags)
-      print ("<input type=button name=tag value=\"other\" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" >")
+      print ("<input type=button name=tag value=\"other\" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" class='" + cls + "'>")
 
 
 
@@ -126,10 +126,10 @@ def parse_tags(tag_file, file_dict):
    for line in fp:
       line = line.replace("\n", "")
       (cmd, tag, file) = line.split(",")
-      if cmd == 'add':
-         file_dict[file]['tags'] = file_dict[file]['tags'] + "," + tag
-      else:
-         file_dict[file]['tags'].replace(tag+",", "")
+    #  if cmd == 'add':
+      file_dict[file]['tags'] = file_dict[file]['tags'] + "," + tag
+    #  else:
+    #     file_dict[file]['tags'].replace(tag+",", "")
    return(file_dict)   
 
 main()
