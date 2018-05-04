@@ -393,6 +393,7 @@ class ProcessVideo:
          print ("TRIM: ", self.motion_frames[0] - 25, self.motion_frames[-1]+25)
          #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+50)
          cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 76) + " " + str( self.motion_frames[-1]+50)
+         meteor_yn = 1
          self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
          # upload video 
          #print (cmd)
@@ -1206,7 +1207,6 @@ class ProcessVideo:
                   cmd = "./trim_video.py " + self.orig_video_file + " " + str(trim_start) + " " + str(trim_end)
                   os.system(cmd)
                   self.trim_file = self.trim_file.replace("-trim.mp4", "-trim-" + str(trim_start) + ".avi")
-                  self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
      
  
       #print("STACK", self.stacked_image)          
@@ -1259,6 +1259,8 @@ class ProcessVideo:
       print ("Motion Events:" + str(self.motion_events))
       print ("Event CNTS:" + str(self.event_cnts))
 
+      if self.meteor_yn == "Y":
+         self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
       cx = (self.min_x + self.max_x) / 2
       cy = (self.min_y + self.max_y) / 2
 
