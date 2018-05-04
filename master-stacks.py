@@ -4,7 +4,7 @@
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure 
-
+import time
 from sklearn.cluster import KMeans
 from sklearn import datasets
 
@@ -39,8 +39,6 @@ def stack_stack(pic1, pic2):
    stacked_image = pic2
    if pic2 is not None:
       np_stacked_image = np.asarray(stacked_image)
-      print ("PIC1: ", pic1.shape)
-      print ("PIC2: ", np_stacked_image.shape)
 
    if stacked_image is None:
       stacked_image = frame_pil 
@@ -1106,13 +1104,13 @@ def day_or_night(config, capture_date):
    saz = str(sun.az)
    (sun_az, x,y) = saz.split(":")
    #print ("SUN", sun_alt)
-   if int(sun_alt) < -4:
+   if int(sun_alt) < -1:
       sun_status = "night"
    else:
       sun_status = "day"
    return(sun_status, sun_alt)
 
-def diff_stills(sdate, cam_num):
+def diff_stills(sdate, cam_num, show_video):
    med_last_objects = []
    last_objects = deque(maxlen=5) 
    diffed_files = []
@@ -1135,7 +1133,8 @@ def diff_stills(sdate, cam_num):
    report_file = video_dir + "proc/" + sdate + "/" + sdate + "-cam" + str(cam_num) + "-report.txt"
    master_stack_file = video_dir + "proc/" + sdate + "/" + sdate + "-cam" + str(cam_num) + "-master_stack.jpg"
 
-   cv2.namedWindow('pepe')
+   if int(show_video) == 1:
+      cv2.namedWindow('pepe')
    mask_file = "conf/mask-" + str(cam_num) + ".txt"
    file_exists = Path(mask_file)
    mask_exists = 0
@@ -1158,14 +1157,17 @@ def diff_stills(sdate, cam_num):
    for filename in (glob.glob(glob_dir)):
        capture_date = parse_file_date(filename)
        sun_status, sun_alt = day_or_night(config, capture_date)
-       if sun_status != 'day' and int(sun_alt) < -4:
+       #if sun_status != 'day' and int(sun_alt) < -4:
+       #if sun_status != 'day' :
           #print("NIGHTTIME", capture_date, filename, sun_status)
-          file_list.append(filename)
-       else: 
-          print ("This is a daytime or dusk file")
+       file_list.append(filename)
+       #else: 
+       #   print ("This is a daytime or dusk file")
    
    sorted_list = sorted(file_list)
    print ("Loading Images...")
+   print ("TOTAL IMAGES TO START:", len(sorted_list))
+   #time.sleep(5)
    for filename in sorted_list:
       open_cv_image = cv2.imread(filename,0)
       orig_image = open_cv_image
@@ -1179,11 +1181,13 @@ def diff_stills(sdate, cam_num):
             open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
          images.append(open_cv_image)
       else:
+         print ("IMAGE IS BAD!")
          cmd = "rm " + filename
          os.system(cmd)
        
 
    print ("Finished Loading Images.")
+
    height , width =  open_cv_image.shape
    master_stack = None 
    print ("Make master median...")
@@ -1204,7 +1208,15 @@ def diff_stills(sdate, cam_num):
          blend = cv2.imread(blend_file)
          print ("We already did this. Skip", filename)
          print (blend.shape)
-         master_stack = stack_stack(blend, master_stack)
+
+         capture_date = parse_file_date(fn)
+         sun_status, sun_alt = day_or_night(config, capture_date)
+         if int(sun_alt) < -17:
+            print("SUN: ", sun_alt)
+            master_stack = stack_stack(blend, master_stack)
+            if int(show_video) == 1:
+               cv2.imshow('pepe', blend)
+               cv2.waitKey(10)
       else:
    
          if count >= 1:
@@ -1237,7 +1249,7 @@ def diff_stills(sdate, cam_num):
                background = cv2.addWeighted(background, .94, images[count-i], .06,0)
  
          img_rpt_file = filename.replace("-stacked.jpg", "-stack-report.txt")
-         img_report = open(img_rpt_file, "w")
+         #img_report = open(img_rpt_file, "w")
 
          current_image = this_image
          image_diff = cv2.absdiff(current_image.astype(current_image.dtype), background,)
@@ -1247,11 +1259,14 @@ def diff_stills(sdate, cam_num):
          blend, current_image, filename = diff_all(None, background, median, before_image, current_image, after_image,filename)
          blend_file = filename.replace('stacked', 'blend')
          cv2.imwrite(blend_file, blend)
-         cv2.imshow('pepe', blend)
-         cv2.waitKey(1)
+         #cv2.imshow('pepe', blend)
+         #cv2.waitKey(1)
          count = count + 1
 
-      master_stack = stack_stack(blend, master_stack)
+      capture_date = parse_file_date(fn)
+      sun_status, sun_alt = day_or_night(config, capture_date)
+      if int(sun_alt) < -17:
+         master_stack = stack_stack(blend, master_stack)
 
    if master_stack is not None:
       print("saving", master_stack_file)
@@ -1261,5 +1276,11 @@ def diff_stills(sdate, cam_num):
        
 sdate = sys.argv[1]
 cam_num = sys.argv[2]
-  
-diff_stills(sdate, cam_num) 
+
+try: 
+   show_video = sys.argv[3]
+except:
+   show_video = 0
+
+print ("Show video?:", show_video)  
+diff_stills(sdate, cam_num, show_video) 

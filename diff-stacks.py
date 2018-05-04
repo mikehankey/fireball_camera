@@ -446,7 +446,7 @@ def find_best_thresh(image, thresh_limit, type):
       _, thresh = cv2.threshold(image, thresh_limit, 255, cv2.THRESH_BINARY)
       (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
       if type == 0:
-         cap = 80
+         cap = 4 
       else:
          cap = 100
       if len(cnts) > cap:
@@ -458,13 +458,18 @@ def find_best_thresh(image, thresh_limit, type):
             x,y,w,h = cv2.boundingRect(cnts[i])
             if w == image.shape[1]: 
                bad = 1
-            if type == 0 and (w >= 10 or h > 10): 
-               bad = 1
+            #if type == 0 and (w >= 10 or h > 10): 
+            #   bad = 1
+            #if type == 0 and (w == 1 or h == 1): 
+            #   bad = 1
          if bad == 0: 
             go = 0
          else:
             thresh_limit = thresh_limit + 1 
-      #print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
+      print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
+   #thresh_limit = thresh_limit + 3
+   print ("CNTs, BEST THRESH:", str(len(cnts)), thresh_limit)
+   #time.sleep(3)
    return(thresh_limit)
 
 
@@ -1097,7 +1102,7 @@ def day_or_night(config, capture_date):
    saz = str(sun.az)
    (sun_az, x,y) = saz.split(":")
    #print ("SUN", sun_alt)
-   if int(sun_alt) <= -4:
+   if int(sun_alt) < -1:
       sun_status = "night"
    else:
       sun_status = "day"
@@ -1296,8 +1301,9 @@ def find_cnts(image):
    return(good, good_angles, image)
 
 
-def diff_stills(sdate, cam_num):
-   cv2.namedWindow('pepe')
+def diff_stills(sdate, cam_num, show_video):
+   if show_video == 1:
+      cv2.namedWindow('pepe')
    image_thresh = []
    med_last_objects = []
    last_objects = deque(maxlen=5) 
@@ -1344,11 +1350,11 @@ def diff_stills(sdate, cam_num):
    for filename in (glob.glob(glob_dir)):
        capture_date = parse_file_date(filename)
        sun_status, sun_alt = day_or_night(config, capture_date)
-       if sun_status != 'day' and int(sun_alt) < -4:
+       #if sun_status != 'day' and int(sun_alt) < -4:
           #print("NIGHTTIME", capture_date, filename, sun_status)
-          file_list.append(filename)
-       else: 
-          print ("This is a daytime or dusk file", filename)
+       file_list.append(filename)
+       #else: 
+       #   print ("This is a daytime or dusk file", filename)
    
    sorted_list = sorted(file_list)
    print ("Loading Images...")
@@ -1363,7 +1369,10 @@ def diff_stills(sdate, cam_num):
 
 
 
-   print ("Finished Loading Images.")
+   print ("Finished Loading Images.", len(sorted_list))
+   if len(sorted_list) == 0:
+      print ("Pre-processing of stack blends has not happened yet. Aborting...")
+      exit()
    diff_sums = []
    height , width =  open_cv_image.shape
    master_stack = None 
@@ -1394,17 +1403,21 @@ def diff_stills(sdate, cam_num):
          current_image = images[count]
          current_filename = sorted_list[count]
    
-         if count >= 1:
+         if count >= 2:
+            before_image2 = images[count-2]
             before_image = images[count-1]
             before_filename = sorted_list[count-1]
          else:
+            before_image2 = images[count+2]
             before_image = images[count+2]
             before_filename = sorted_list[count+2]
    
-         if count >= len(sorted_list)-1:
+         if count >= len(sorted_list)-2:
+            after_image2 = images[count-3]
             after_image = images[count-2]
             after_filename = sorted_list[count-2]
          else:
+            after_image2 = images[count+2]
             after_image = images[count+1]
             after_filename = sorted_list[count+1]
 
@@ -1424,15 +1437,17 @@ def diff_stills(sdate, cam_num):
 
          md = np.median(blur_med)
          av = np.average(blur_med)
-         tm = md + (av /1)
+         #tm = md + (av /1)
 
          _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
          (_, median_cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+         med_diff = cv2.absdiff(current_image.astype(current_image.dtype), median,)
          image_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
+         image_diff2 = cv2.absdiff(current_image.astype(current_image.dtype), before_image2,)
          aft_image_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
+         aft_image_diff2 = cv2.absdiff(current_image.astype(current_image.dtype), after_image2,)
          bef_aft_image_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
-         median_three = np.median((image_diff, aft_image_diff, bef_aft_image_diff), axis=0)
-         #median_three = np.median(np.array((before_image, after_image, current_image)), axis=0)
+         median_three = np.median((image_diff, image_diff2, aft_image_diff, aft_image_diff2, med_diff), axis=0)
          median_three = np.uint8(median_three)
 
          for (i,c) in enumerate(median_cnts):
@@ -1454,10 +1469,10 @@ def diff_stills(sdate, cam_num):
          print ("working on: ", filename)
          md = np.median(current_image)
          av = np.average(current_image)
-         thresh_limit = md + (av /1)
+         #thresh_limit = md + (av /1)
+         thresh_limit = 10
 
 
-         #_, thresh = cv2.threshold(image_diff, thresh_limit, 255, cv2.THRESH_BINARY)
          _, thresh = cv2.threshold(median_three, thresh_limit, 255, cv2.THRESH_BINARY)
          this_thresh = thresh.copy()
          cnts = []
@@ -1479,14 +1494,16 @@ def diff_stills(sdate, cam_num):
          sum = np.sum(this_thresh)
          diff_sums.append(sum)
          noise, this_thresh = find_noisy_cnts(this_thresh)
-         if count > 0:
+         #if count > 0:
 
 
-            cv2.putText(this_thresh, str(before_filename),  (5,460), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
-            cv2.putText(this_thresh, str(current_filename),  (5,470), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+            #cv2.putText(this_thresh, str(before_filename),  (5,460), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
+            #cv2.putText(this_thresh, str(current_filename),  (5,470), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
 
-         cv2.imshow('pepe', this_thresh)
-         cv2.waitKey(100)
+         if show_video == 1:
+            cv2.imshow('pepe', this_thresh)
+            #cv2.imshow('pepe', cv2.convertScaleAbs(median_three))
+            cv2.waitKey(100)
          cv2.imwrite(thresh_file, this_thresh)
 
          image_thresh.append(this_thresh)
@@ -1495,6 +1512,7 @@ def diff_stills(sdate, cam_num):
          cnts_counts.append((real_cnt,real_cnt_space))
          count = count + 1
 
+   exit()
    md = np.median(diff_sums)
    mav = np.average(diff_sums)
    count = 0
@@ -1530,5 +1548,9 @@ def diff_stills(sdate, cam_num):
        
 sdate = sys.argv[1]
 cam_num = sys.argv[2]
+try:
+   show_video = sys.argv[3]
+except:
+   show_video = 0
   
-diff_stills(sdate, cam_num) 
+diff_stills(sdate, cam_num, show_video) 
