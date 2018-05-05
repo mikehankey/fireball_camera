@@ -1439,7 +1439,10 @@ def diff_stills(sdate, cam_num, show_video):
          av = np.average(blur_med)
          #tm = md + (av /1)
 
+         #median_thresh = cv2.adaptiveThreshold(blur_med,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,1)
          _, median_thresh = cv2.threshold(blur_med, tm, 255, cv2.THRESH_BINARY)
+
+
          (_, median_cnts, xx) = cv2.findContours(median_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
          med_diff = cv2.absdiff(current_image.astype(current_image.dtype), median,)
          image_diff = cv2.absdiff(current_image.astype(current_image.dtype), before_image,)
@@ -1447,9 +1450,10 @@ def diff_stills(sdate, cam_num, show_video):
          aft_image_diff = cv2.absdiff(current_image.astype(current_image.dtype), after_image,)
          aft_image_diff2 = cv2.absdiff(current_image.astype(current_image.dtype), after_image2,)
          bef_aft_image_diff = cv2.absdiff(before_image.astype(current_image.dtype), after_image,)
-         median_three = np.median((image_diff, image_diff2, aft_image_diff, aft_image_diff2, med_diff), axis=0)
+         median_three = np.median((image_diff, image_diff2, aft_image_diff, aft_image_diff2, med_diff, current_image), axis=0)
          median_three = np.uint8(median_three)
 
+         # block out bright parts of the median
          for (i,c) in enumerate(median_cnts):
             x,y,w,h = cv2.boundingRect(median_cnts[i])
             my = y - 30
@@ -1466,14 +1470,15 @@ def diff_stills(sdate, cam_num, show_video):
 
 
    
-         print ("working on: ", filename)
          md = np.median(current_image)
          av = np.average(current_image)
+         print ("working on (md,av): ", filename, md, av)
          #thresh_limit = md + (av /1)
          thresh_limit = 10
 
 
-         _, thresh = cv2.threshold(median_three, thresh_limit, 255, cv2.THRESH_BINARY)
+         #_, thresh = cv2.threshold(median_three, thresh_limit, 255, cv2.THRESH_BINARY)
+         thresh = cv2.adaptiveThreshold(median_three,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,-10)
          this_thresh = thresh.copy()
          cnts = []
          real_cnt = 0
@@ -1493,7 +1498,7 @@ def diff_stills(sdate, cam_num, show_video):
 
          sum = np.sum(this_thresh)
          diff_sums.append(sum)
-         noise, this_thresh = find_noisy_cnts(this_thresh)
+         #noise, this_thresh = find_noisy_cnts(this_thresh)
          #if count > 0:
 
 
@@ -1501,8 +1506,9 @@ def diff_stills(sdate, cam_num, show_video):
             #cv2.putText(this_thresh, str(current_filename),  (5,470), cv2.FONT_HERSHEY_SIMPLEX, .4, (255), 1)
 
          if show_video == 1:
+            cv2.imshow('pepe', cv2.convertScaleAbs(median_three))
+            cv2.waitKey(100)
             cv2.imshow('pepe', this_thresh)
-            #cv2.imshow('pepe', cv2.convertScaleAbs(median_three))
             cv2.waitKey(100)
          cv2.imwrite(thresh_file, this_thresh)
 
@@ -1549,7 +1555,7 @@ def diff_stills(sdate, cam_num, show_video):
 sdate = sys.argv[1]
 cam_num = sys.argv[2]
 try:
-   show_video = sys.argv[3]
+   show_video = int(sys.argv[3])
 except:
    show_video = 0
   

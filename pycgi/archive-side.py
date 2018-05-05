@@ -12,7 +12,7 @@ from pathlib import Path
 
 #cgi.enable()
 print ("Content-type: text/html\n\n")
-print (" <style> .active { background: #ff0000; } .inactive { background: #ffffff; } </style>")
+print (" <style> .active { background: #ff0000; } .inactive { background: #ffffff; } body { background-color: #000000; color: #ffffff } </style>")
 
 def get_days():
    days = []
@@ -62,7 +62,7 @@ def browse_day(day, cam):
    form = cgi.FieldStorage()
    debug = form.getvalue('debug')
    print("<script src=/pycgi/tag_pic.js></script>")
-   print ("<h2>Browse Day</h2>")
+   print ("<h2>Browse Day " + str(day) + " Cam " + str(cam) + "</h2>")
    report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
    files = get_files_for_day_cam(day, cam)
    file_dict = defaultdict()
@@ -80,22 +80,66 @@ def browse_day(day, cam):
       blend = file.replace(".mp4", "-blend.jpg") 
       diff = file.replace(".mp4", "-diff.jpg") 
       tags = file_dict[file]['tags']
-      print ("<div style='width: 650; padding: 5px; border: 1px solid blue'><div style='width: 640; padding: 5px; border: 1px solid blue'><a href=" + file + " onmouseover=\"document.img" + str(count) + ".src='" + diff + "'\" onmouseout=\"document.img" + str(count) + ".src='" + jpg + "'\"><img name='img" + str(count) + "' src=" + jpg + "></a></div>")
+      print ("<div class='divTable'>")
+      print ("<div class='divTableBody'>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+      print ("<a href=" + file + " onmouseover=\"document.img" + str(count) + ".src='" + diff + "'\" onmouseout=\"document.img" + str(count) + ".src='" + jpg + "'\"><img name='img" + str(count) + "' src=" + jpg + "></a></div>")
+      print ("<div class='divTableCell'>") 
+
+      # start the button area here
+      print ("<div class='divTable'>")
+      print ("<div class='divTableBody'>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
       cls = mark_tag("meteor", tags)
-      print ("<div style='margin: 10px; width=640; padding: 5px; border: 1px solid blue'><input type=button name=tag value=\"meteor\" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
+      print ("<input type=button name=tag value=\"   meteor  \" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
       cls = mark_tag("plane", tags)
-      print ("<input type=button name=tag value=\"plane\" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" class='" + cls + "'>")
+      print ("<input type=button name=tag value=\"    plane   \" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
       cls = mark_tag("sat", tags)
-      print ("<input type=button name=tag value=\"sat\" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" class='" + cls + "'>")
+      print ("<input type=button name=tag value=\"    sat      \" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
       cls = mark_tag("cloud", tags)
-      print ("<input type=button name=tag value=\"cloud\" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
+      print ("<input type=button name=tag value=\"   cloud   \" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
+
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
       cls = mark_tag("notsure", tags)
-      print ("<input type=button name=tag value=\"notsure\" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" class='" + cls + "'>")
+      print ("<input type=button name=tag value=\"  notsure \" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
+
       cls = mark_tag("interesting", tags)
       print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("<div class='divTableRow'>")
+      print ("<div class='divTableCell'>")
+
+
+
       cls = mark_tag("other", tags)
-      print ("<input type=button name=tag value=\"other\" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" class='" + cls + "'>")
-      print ("</div></div></div><P>")
+      print ("<input type=button name=tag value=\"   other    \" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" class='" + cls + "'>")
+      print ("</div></div>")
+      print ("</div>")
+      print ("</div>")
+
+      print ("</div></div></div></div><P>")
       count = count + 1
 
       #print("</td><td>")
@@ -106,6 +150,9 @@ def browse_day(day, cam):
 
 
 def main():
+   print ("<link rel='stylesheet' href='div_table.css'>")
+   print("<script src='/pycgi/big-little-image.js'></script>")
+
    form = cgi.FieldStorage()
    cam_num = form.getvalue('cam_num')
    day = form.getvalue('day')
@@ -116,7 +163,6 @@ def main():
    #day = "2018-05-02"
    #cam_num = 1
 
-   print("<script src='/pycgi/big-little-image.js'></script>")
 
    archive_links = make_archive_links()
 
