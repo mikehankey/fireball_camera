@@ -365,6 +365,7 @@ class ProcessVideo:
                cmd = "./trim_video.py " + self.orig_video_file + " " + str(event[0] - 75) + " " + str( event[-1]+50)
                print (cmd)
                os.system(cmd)
+ 
                self.xs = []
                self.ys = []
                for frame_num in event:
@@ -394,10 +395,11 @@ class ProcessVideo:
          #self.trimVideo(self.motion_frames[0] - 25, self.motion_frames[-1]+50)
          cmd = "./trim_video.py " + self.orig_video_file + " " + str(self.motion_frames[0] - 76) + " " + str( self.motion_frames[-1]+50)
          meteor_yn = 1
+         os.system(cmd)
          self.upload_allsky6(self.orig_video_file, self.trim_file, self.stacked_image_fn,  self.report_fn, self.capture_date, self.cam_num)
          # upload video 
+
          #print (cmd)
-         #os.system(cmd)
 
 
       # copy the time lapse file
