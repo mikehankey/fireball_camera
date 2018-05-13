@@ -9,6 +9,7 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install curl -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
 
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install openssh-server 
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install git
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install build-essential cmake pkg-config
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev
@@ -180,3 +181,6 @@ sudo pip3 install fitsio
 
 # to fix autocomplete in shell 
 # https://stackoverflow.com/questions/23418831/command-line-auto-complete-tab-key-not-work-in-terminal-for-ubuntu
+
+# configure apache
+./ap.sh
