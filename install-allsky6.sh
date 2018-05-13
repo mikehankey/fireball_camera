@@ -184,3 +184,23 @@ sudo pip3 install fitsio
 
 # configure apache
 ./ap.sh
+
+# setup allsky6 config files
+cd ~/fireball_camera
+
+mkdir conf
+cat config-example.txt |grep -v cam_ip > conf/config-1.txt
+echo "cam_ip=192.168.76.71" >> conf/config-1.txt
+cat config-example.txt |grep -v cam_ip > conf/config-2.txt
+echo "cam_ip=192.168.76.72" >> conf/config-2.txt
+cat config-example.txt |grep -v cam_ip > conf/config-3.txt
+echo "cam_ip=192.168.76.73" >> conf/config-3.txt
+cat config-example.txt |grep -v cam_ip > conf/config-4.txt
+echo "cam_ip=192.168.76.74" >> conf/config-4.txt
+cat config-example.txt |grep -v cam_ip > conf/config-5.txt
+echo "cam_ip=192.168.76.75" >> conf/config-5.txt
+cat config-example.txt |grep -v cam_ip > conf/config-6.txt
+echo "cam_ip=192.168.76.76" >> conf/config-6.txt
+rm config.txt
+ln -s conf/config-1.txt ./config.txt
+
