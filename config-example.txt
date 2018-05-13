@@ -1,1 +1,22 @@
-cam_ip=192.168.1.80
+hd=0
+lan_ip=0.0.0.0
+first_name=Mike
+user_id=19
+api_key=QwCsPJKr87y15Sy
+email=mike@castlecomm.com
+cam_geoloc_id=67
+wlan_mac=00-b9-41-79-c7-30
+lan_mac=00:0e:c4:d3:e1:15
+reg_date=2017-11-28 09:48:53
+status=1
+cam_ip=192.168.176.71
+device_id=54
+last_name=Hankey
+cam_pwd=X03ovRrlQeaI5vdG0J5nGl9ucj6k4NOV6bMBY3z+3d0=
+wlan_ip=0.0.0.0
+obs_name=Starlight Farm
+city_name=Monkton
+state_name=MD
+device_lat=39.58909497
+device_lng=-76.58424914
+device_alt=145.00000000
