@@ -32,6 +32,7 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install python3-tk
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install apache2 
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ffmpeg
 
 # install ffmpeg
 git clone https://gist.github.com/e4f713c8cd1a389a5917.git
@@ -118,7 +119,7 @@ python get-pip.py
 
 #PIP INSTALLS
 pip3 install dropbox
-pip3 install ephem
+pip3 install pyephem
 pip3 install fitsio 
 pip3 install matplotlib
 pip3 install netifaces
@@ -142,8 +143,8 @@ pip3 install pycrypto
 sudo apt-get install python3-pil.imagetk
 apt-get install scikit-image
 
-pip3 install scipy
-pip3 uninstall scipy
+#pip3 install scipy
+#pip3 uninstall scipy
 pip3 install python-imaging-tk
 pip3 install pillow
 pip3 install astride
@@ -166,7 +167,16 @@ mkdir /var/www/html/out/false
 mkdir /var/www/html/out/maybe
 mkdir /var/www/html/out/cal
 chown -R ams:ams /var/www
+chown -R ams:ams ~/fireball_camera
 ln -s /home/ams/fireball_camera/pycgi /var/www/html/pycgi
+
+# install sshd
+# reinstall scipy
+sudo pip3 install --ignore-installed scipy
+sudo pip3 install astropy
+sudo pip3 install pycrypto 
+sudo pip3 install astride 
+sudo pip3 install fitsio
 
 # to fix autocomplete in shell 
 # https://stackoverflow.com/questions/23418831/command-line-auto-complete-tab-key-not-work-in-terminal-for-ubuntu
