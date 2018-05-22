@@ -79,6 +79,7 @@ if arg == 'batch':
    #files = glob.glob(video_dir + "/*.mp4")
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
+   cc = 0
    for file in sorted(files):
         
       cur_time = int(time.time())
@@ -120,17 +121,19 @@ if arg == 'batch':
          if sun_status == "day":
             el = file.split("/")
             file_name = el[-1]
-            cmd = "mv " +  file + " /mnt/ams2/SD/proc/daytime/" + file_name
-            print("MIKE: ", cmd)
+            cmd = "mv " +  file + " /mnt/ams2/SD/proc/daytime/" + file_name 
             os.system(cmd)
+           
          else:
-            cmd = "./fast_frames3.py " + file 
-            #cmd = "./PV.py " + file + " x"
-            start_time = int(time.time())
-            os.system(cmd)
-            end_time = int(time.time())
-            elapsed = end_time - start_time
-            print ("PROCESSED FILE IN: ", elapsed)
+            if cc % 1 == 0:
+               cmd = "./fast_frames5.py " + file 
+               os.system(cmd)
+               #time.sleep(15)
+            #else:
+            #   time.sleep(10)
+            #   cmd = "./fast_frames4.py " + file 
+            #   os.system(cmd)
+
          #vid = PV.ProcessVideo()
          #vid.orig_video_file = file
          #vid.show_video = 1
@@ -139,7 +142,7 @@ if arg == 'batch':
          #vid.make_stack = 1 
          #vid.ProcessVideo()
          #vid.StackVideo()
-
+      cc = cc + 1
 elif arg == 'crop':
    file = sys.argv[2]
    vid = PV.ProcessVideo()

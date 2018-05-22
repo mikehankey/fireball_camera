@@ -142,7 +142,7 @@ def purge_SD_proc_dir():
 
 def move_processed_SD_files():
 
-   files = glob.glob(video_dir + "*.jpg")
+   files = glob.glob(video_dir + "*stacked.jpg")
    #print("SUN:", sun_status)
    
    for file in files:
@@ -175,6 +175,7 @@ def move_processed_SD_files():
       else:
          if "-stacked" not in file_name:
             file_name = file_name.replace("stack", "stacked")
+
          cmd = "mv " +  file + " " + date_dir + "/" + file_name
          print(cmd)
          os.system(cmd) 
@@ -182,11 +183,15 @@ def move_processed_SD_files():
          cmd = "mv " +  video_file + " " + date_dir + "/" + video_file_name
          print(cmd)
          os.system(cmd) 
+  
+         wild_card = video_file.replace(".mp4", "*")
+         cmd = "mv " +  wild_card + " " + date_dir + "/" 
+         os.system(cmd) 
    
 
 
 conf = read_config("conf/config-1.txt")
+move_processed_SD_files()
 purge_hd_files()
 purge_sd_files()
-move_processed_SD_files()
 purge_SD_proc_dir()

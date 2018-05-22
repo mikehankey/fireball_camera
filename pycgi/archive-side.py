@@ -23,6 +23,27 @@ def get_days():
          days.append(file)
    return(sorted(days, reverse=True))
 
+def load_scan_file(day, cam_num):
+   #/mnt/ams2/SD/proc/2018-05-10/cam5.txt
+   scan_file = video_dir + "proc/" + day + "/" + "cam" + str(cam_num) + ".txt" 
+   img_dict = dict()
+   file_exists = Path(scan_file)
+   od = 0
+   if (file_exists.is_file()):
+      sfp = open(scan_file, "r")
+      for line in sfp:
+         (img_file, status_desc, hit) = line.split(",") 
+         img_dict[img_file] = {}
+         img_dict[img_file]['status_desc'] = status_desc
+         img_dict[img_file]['hit'] = hit 
+         if int(hit) == 1:
+            od = od + 1
+          
+   else:
+      print ("Scan file does not exists.", scan_file)
+   
+   return(img_dict, od)
+
 def make_archive_links():
    days = get_days()
    d = 0
@@ -35,6 +56,7 @@ def make_archive_links():
          rand_num = random.randint(1,10000)
          master_stack_file = "/mnt/ams2/SD/proc/" + day + "/" + day + "-cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
          master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='bigImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
+         #master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='normalImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
          html = html + "<a href=archive-side.py?cmd=browse_day&day=" + day + "&cam_num=" + str(cn) + ">" + master_stack_img + "</a>" + "\n"
       html = html + "<P>"
       d = d + 1
@@ -64,8 +86,11 @@ def browse_day(day, cam):
    print("<script src=/pycgi/tag_pic.js></script>")
    print ("<h2>Browse Day " + str(day) + " Cam " + str(cam) + "</h2>")
    report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
+   img_dict, od = load_scan_file(day, cam)
    files = get_files_for_day_cam(day, cam)
    file_dict = defaultdict()
+   print(str(len(files)) + " total files <BR>")
+   print(str(od) + " objects auto detected<BR>")
    for file in files:
       file_dict[file] = {}
       file_dict[file]['tags'] = ""
@@ -78,12 +103,22 @@ def browse_day(day, cam):
    for file in files:
       jpg = file.replace(".mp4", "-stacked.jpg") 
       blend = file.replace(".mp4", "-blend.jpg") 
-      diff = file.replace(".mp4", "-diff.jpg") 
+      #diff = file.replace(".mp4", "-diff.jpg") 
+      diff = file.replace(".mp4", "-objects.jpg") 
+      if jpg in img_dict:
+         hit = img_dict[jpg]['hit']   
+         status_desc = img_dict[jpg]['status_desc']   
+      else: 
+         hit = 0 
+         status_desc = "rejected for brightness" 
       tags = file_dict[file]['tags']
       print ("<div class='divTable'>")
       print ("<div class='divTableBody'>")
       print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+      if int(hit) == 1:
+         print ("<div class='divTableCellDetect'>")
+      else:
+         print ("<div class='divTableCell'>")
       print ("<a href=" + file + " onmouseover=\"document.img" + str(count) + ".src='" + diff + "'\" onmouseout=\"document.img" + str(count) + ".src='" + jpg + "'\"><img name='img" + str(count) + "' src=" + jpg + "></a></div>")
       print ("<div class='divTableCell'>") 
 
@@ -113,7 +148,6 @@ def browse_day(day, cam):
 
       cls = mark_tag("cloud", tags)
       print ("<input type=button name=tag value=\"   cloud   \" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
-
       print ("</div></div>")
       print ("<div class='divTableRow'>")
       print ("<div class='divTableCell'>")
@@ -139,6 +173,7 @@ def browse_day(day, cam):
       print ("</div>")
       print ("</div>")
 
+      print (str(hit) + "-" + status_desc)
       print ("</div></div></div></div><P>")
       count = count + 1
 
@@ -150,7 +185,8 @@ def browse_day(day, cam):
 
 
 def main():
-   print ("<link rel='stylesheet' href='div_table.css'>")
+   rand_num = random.randint(1,10000)
+   print ("<link rel='stylesheet' href='div_table.css?" + str(rand_num) + "'>")
    print("<script src='/pycgi/big-little-image.js'></script>")
 
    form = cgi.FieldStorage()
@@ -160,8 +196,8 @@ def main():
    cmd = form.getvalue('cmd')
    # for testn
    #cmd = "browse_day"
-   #day = "2018-05-02"
-   #cam_num = 1
+   #day = "2018-05-10"
+   #cam_num = 5
 
 
    archive_links = make_archive_links()

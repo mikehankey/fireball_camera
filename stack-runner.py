@@ -7,7 +7,7 @@ import os
 proc_dir = "/mnt/ams2/SD/proc/*"
 
 def check_running():
-   cmd = "ps -aux |grep \"stack-runner.py\" | grep -v grep | wc -l"
+   cmd = "ps -aux |grep \"stack-runner2.py\" | grep -v grep | wc -l"
    print(cmd)
    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    output = int(output.replace("\n", ""))
@@ -24,21 +24,30 @@ def count_images(check_dir):
    stacks = glob.glob(check_dir + "/*stacked.jpg")
    print ("Total Stacks:", len(stacks))
 
-   blends = glob.glob(check_dir + "/*blend.jpg")
-   print ("Total Blends:", len(blends))
+   #blends = glob.glob(check_dir + "/*blend.jpg")
+   #print ("Total Blends:", len(blends))
 
-   diffs = glob.glob(check_dir + "/*diff.jpg")
-   print ("Total Diffs:", len(diffs))
+   #diffs = glob.glob(check_dir + "/*diff.jpg")
+   #print ("Total Diffs:", len(diffs))
 
-   if len(blends) != len(stacks):
+   objs = glob.glob(check_dir + "/*ojects.jpg")
+   print ("Total Objs:", len(objs))
+
+   #if len(blends) != len(stacks):
+   #   for i in range(1,7):
+   #      job = "./master-stacks.py " + str(proc_date) + " " + str(i)
+         #jobs.append(job)
+
+   #if len(diffs) != len(stacks):
+   #   for i in range(1,7):
+   #      job = "./diff-stacks.py " + proc_date + " " + str(i)
+         #jobs.append(job)
+
+   if len(objs) != len(stacks):
       for i in range(1,7):
-         job = "./master-stacks.py " + str(proc_date) + " " + str(i)
+         job = "./examine-still.py " + "/mnt/ams2/SD/proc/" + proc_date + "/ " + str(i)
          jobs.append(job)
 
-   if len(diffs) != len(stacks):
-      for i in range(1,7):
-         job = "./diff-stacks.py " + proc_date + " " + str(i)
-         jobs.append(job)
   
    return(jobs) 
 

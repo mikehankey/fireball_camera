@@ -9,6 +9,7 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install curl -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
 
+apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ntpdate
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install openssh-server 
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install git
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install build-essential cmake pkg-config
