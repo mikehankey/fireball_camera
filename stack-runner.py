@@ -7,10 +7,11 @@ import os
 proc_dir = "/mnt/ams2/SD/proc/*"
 
 def check_running():
-   cmd = "ps -aux |grep \"stack-runner2.py\" | grep -v grep | wc -l"
+   cmd = "ps -aux |grep \"stack-runner.py\" | grep -v grep | wc -l"
    print(cmd)
    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    output = int(output.replace("\n", ""))
+   print ("Running: ", output)
    return(int(output))
 
 
@@ -53,7 +54,7 @@ def count_images(check_dir):
 
 def main():
    running = check_running()
-   if running > 2:
+   if running >= 2:
       print("Already running. Abort.", running)
       exit()
    all_jobs = []
