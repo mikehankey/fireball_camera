@@ -54,9 +54,10 @@ def make_archive_links():
          #if cn != 1:
          #   html = html + " - "
          rand_num = random.randint(1,10000)
-         master_stack_file = "/mnt/ams2/SD/proc/" + day + "/" + day + "-cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
-         master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='bigImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
-         #master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='normalImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
+         #master_stack_file = "/mnt/ams2/SD/proc/" + day + "/" + day + "-cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
+         master_stack_file = "/mnt/ams2/SD/proc/" + day + "/"  + "cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
+         #master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='bigImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
+         master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='normalImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
          html = html + "<a href=archive-side.py?cmd=browse_day&day=" + day + "&cam_num=" + str(cn) + ">" + master_stack_img + "</a>" + "\n"
       html = html + "<P>"
       d = d + 1
