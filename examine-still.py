@@ -12,7 +12,7 @@ from PIL import Image, ImageChops
 dir = sys.argv[1]
 cam_num = sys.argv[2]
 DEBUG = 1
-cv2.namedWindow('pepe')
+#cv2.namedWindow('pepe')
 
 def median_mask(images, img, count):
    median_array = [] 
@@ -424,7 +424,7 @@ def examine_still(filename, img, last_cnts, past_clusters):
 
 
 
-   cv2.imshow('pepe', img)
+   #cv2.imshow('pepe', img)
    cv2.imwrite(obj_file, img)
    fp = open(txt_file, "w")
    fp.write("cnts=" + str(cnts))
