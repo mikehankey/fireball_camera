@@ -54,7 +54,7 @@ def count_images(check_dir):
 
 def main():
    running = check_running()
-   if running >= 2:
+   if running >= 3:
       print("Already running. Abort.", running)
       exit()
    all_jobs = []
