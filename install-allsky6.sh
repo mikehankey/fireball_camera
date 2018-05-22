@@ -9,7 +9,6 @@ apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-pa
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install curl -y
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install lynx -y
 
-apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install ntpdate
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install openssh-server 
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install git
 apt-get --yes --allow-downgrades --allow-remove-essential --allow-change-held-packages install build-essential cmake pkg-config
@@ -205,3 +204,5 @@ echo "cam_ip=192.168.76.76" >> conf/config-6.txt
 rm config.txt
 ln -s conf/config-1.txt ./config.txt
 
+# /etc/network/interfaces config
+# dhcp config
