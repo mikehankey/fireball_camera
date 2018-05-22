@@ -248,6 +248,7 @@ def examine_still(filename, img, last_cnts, past_clusters):
    av = np.average(orig_img)
    md = np.median(orig_img)
    if av > 50:
+      cv2.imwrite(obj_file, orig_img)
       return([], [], 0, "avg pixels are too bright.", orig_img)
 
 
@@ -463,5 +464,8 @@ def preload_images(stack_files):
       if av < 50:
          images.append(img)
          new_stack_files.append(filename)
+      else:
+         obj_file = filename.replace("stacked.jpg", "objects.jpg")
+         cv2.imwrite(obj_file, img)
    return(new_stack_files, images)      
    

@@ -31,7 +31,7 @@ def count_images(check_dir):
    #diffs = glob.glob(check_dir + "/*diff.jpg")
    #print ("Total Diffs:", len(diffs))
 
-   objs = glob.glob(check_dir + "/*ojects.jpg")
+   objs = glob.glob(check_dir + "/*objects.jpg")
    print ("Total Objs:", len(objs))
 
    #if len(blends) != len(stacks):
