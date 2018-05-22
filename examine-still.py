@@ -24,19 +24,32 @@ stack_files = new_stack_files
 master_stack = None
 rpt_file = dir + "/cam" + str(cam_num) + ".txt"
 sfp = open(rpt_file, "w")
-c = 0
+count = 0
 for file in stack_files:
+   c= count
    print(file)
-   img = examinelib.median_mask(images, images[c], c)
+   median_array = []
+   if count < 11:
+      for i in range(count + 1, count + 11):
+         median_array.append(images[i])
+   elif count > len(images) - 11:
+      for i in range(count-11, count -1):
+         median_array.append(images[i])
+   else:
+      for i in range(count-5, count + 6):
+         median_array.append(images[i])
+
+   img = examinelib.median_mask(median_array, images[c], c)
    last_cnts, cls, hit, status_desc, orig_img = examinelib.examine_still(file, img, last_cnts, past_clusters)
    past_clusters.append(cls)
+   print(len(past_clusters))
    hits = hits + hit
    print ("STATUS:", status_desc)
    if hit == 1:
       master_stack = examinelib.stack_stack(orig_img, master_stack)
    data = file + "," + status_desc + "," + str(hit) + "\n"
    sfp.write(data)
-   c = c + 1
+   count = count + 1
 if master_stack is not None:
    print("saving", master_stack_file)
    master_stack.save(master_stack_file, "JPEG")

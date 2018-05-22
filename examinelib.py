@@ -8,17 +8,17 @@ from collections import deque
 from PIL import Image, ImageChops
 
 
-def median_mask(images, img, count):
-   median_array = [] 
-   if count < 11:
-      for i in range(count + 1, count + 11):
-         median_array.append(images[i])
-   elif count > len(images) - 11:
-      for i in range(count-11, count -1):
-         median_array.append(images[i])
-   else:
-      for i in range(count-5, count + 6):
-         median_array.append(images[i])
+def median_mask(median_array, img, count):
+#   median_array = [] 
+#   if count < 11:
+#      for i in range(count + 1, count + 11):
+#         median_array.append(images[i])
+   #elif count > len(images) - 11:
+#      for i in range(count-11, count -1):
+#         median_array.append(images[i])
+#   else:
+#      for i in range(count-5, count + 6):
+#         median_array.append(images[i])
 
    median_image = np.median(np.array(median_array), axis=0)
       
@@ -233,7 +233,7 @@ def find_best_thresh(img, tval):
       (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
       tval = tval - 2 
       tcnt = len(cnts)
-      print("TVAL:", tval)
+      #print("TVAL:", tval)
    return(tval)
 
 
@@ -251,31 +251,35 @@ def examine_still(filename, img, last_cnts, past_clusters):
       return([], [], 0, "avg pixels are too bright.", orig_img)
 
 
-   if len(last_cnts) > 0:
-      for (i,c) in enumerate(last_cnts):
-         x,y,w,h = cv2.boundingRect(last_cnts[i])
-         img[y-5:y+h+5, x-5:x+w+5] = [av-5]
+   #if len(last_cnts) > 0:
+   #   for (i,c) in enumerate(last_cnts):
+   #      x,y,w,h = cv2.boundingRect(last_cnts[i])
+   #      img[y-5:y+h+5, x-5:x+w+5] = [av-5]
 
    img[440:480, 0:640] = [av]
 
    tval = find_best_thresh(img, -10)
 
-   thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,tval)
-   (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-   for (i,c) in enumerate(cnts):
-      x,y,w,h = cv2.boundingRect(cnts[i])
-      if w > 10 or h > 10:
-         img = grid_big_cnt(img, x, y, w,h)
-
-   thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,tval)
-   (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
    points = []
    real_cnts = 0
+   thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,tval)
+   (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   big_cnt = 0
+   print ("CNTS: ", len(cnts))
+   if len(cnts) > 0 and len(cnts) < 100:
+      for (i,c) in enumerate(cnts):
+         x,y,w,h = cv2.boundingRect(cnts[i])
+         if w > 10 or h > 10:
+            img = grid_big_cnt(img, x, y, w,h)
+            big_cnt = 1
+
+   if big_cnt == 1:
+      thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,tval)
+      (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
    for (i,c) in enumerate(cnts):
       x,y,w,h = cv2.boundingRect(cnts[i])
+
       if w > 2 or h > 2:
-         #cv2.rectangle(img,(x,y),(x+w,y+h),(255,255,255),1)
          cv2.circle(img, (x,y), 5, (125), 1)
          real_cnts = real_cnts + 1
          points.append((x,y))
@@ -411,7 +415,7 @@ def examine_still(filename, img, last_cnts, past_clusters):
       status_desc = "rejected for having SNR below 10%:" + str(noise)
    if real_cnts < 3:
       status = 0
-      status_desc = "rejected for having less than 3 points"
+      status_desc = "rejected for having less than 3 points:" + str(real_cnts)
 
 
 
@@ -426,7 +430,7 @@ def examine_still(filename, img, last_cnts, past_clusters):
    fp.write("hit=" + str(status))
    fp.close()
    if status == 1:
-      cv2.waitKey(10)
+      #cv2.waitKey(10)
       return(cnts, clusters, 1, status_desc, orig_img)
       #while(1):
       #   k = cv2.waitKey(33)
@@ -437,7 +441,7 @@ def examine_still(filename, img, last_cnts, past_clusters):
       #      exit()
    else:
       print("REJECTED: ", status_desc)
-      cv2.waitKey(10)
+      #cv2.waitKey(10)
       return(cnts, clusters, 0, status_desc, orig_img)
 
 
