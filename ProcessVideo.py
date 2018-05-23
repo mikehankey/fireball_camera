@@ -1196,9 +1196,9 @@ class ProcessVideo:
          print("STRAIGHT:", self.straight_line) 
 
          self.meteor_yn = "Y"
-         if 1 <= len(straight_cnts) <= 5:
+         if 1 <= len(straight_cnts) <= 75:
             for st_cnt_gp in straight_cnts:
-               if self.straight_line == 1 and self.sun_status != 'day' and len(st_cnt_gp) < 75 and len(self.motion_frames) < 10:
+               if self.straight_line == 1 and self.sun_status != 'day' and len(st_cnt_gp) < 200 :
                   self.meteor_yn = "Y"
                   trim_start = st_cnt_gp[0][0] - 76
                   trim_end = st_cnt_gp[-1][0] + 76
@@ -1210,6 +1210,10 @@ class ProcessVideo:
                   cmd = "./trim_video.py " + self.orig_video_file + " " + str(trim_start) + " " + str(trim_end)
                   os.system(cmd)
                   self.trim_file = self.trim_file.replace("-trim.mp4", "-trim-" + str(trim_start) + ".avi")
+         else:
+            print ("FAILED TO TRIM", len(straight_cnts), straight_cnts)
+            #exit()
+         
      
  
       #print("STACK", self.stacked_image)          
