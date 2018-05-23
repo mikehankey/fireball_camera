@@ -98,9 +98,14 @@ def process_tag_file(tag_file):
             cmd = "./PV.py " + video_file + " " + cam_num       
 #/mnt/ams2/SD/proc/2018-05-02/2018-05-02_09-10-02-cam4-report.txt
             rpt_file = file.replace(".mp4", "-report.txt")
+            el = rpt_file.split("/")
+            nrpt = el[-1]
+            rpt_file = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday + "/" + nrpt
             file_exists = Path(rpt_file)
             if (file_exists.is_file()):
                print ("already did this.")
+               #print(cmd)
+               #os.system(cmd)
             else:
                print (act, tag, file, cam_num, date_str)
                print(cmd)

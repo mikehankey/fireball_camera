@@ -210,7 +210,9 @@ class ProcessVideo:
       
 
    def is_straight(self, points):
+      
       points = np.unique(np.array(points), axis=0)
+      points =  sorted(points, key=lambda x: x[0])
       last_angle = None
       total = len(points)
       #print ("TP", total)
@@ -220,12 +222,11 @@ class ProcessVideo:
       angle_group = []
       print ("CHECKING IF POINTS IN THIS GROUP ARE STRAIGHT:", points) 
       for i in range(0,total-1):
-         #print(i)
-         #angle = self.find_angle(points[0][0], points[0][1], points[i][0], points[i][1])
          angle = self.find_angle(points[i][0], points[i][1], points[i+1][0], points[i+1][1])
-         print ("ANGLE:", points[i][0], points[i][1], points[i+1][0], points[i+1][1], angle)
+         #print ("ANGLE:", points[i][0], points[i][1], points[i+1][0], points[i+1][1], angle)
+         print ("ANGLE:", i, angle, last_angle)
          if last_angle is not None:
-            if (last_angle - 10) < angle < (last_angle + 10):
+            if (last_angle - 15) < angle < (last_angle + 15):
                passed = passed + 1
                angle_group.append(angle)
                print("passed", angle, last_angle)
@@ -969,7 +970,7 @@ class ProcessVideo:
                      if w > 2 and h > 2 and frame_count > 8 and (x > 1 or y > 1):
                         real_cnts.append([x,y,w,h])
                print ("REAL CNTS: ", len(real_cnts))
-               if len(real_cnts) >= 1 and frame_count > 60:
+               if len(real_cnts) >= 1 and frame_count > 20:
                   #self.motion_cnts.append([frame_count,len(cnts),x,y,w,h])
                   
                   cnt_group.append([frame_count,len(cnts),x,y,w,h])
