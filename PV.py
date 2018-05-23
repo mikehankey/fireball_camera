@@ -159,6 +159,6 @@ else:
    #vid.find_HD_video(608,711)
    #exit()
    vid.detect_motion = 1 
-   vid.show_video = 1 
+   vid.show_video = 0 
    vid.make_stack = 1 
    vid.ProcessVideo()
