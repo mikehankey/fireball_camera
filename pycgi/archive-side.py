@@ -84,14 +84,26 @@ def mark_tag(word, tags):
 def browse_day(day, cam):
    form = cgi.FieldStorage()
    debug = form.getvalue('debug')
+   detect_only = form.getvalue('detect_only')
+   if detect_only is None:
+      detect_only = 0
+   else:
+      detect_only = int(detect_only)
    print("<script src=/pycgi/tag_pic.js></script>")
-   print ("<h2>Browse Day " + str(day) + " Cam " + str(cam) + "</h2>")
+   print ("<h2><a href=archive-side.py>Home</a> -> Browse Day " + str(day) + " Cam " + str(cam) + "</h2>")
    report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
    img_dict, od = load_scan_file(day, cam)
    files = get_files_for_day_cam(day, cam)
    file_dict = defaultdict()
    print(str(len(files)) + " total files <BR>")
    print(str(od) + " objects auto detected<BR>")
+   print ("<form action=archive-side.py>")
+   print ("<input type=submit value='Show Detections Only'>")
+   print ("<input type=hidden name=day value='" + day + "'>")
+   print ("<input type=hidden name=cam_num value='" + str(cam) + "'>")
+   print ("<input type=hidden name=detect_only value='1'>")
+   print ("<input type=hidden name=cmd value='browse_day'>")
+   print ("</form>")
    for file in files:
       file_dict[file] = {}
       file_dict[file]['tags'] = ""
@@ -107,82 +119,81 @@ def browse_day(day, cam):
       #diff = file.replace(".mp4", "-diff.jpg") 
       diff = file.replace(".mp4", "-objects.jpg") 
       if jpg in img_dict:
-         hit = img_dict[jpg]['hit']   
+         hit = int(img_dict[jpg]['hit'])
          status_desc = img_dict[jpg]['status_desc']   
       else: 
          hit = 0 
          status_desc = "rejected for brightness" 
-      tags = file_dict[file]['tags']
-      print ("<div class='divTable'>")
-      print ("<div class='divTableBody'>")
-      print ("<div class='divTableRow'>")
-      if int(hit) == 1:
-         print ("<div class='divTableCellDetect'>")
-      else:
+      if (detect_only == 1 and hit == 1) or (detect_only == 0):
+         tags = file_dict[file]['tags']
+         print ("<div class='divTable'>")
+         print ("<div class='divTableBody'>")
+         print ("<div class='divTableRow'>")
+         if int(hit) == 1:
+            print ("<div class='divTableCellDetect'>")
+         else:
+            print ("<div class='divTableCell'>")
+         print ("<a href=" + file + " onmouseover=\"document.img" + str(count) + ".src='" + diff + "'\" onmouseout=\"document.img" + str(count) + ".src='" + jpg + "'\"><img name='img" + str(count) + "' src=" + jpg + "></a></div>")
+         print ("<div class='divTableCell'>") 
+
+         # start the button area here
+         print ("<div class='divTable'>")
+         print ("<div class='divTableBody'>")
+         print ("<div class='divTableRow'>")
          print ("<div class='divTableCell'>")
-      print ("<a href=" + file + " onmouseover=\"document.img" + str(count) + ".src='" + diff + "'\" onmouseout=\"document.img" + str(count) + ".src='" + jpg + "'\"><img name='img" + str(count) + "' src=" + jpg + "></a></div>")
-      print ("<div class='divTableCell'>") 
 
-      # start the button area here
-      print ("<div class='divTable'>")
-      print ("<div class='divTableBody'>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("meteor", tags)
+         print ("<input type=button name=tag value=\"   meteor  \" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
-      cls = mark_tag("meteor", tags)
-      print ("<input type=button name=tag value=\"   meteor  \" onclick=\"javascript:tag_pic('" + file + "', 'meteor', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("plane", tags)
+         print ("<input type=button name=tag value=\"    plane   \" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
-      cls = mark_tag("plane", tags)
-      print ("<input type=button name=tag value=\"    plane   \" onclick=\"javascript:tag_pic('" + file + "', 'plane', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("sat", tags)
+         print ("<input type=button name=tag value=\"    sat      \" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
-      cls = mark_tag("sat", tags)
-      print ("<input type=button name=tag value=\"    sat      \" onclick=\"javascript:tag_pic('" + file + "', 'sat', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("cloud", tags)
+         print ("<input type=button name=tag value=\"   cloud   \" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
-      cls = mark_tag("cloud", tags)
-      print ("<input type=button name=tag value=\"   cloud   \" onclick=\"javascript:tag_pic('" + file + "', 'cloud', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
-
-      cls = mark_tag("notsure", tags)
-      print ("<input type=button name=tag value=\"  notsure \" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("notsure", tags)
+         print ("<input type=button name=tag value=\"  notsure \" onclick=\"javascript:tag_pic('" + file + "', 'notsure', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
 
-      cls = mark_tag("interesting", tags)
-      print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("<div class='divTableRow'>")
-      print ("<div class='divTableCell'>")
+         cls = mark_tag("interesting", tags)
+         print ("<input type=button name=tag value=\"interesting\" onclick=\"javascript:tag_pic('" + file + "', 'interesting', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("<div class='divTableRow'>")
+         print ("<div class='divTableCell'>")
 
 
 
-      cls = mark_tag("other", tags)
-      print ("<input type=button name=tag value=\"   other    \" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" class='" + cls + "'>")
-      print ("</div></div>")
-      print ("</div>")
-      print ("</div>")
+         cls = mark_tag("other", tags)
+         print ("<input type=button name=tag value=\"   other    \" onclick=\"javascript:tag_pic('" + file + "', 'other', event);\" class='" + cls + "'>")
+         print ("</div></div>")
+         print ("</div>")
+         print ("</div>")
 
-      print (str(hit) + "-" + status_desc)
-      print ("</div></div></div></div><P>")
-      count = count + 1
+         print (str(hit) + "-" + status_desc)
+         print ("</div></div></div></div><P>")
+         count = count + 1
 
-      #print("</td><td>")
-      if debug is not None:
-         print("<img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
-      #else:
-      #   print("</td><td></td></tr></table> ")
+         #print("</td><td>")
+         if debug is not None:
+            print("<img src=" + blend + "></a><BR></td><td><img src=" + diff + "></a><BR> </td></tr></table> ")
 
 
 def main():
