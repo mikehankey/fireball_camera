@@ -6,6 +6,7 @@ import sys
 import datetime
 import time
 import settings
+import platform
 
 from amscommon import read_config
 
@@ -21,7 +22,8 @@ cam_num = sys.argv[6]
 
 config = read_config()
 
-station_id = config['station_id']
+station_id = platform.node()
+#config['station_id']
 lat = config['device_lat']
 lon = config['device_lng']
 alt = config['device_alt']
