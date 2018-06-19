@@ -37,7 +37,9 @@ def view(file, show):
     stack_frame = np.array(frame,dtype=np.float32)
     im = np.array(frame,dtype=np.float32)
     final_image = Image.fromarray(frame)
+    median_array = []
     #cv2.namedWindow('pepe')
+    med_on = 0
     while True:
         _ , frame = cap.read()
         nice_frame = frame
@@ -46,55 +48,61 @@ def view(file, show):
             break
         else:
 
-            save_image = Image.fromarray(nice_frame)
-            #save_file = "-" + str(count) + ".jpg"
-            #save_file = file.replace(".avi", str(count) + ".jpg")
-            el = file.split("/")
-            temp = el[-1]
-            temp2 = str(1000+count) + "-" + temp.replace(".avi", ".jpg")
-            save_file = file.replace(temp, temp2)
-            print (save_file)
-            save_image.save(save_file, "JPEG")
+            if med_on == 0:
+               frame_img = Image.fromarray(frame)
+               final_image=ImageChops.lighter(final_image,frame_img)
 
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-            frame_img = Image.fromarray(frame)
-            final_image=ImageChops.lighter(final_image,frame_img)
-            #im += np.array(frame_img, dtype=np.float32)
+            if count % 10 != 0 or count == 0:
+               print ("median work")
+               median_array.append(frame)
+            else:
+                median_image = np.median(np.array(median_array), axis=0)
+                median = np.uint8(median_image)
 
-            alpha = .25
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frame = cv2.GaussianBlur(frame, (21, 21), 0)
-            if last_frame is None:
-               last_frame = nice_frame
-            if image_acc is None:
-               image_acc = np.empty(np.shape(frame))
-            image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
-            hello = cv2.accumulateWeighted(frame, image_acc, alpha)
-            _, threshold = cv2.threshold(image_diff, 10, 255, cv2.THRESH_BINARY)
-            thresh= cv2.dilate(threshold, None , iterations=2)
-            (_, cnts, hierarchy) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            if count < 20: 
-               cnts is None
-               hierarchy is None
-            data = str(count) + "|"
-            if len(cnts) > 0 :
-               hierarchy = hierarchy[0]
-               for comp in zip(cnts,hierarchy):
-                   cnt = comp[0]
-                   ch = comp[1]
-                   x,y,w,h = cv2.boundingRect(cnt)
-                   cv2.rectangle(nice_frame,(x,y),(x+w,y+h),(0,255,0),2)
+                save_image = Image.fromarray(nice_frame)
+                el = file.split("/")
+                temp = el[-1]
+                temp2 = str(1000+count) + "-" + temp.replace(".avi", ".jpg")
+                save_file = file.replace(temp, temp2)
+                save_image.save(save_file, "JPEG")
+
+                frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+                frame_img = Image.fromarray(median)
+                final_image=ImageChops.lighter(final_image,frame_img)
+                #im += np.array(frame_img, dtype=np.float32)
+
+                alpha = .25
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                frame = cv2.GaussianBlur(frame, (21, 21), 0)
+                if last_frame is None:
+                   last_frame = nice_frame
+                if image_acc is None:
+                   image_acc = np.empty(np.shape(frame))
+                image_diff = cv2.absdiff(image_acc.astype(frame.dtype), frame,)
+                hello = cv2.accumulateWeighted(frame, image_acc, alpha)
+                _, threshold = cv2.threshold(image_diff, 10, 255, cv2.THRESH_BINARY)
+                thresh= cv2.dilate(threshold, None , iterations=2 )
+                (_, cnts, hierarchy) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if count < 20: 
+                    cnts is None
+                    hierarchy is None
+                data = str(count) + "|"
+                if len(cnts) > 0 :
+                    hierarchy = hierarchy[0]
+                    for comp in zip(cnts,hierarchy):
+                        cnt = comp[0]
+                        ch = comp[1]
+                        x,y,w,h = cv2.boundingRect(cnt)
+                        cv2.rectangle(nice_frame,(x,y),(x+w,y+h),(0,255,0),2)
 
  
-                   print (ch)
-                   if ch[2] < 0:
-                       print (ch[2])
-                       cv2.drawContours(nice_frame, [cnt], 0, (255,0,255), 3)
-                   elif ch[3] < 0:
-                       cv2.drawContours(nice_frame, [cnt], 0, (0,255,0), 3)
-               print (len(cnts), " contours found.", hierarchy[0])
-               #cv2.imshow("pepe", nice_frame)
-               #cv2.waitKey(1)
+                    print (ch)
+                    if ch[2] < 0:
+                        print (ch[2])
+                        cv2.drawContours(nice_frame, [cnt], 0, (255,0,255), 3)
+                    elif ch[3] < 0:
+                        cv2.drawContours(nice_frame, [cnt], 0, (0,255,0), 3)
+                    print (len(cnts), " contours found.", hierarchy[0])
 
 
 
