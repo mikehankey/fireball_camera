@@ -176,68 +176,59 @@ def get_calibration_frames(config_file, cam_num):
 
 
    # set brightness
-   #set_setting(config, "Brightness", settings['Brightness'])
+   set_setting(config, "Brightness", settings['Brightness'])
    #print ("setting brightness to ", settings['Brightness'])
    # set BLC
-   #set_special(config, "1017", settings['BLC'])
+   set_special(config, "1017", settings['BLC'])
    #print ("setting BLC to ", settings['BLC'])
  
    # set Gamma
-   #set_setting(config, "Gamma", config['Gamma'])
+   set_setting(config, "Gamma", settings['Gamma'])
    #print ("setting Gamma to ", settings['Gamma'])
 
    # set contrast
-   #set_setting(config, "Contrast", settings['Contrast'])
-   #time.sleep(2)
+   set_setting(config, "Contrast", settings['Contrast'])
+   time.sleep(2)
    #print ("setting Contrast to ", settings['Contrast'])
 
    # sense up
    r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
    time.sleep(3)
-   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1")
+   cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0")
 
    #read_noise(config_file, cam_num)
 
    cv2.setUseOptimized(True)
    #lock = open("/home/pi/fireball_camera/calibrate.txt", "w")
    time_start = time.time()
-   time.sleep(3)
+   time.sleep(15)
 
-   _ , frame = cap.read()
-   frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
-   final_image = Image.fromarray(frame)
-   frame_img = Image.fromarray(frame)
-   cv2.imwrite("/var/www/html/out/temp_upload/cal1.jpg", frame)
-   final_image=ImageChops.lighter(final_image,frame_img)
-   time.sleep(1)
 
-   _ , frame = cap.read()
-   frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
-   frame_img = Image.fromarray(frame)
-   final_image=ImageChops.lighter(final_image,frame_img)
-   cv2.imwrite("/var/www/html/out/temp_upload/cal2.jpg", frame)
-   time.sleep(1)
 
-   _ , frame = cap.read()
-   frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
-   frame_img = Image.fromarray(frame)
-   final_image=ImageChops.lighter(final_image,frame_img)
-   cv2.imwrite("/var/www/html/out/temp_upload/cal3.jpg", frame)
-
-   for i in range(0, 30, 1):
+   med_arr = []
+   final_image = None 
+   for i in range(0, 100, 1):
       _ , frame = cap.read()
-      frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
-      frame_img = Image.fromarray(frame)
-      final_image=ImageChops.lighter(final_image,frame_img)
+      #frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
+      if i % 15 != 0 or i == 0 :
+         med_arr.append(frame)
+         print ("Getting frame.")
+      else:
+         median_image = np.median(np.array(med_arr), axis=0)
+         median = np.uint8(median_image)
 
-   final_image = Image.fromarray(frame)
+         frame_img = Image.fromarray(median)
+         if final_image is None:
+            final_image = frame_img
+         final_image=ImageChops.lighter(final_image,frame_img)
+
   
 
    #out_file = "/var/www/html/out/temp_upload/stack.jpg"
 
    frame_time = time.time()
    format_time = datetime.datetime.fromtimestamp(int(frame_time)).strftime("%Y%m%d%H%M%S")
-   out_file = "{}/{}-{}.jpg".format("/var/www/html/out/cal", format_time, cam_num)
+   out_file = "{}/{}-{}.jpg".format("/mnt/ams2/cal", format_time, cam_num)
    final_image.save(out_file, "JPEG")
 
    time.sleep(10)
