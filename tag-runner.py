@@ -100,8 +100,10 @@ def process_tag_file(tag_file):
             rpt_file = file.replace(".mp4", "-report.txt")
             el = rpt_file.split("/")
             nrpt = el[-1]
-            rpt_file = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday + "/" + nrpt
+            rpt_file = "/mnt/ams2/SD/proc/" + xyear + "-" + xmonth + "-" + xday + "/" + nrpt
             file_exists = Path(rpt_file)
+
+
             if (file_exists.is_file()):
                print ("already did this.")
                #print(cmd)

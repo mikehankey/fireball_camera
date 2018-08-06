@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Browse Calibration Files</title>
+</head>
+<body>
+  <h1>Calibration Files</h1>
+Select camera to browse:
+<a href="javascript:load_list(1)">Camera 1</a> -
+<a href="javascript:load_list(2)">Camera 2</a> -
+<a href="javascript:load_list(3)">Camera 3</a> -
+<a href="javascript:load_list(4)">Camera 4</a> -
+<a href="javascript:load_list(5)">Camera 5</a> -
+<a href="javascript:load_list(6)">Camera 6</a> -
+<br>
+or 
+<a href="javascript:load_list()">View All</a>
+
+<P>
+Instructions: 
+<ul>
+<li>Delete the calibration photos that have less than 10 visible stars in them. </li>
+<li>Press 'Solve' to plate-solve images with good star fields. 
+</p>
+</ul>
+
+  <ul id="file_list"></ul>
+</body>
+</html>
+
+
+<script>
+  function del_pic(id) {
+     var myid = document.getElementById(id);
+     myid.parentNode.removeChild(myid);
+  }
+  function createNode(element) {
+    return document.createElement(element);
+  }
+
+  function append(parent, el) {
+    return parent.appendChild(el);
+  }
+
+  function load_list(cam) {
+  
+    if (!cam) {
+       cam = "all"
+    }
+
+  const ul = document.getElementById('file_list');
+  if (document.getElementById('file_list').getElementsByTagName('li').length >= 1) 
+  {
+     while(ul.firstChild) ul.removeChild(ul.firstChild);
+  }
+
+  const url = '/pycgi/get-cal-files.py?cam=' + cam ;
+  fetch(url)
+  .then((resp) => resp.json())
+  .then(function(data) {
+    let calfiles = data.results;
+    return calfiles.map(function(calfiles) {
+      let li = createNode('li'),
+          img = createNode('img'),
+          span = createNode('span');
+      img.src = calfiles.cfile;
+      li.id = calfiles.cfile;
+      //alert(calfiles.cfile)
+      span.innerHTML = "<br><a onclick=\"del_pic('" + `${calfiles.cfile}` + "')\" href=\"#\">Delete " + `${calfiles.cfile}` + "</A>";
+      append(li, img);
+      append(li, span);
+      append(ul, li);
+    })
+  })
+  .catch(function(error) {
+    alert(error)
+    console.log(JSON.stringify(error));
+  });
+  }
+</script>
+

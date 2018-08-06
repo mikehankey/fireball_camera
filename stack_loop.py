@@ -61,71 +61,66 @@ def stack_loop(stack_queue, file, thread_num, start_time):
    motion_events = []
    motion_frames = []
    stop_motion = 0
+   motion_detect_on = 0 
    while frame != 'STOP':
       frame = stack_queue.get()
 
       if frame is not None and frame != 'STOP' and frame != 'SKIP':
 
          # motion dection here....
-         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-         gray_frame[440:480, 0:640] = [0]
-         if image_acc is None:
-            image_acc = np.empty(np.shape(gray_frame))
-         hello = cv2.accumulateWeighted(gray_frame.copy(), image_acc, .5)
-         image_diff = cv2.absdiff(image_acc.astype(gray_frame.dtype), gray_frame,)
-         av = np.average(image_diff)
-         mx = np.max(image_diff)
-         mx_roll = mx_roll + mx
-         if cc > 0:
-            mx_avg = mx_roll / ((cc + 1) - ((thread_num - 1 ) * 300))
-            mx_avg = round(mx_avg, 2)
-         else:
-            mx_avg = mx_roll
-         av = round(av, 2)
-         if mx > (mx_avg * 2):
-            thresh = cv2.adaptiveThreshold(image_diff,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,-20)
-            (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-         else:
-            cnts = []
-         rpt.write(str(cc) + "\t" + str(av) + "\t" + str(mx_roll) + "\t" + str(mx_avg) + "\t" + str(mx) + "\t" + str(len(cnts)) + "\n")
-         if len(cnts) > 0:
-            if motion_on == 1:
-               cons_motion = cons_motion + 1
-               motion_frames.append(cc)
+         if motion_detect_on == 1:
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray_frame[440:480, 0:640] = [0]
+            if image_acc is None:
+               image_acc = np.empty(np.shape(gray_frame))
+            hello = cv2.accumulateWeighted(gray_frame.copy(), image_acc, .5)
+            image_diff = cv2.absdiff(image_acc.astype(gray_frame.dtype), gray_frame,)
+            av = np.average(image_diff)
+            mx = np.max(image_diff)
+            mx_roll = mx_roll + mx
+            if cc > 0:
+               mx_avg = mx_roll / ((cc + 1) - ((thread_num - 1 ) * 300))
+               mx_avg = round(mx_avg, 2)
             else:
-               # event started
-               motion_on = 1
-               stop_motion = 0
-               cons_motion = cons_motion + 1
-               motion_frames.append(cc)
-         else:
-            motion_on = 0
-            stop_motion = stop_motion + 1
-         if cons_motion >= 1 and motion_on == 0:
-            stop_motion = stop_motion + 1
-         if cons_motion >= 1 and stop_motion >= 3:
-            # end of event
-            if len(motion_frames) > 1:
-               motion_events.append(motion_frames)
-            motion_frames = []
-            stop_motion = 0
-            cons_motion = 0
-            motion_on = 0
+               mx_avg = mx_roll
+            av = round(av, 2)
+            if mx > (mx_avg * 2):
+               thresh = cv2.adaptiveThreshold(image_diff,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,-20)
+               (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-         #print (thread_num, cc, motion_on, cons_motion, stop_motion)
- 
-         #   for (i,c) in enumerate(cnts):
-         #      x,y,w,h = cv2.boundingRect(cnts[i])
-         #      if w > 2 or h > 2:
-         #         cv2.circle(image_diff, (x,y), 5, (255), 1)
+            else:
+               cnts = []
+            rpt.write(str(cc) + "\t" + str(av) + "\t" + str(mx_roll) + "\t" + str(mx_avg) + "\t" + str(mx) + "\t" + str(len(cnts)) + "\n")
+            if len(cnts) > 0:
+               if motion_on == 1:
+                  cons_motion = cons_motion + 1
+                  motion_frames.append(cc)
+               else:
+                  # event started
+                  motion_on = 1
+                  stop_motion = 0
+                  cons_motion = cons_motion + 1
+                  motion_frames.append(cc)
+            else:
+               motion_on = 0
+               stop_motion = stop_motion + 1
+            if cons_motion >= 1 and motion_on == 0:
+               stop_motion = stop_motion + 1
+            if cons_motion >= 1 and stop_motion >= 3:
+               # end of event
+               if len(motion_frames) > 1:
+                  motion_events.append(motion_frames)
+               motion_frames = []
+               stop_motion = 0
+               cons_motion = 0
+               motion_on = 0
 
          frame_pil = Image.fromarray(frame)
          if stacked_image is None:
             stacked_image = frame_pil
          else:
-            if av < 7:
-               stacked_image=ImageChops.lighter(stacked_image,frame_pil)
+            #if av < 7:
+            stacked_image=ImageChops.lighter(stacked_image,frame_pil)
 
       else:
          rpt.write(str(cc) + "\t" + "skip" + "\t" + "skip" + "\t" + "skip" + "\t" + "skip" + "\t" + "skip" + "\n")
