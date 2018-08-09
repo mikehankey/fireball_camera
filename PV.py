@@ -80,7 +80,7 @@ if arg == 'batch':
    if len(files) == 0:
       files = glob.glob(video_dir + "/*.avi")
    cc = 0
-   for file in sorted(files):
+   for file in sorted(files, reverse=True):
         
       cur_time = int(time.time())
       st = os.stat(file)
