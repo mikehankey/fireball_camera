@@ -29,7 +29,7 @@ def check_disk_space():
       line = line.replace("%", "")
       if len(line) > 0:
          perc, vol = line.split(" ")
-         if int(perc) >= 15:
+         if int(perc) >= 85:
             derrs.append("Disk volume " + str(vol) + " is " + str(perc) + "% full!")
    return(derrs)
            
