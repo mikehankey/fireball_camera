@@ -247,7 +247,7 @@ def get_calibration_frames(config_file, cam_num):
    time.sleep(3)
    os.system("rm /home/pi/fireball_camera/calnow"+str(cam_num))
 
-   #os.system("/home/pi/fireball_camera/camera-settings.py " + str(cam_num))
+   os.system("/home/pi/fireball_camera/camera-settings.py " + str(cam_num))
    #return(1)
 
 def stack_calibration_video(outfile):
