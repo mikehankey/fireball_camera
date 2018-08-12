@@ -97,12 +97,17 @@ def process_tag_file(tag_file):
             video_file = file
             cmd = "./PV.py " + video_file + " " + cam_num       
 #/mnt/ams2/SD/proc/2018-05-02/2018-05-02_09-10-02-cam4-report.txt
-            rpt_file = file.replace(".mp4", "-report.txt")
-            el = rpt_file.split("/")
+            #rpt_file = file.replace(".mp4", "-report.txt")
+            
+            el = file.split("/")
             nrpt = el[-1]
-            rpt_file = "/mnt/ams2/SD/proc/" + xyear + "-" + xmonth + "-" + xday + "/" + nrpt
+            rpt_file = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday + "/" + nrpt
             file_exists = Path(rpt_file)
-
+            print ("Check : ", rpt_file)
+            wild_card = file.replace(".mp4", "*.*")
+            meteor_dir = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday + "/"
+            cmd2 = "cp " + wild_card + " " + meteor_dir
+            print (cmd2) 
 
             if (file_exists.is_file()):
                print ("already did this.")
@@ -112,6 +117,8 @@ def process_tag_file(tag_file):
                print (act, tag, file, cam_num, date_str)
                print(cmd)
                os.system(cmd)
+               print (cmd2)
+               os.system(cmd2)
          stack_file = file.replace(".mp4", "-stacked.jpg")
          el = stack_file.split("/")
          stack_fn = el[-1]
