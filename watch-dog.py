@@ -43,7 +43,7 @@ def ping_cam(cam_num):
       return(1)
    else:
       print ("Cam is down!")
-      return(1)
+      return(0)
 
 def check_stream(cam_num, stream_type):
    bad = 0
