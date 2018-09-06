@@ -24,8 +24,8 @@ def ping_cam(ip):
       return(1)
 
 def scan_network():
-   ip_range = "192.168.176."
-   for i in range(70,80):
+   ip_range = "192.168.76."
+   for i in range(70,85):
       ip = ip_range + str(i)
       ping_cam(ip)
       print("<BR>")
