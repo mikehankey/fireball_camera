@@ -114,9 +114,9 @@ print (r.text)
 
 r = requests.get("http://" + str(cam_ip) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=50&paramstep=0&paramreserved=0&")
 
-#os.system("./camera-settings.py " + str(cam_num) )
-#print ("Set the video encoding params.")
-#url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=1024&FrameRate1=25&Profile1=High Profile&PicLevel1=1"
+os.system("./camera-settings.py " + str(cam_num) )
+print ("Set the video encoding params.")
+url = "http://" + str(cam_ip) + "/cgi-bin/videocoding_cgi?action=set&user=admin&pwd="+ config['cam_pwd'] +"&channel=0&EncType1=H.264&Resolution1=1280*720&BitflowType1=VBR&KeyInterval1=5&Bitrate1=1024&FrameRate1=25&Profile1=High Profile&PicLevel1=1"
 
 #time.sleep(45)
 print (url)

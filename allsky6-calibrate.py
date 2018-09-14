@@ -135,10 +135,10 @@ def read_noise(config_file, cam_num) :
             nrc = 0
             nrfc = 0
             cc = 0
-            if .1 <= nr <= .2: 
+            if .02 <= nr < .05: 
                print ("brightness is good.", new_brightness)   
                return()
-            if nr > .1:
+            if nr >= .05:
                print ("Too much noise, lower brightness")
                if nr > .4:
                   new_brightness = new_brightness - 10
@@ -192,8 +192,10 @@ def get_calibration_frames(config_file, cam_num):
    #print ("setting Contrast to ", settings['Contrast'])
 
    # sense up
-   r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=25&paramstep=0&paramreserved=0&")
+   r = requests.get("http://" + config['cam_ip'] + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=1058&paramctrl=12&paramstep=0&paramreserved=0&")
    time.sleep(3)
+ 
+   os.system("./allsky6-calibrate.py read_noise " + str(cam_num) )
    cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_0")
 
    #read_noise(config_file, cam_num)
@@ -247,7 +249,7 @@ def get_calibration_frames(config_file, cam_num):
    time.sleep(3)
    os.system("rm /home/pi/fireball_camera/calnow"+str(cam_num))
 
-   os.system("/home/pi/fireball_camera/camera-settings.py " + str(cam_num))
+   os.system("/home/pi/fireball_camera/sro-settings.py " + str(cam_num))
    #return(1)
 
 def stack_calibration_video(outfile):
