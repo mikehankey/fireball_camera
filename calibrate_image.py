@@ -4,6 +4,75 @@ import numpy as np
 import sys
 import os
 import time 
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+
+import brightstardata as bsd
+mybsd = bsd.brightstardata()
+bright_stars = mybsd.bright_stars
+
+def plot_bright_stars(jpg_file, image, star_data_file):
+   bright_star_file = jpg_file.replace(".jpg", "-bright-stars.jpg")
+   pil_image = Image.fromarray(image)
+   draw = ImageDraw.Draw(pil_image)
+   font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
+
+
+   for data in star_data_file:
+      (name, cons, ra, dec, mag, ast_x, ast_y) = data.split(",")
+      ast_x = int(float(ast_x))
+      ast_y = int(float(ast_y))
+      draw.ellipse((ast_x-4, ast_y-4, ast_x+4, ast_y+4), ) 
+      draw.text((int(float(ast_x)), int(float(ast_y) )), name, font = font, fill=(255,255,255))
+      pil_image.save(bright_star_file)
+
+
+def parse_astr_star_file(star_data_file):
+   bright_stars_found = [] 
+   fp = open(star_data_file, "r")
+   for line in fp:
+      fields = line.split(" ")
+      #print (len(fields) )
+      if len(fields) == 8:
+         star_name = fields[4]
+         ast_x = fields[6]
+         ast_y = fields[7]
+         ast_x = ast_x.replace("(", "")
+         ast_x = ast_x.replace(",", "")
+         ast_y = ast_y.replace(")", "")
+         ast_y = ast_y.replace("\n", "")
+      elif len(fields) == 9 :
+         star_name = fields[5]
+         star_name = star_name.replace("(", "")
+         star_name = star_name.replace(")", "")
+         ast_x = fields[7]
+         ast_y = fields[8]
+         ast_x = ast_x.replace("(", "")
+         ast_x = ast_x.replace(",", "")
+         ast_y = ast_y.replace(")", "")
+         ast_y = ast_y.replace("\n", "")
+         #print(star_name)
+         (status, bname, cons, ra,dec,mag) = find_star_by_name(star_name)
+         #print(status, bname, cons, ra,dec, mag)
+         if int(status) == 1:
+            data = bname + "," + cons + "," + str(ra) + "," + str(dec) + "," + str(mag) + "," + str(ast_x) + "," + str(ast_y)
+            #print("Bright Star found:", bname, cons, ra,dec, mag, "Near position", ast_x, ast_y)
+            bright_stars_found.append(data)
+
+   for data in bright_stars_found :
+      print(data)
+
+   return(bright_stars_found)
+
+def find_star_by_name(star_name):
+   for bname, cons, ra, dec, mag in bright_stars:
+      cons = cons.decode("utf-8")
+      name = bname.decode("utf-8")
+      if name == star_name:
+         return(1,name, cons, ra,dec,mag)
+   return(0,0,0,0,0,0)
+
 
 jpg_file = sys.argv[1]
 
@@ -16,151 +85,41 @@ wcs_file = jpg_file.replace(".jpg", ".wcs")
 grid_file = jpg_file.replace(".jpg", "-grid.png")
 
 star_file = jpg_file.replace(".jpg", "-stars-out.jpg")
-star_data_file = jpg_file.replace(".jpg", "-stars-out.txt")
+star_data_file = jpg_file.replace(".jpg", "-stars.txt")
+astr_out = jpg_file.replace(".jpg", "-astrometry-output.txt")
+
+wcs_info_file = jpg_file.replace(".jpg", "-wcsinfo.txt")
+
+quarter_file = jpg_file.replace(".jpg", "-1.jpg")
 
 
 
+image = cv2.imread(jpg_file)
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+height = gray.shape[0] 
+width = gray.shape[1] 
 
-#cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
+print (width, height)
 
-#cmd = "/usr/local/astrometry/bin/solve-field " + xyfits + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
+crop_height = int(height / 2)
+crop_width = int(width / 2)
+start_x = 0
+start_y = 0
 
-# for 1/4 image solve lower scale range
-#cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=160 --height=90 --scale-low 10 --scale-high 40"
-#print (cmd)
-#os.system(cmd)
+#os.system("convert -crop " + str(crop_width) + "x" + str(crop_height) + "+" + str(start_x) + "+" + str(start_y) + " " + jpg_file + " " + quarter_file)
+#print("convert -crop " + str(crop_height) + "x" + str(crop_width) + "+" + str(start_x) + "+" + str(start_y) + " " + jpg_file + " " + quarter_file)
+#exit()
 
-os.system("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95 ")
-#os.system(cmd)
+print("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=" + str(width) + " --height=" + str(height) + " --scale-low 10 --scale-high 80 > " + astr_out)
+os.system("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=" + str(width) + " --height=" + str(height) + " --scale-low 10 --scale-high 80 > " + astr_out)
+os.system("grep Mike " + astr_out + " >" +star_data_file)
 
 cmd = "/usr/bin/jpegtopnm " + jpg_file + "|/usr/local/astrometry/bin/plot-constellations -w " + wcs_file + " -o " + grid_file + " -i - -N -C -G 600"
 print (cmd)
 os.system(cmd)
 
-cmd = "/usr/local/astrometry/bin/wcsinfo " + wcs_file + " > " + star_data_file
+cmd = "/usr/local/astrometry/bin/wcsinfo " + wcs_file + " > " + wcs_info_file
 os.system(cmd)
 
-
-exit()
-
-
-#jpg_file = "../test.jpg"
-#star_file = "stars-out.jpg"
-#star_data_file = "stars-out.txt"
-image = cv2.imread(jpg_file)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-#gray = cv2.GaussianBlur(gray, (1,1), 1)
-#gray = cv2.medianBlur(gray, 1)
-#cv2.imshow("Image", gray)
-#cv2.waitKey(0)
-limit_low = 60 
-limit_up =  245
-last_x = 0
-last_y = 0
-stars_found = 0
-stars = []
-data = None
-for y in range(gray.shape[0] - 100):
-   for x in range(gray.shape[1]):
-      pixel = gray.item(y,x)
-      if pixel > limit_low and pixel < limit_up: 
-         x1 = x - 4 
-         x2 = x + 5 
-         y1 = y - 4 
-         y2 = y + 5 
-         x3 = x - 1 
-         x4 = x + 1  
-         y3 = y - 1 
-         y4 = y + 1 
-         crop_frame = gray[y1:y2,x1:x2]
-         small_crop_frame = gray[y3:y4,x3:x4]
-
-         avg_pix = np.average(crop_frame)
-         avg_pix_s = np.average(small_crop_frame)
-         #print ("SAVG:", avg_pix_s)
-         diff = avg_pix_s - avg_pix
-
-         x_y_diff = abs((last_x + last_y) - (x + y))
-         if crop_frame.shape[0] > 0 and crop_frame.shape[1] > 0 and diff > 20 and (x_y_diff > 4):
-            print ("X,Y,AVG,SAVG,DIFF:", x,y,pixel,avg_pix, avg_pix_s, diff)
-
-            #edges = cv2.Canny(crop_frame,80,200)
-
-#            print (crop_frame.argmax(axis=0))
-            o,p = np.unravel_index(crop_frame.argmax(), crop_frame.shape)
-            off_x = p -4
-            off_y = o -4 
-            cor_x = x + off_x
-            cor_y = y + off_y
-            cor_val = gray[cor_y,cor_x] 
-            #print("Max Pixel in crop:", o,p, crop_frame[o,p])
-            #print("MAX PIXEL GRAY XY:", x,y,gray[y,x])
-            #print("Corrected gray xy ", off_x, off_y, cor_x, cor_y, cor_val )
-            #print(crop_frame[o,p])
-            #print (crop_frame)
-            x1 = cor_x - 4 
-            x2 = cor_x + 5 
-            y1 = cor_y - 4 
-            y2 = cor_y + 5 
-            x3 = cor_x - 1 
-            x4 = cor_x + 1  
-            y3 = cor_y - 1 
-            y4 = cor_y + 1 
-
-            new_crop_frame = gray[y1:y2,x1:x2]
-            new_crop_frame_sm = gray[y3:y4,x3:x4]
-
-            avg_pix = np.average(new_crop_frame)
-            avg_pix_s = np.average(new_crop_frame_sm)
-
-            #print (new_crop_frame)
-             
-            #print (edges)
-            #cv2.circle(crop_frame, (bx, by), 5, (255,0,0), 1, 1)
-
- 
-            
-            #cv2.imshow("Image", new_crop_frame)
-            #cv2.waitKey(0)
-            last_x = x
-            last_y = y
-            #add pixel here
-            pix_dif = avg_pix_s - avg_pix;
-            stars.append((cor_x,cor_y,avg_pix,avg_pix_s,pix_dif)) 
-            stars_found = stars_found + 1
-      else:
-         pass
-
-dtype = [('x', int), ('y', int), ('avg_pix', float), ('avg_pix_s', float), ('pix_dif', float)]
-star_arry = np.array(stars, dtype=dtype)
-np.sort(star_arry, order='pix_dif')
-
-fp = open(star_data_file, "w")
-fp.write("x,y\n")
-print ("Stars Found: ", stars_found)
-for star_x, star_y, pix_val, pix_val_sm,pix_dif in np.sort(star_arry,order='pix_dif')[::-1]:
-      data = str(star_x) + "," + str(star_y) + "\n"
-      print (star_x, star_y)
-      fp.write(data)
-      cv2.circle(gray, (star_x, star_y), 10, (255,0,0), 1, 1)
-
-fp.close() 
-time.sleep(1)
-
-cv2.imshow("Image", gray)
-cv2.waitKey(0)
-print ("Total Stars Found: ", stars_found)
-
-cv2.imwrite(star_file, gray)
-
-
-
-xyfits = star_data_file.replace(".txt", ".fits")
-cmd = "/usr/bin/python /usr/local/astrometry/bin/text2fits.py -f \"ff\" -s \",\" " + star_data_file + " " + xyfits 
-print (cmd)
-os.system(cmd)
-
-cmd = "/usr/local/astrometry/bin/solve-field " + jpg_file + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
-#cmd = "/usr/local/astrometry/bin/solve-field " + xyfits + " --overwrite --width=640 --height=360 --width=640 --scale-low 50 --scale-high 95"
-print (cmd)
-os.system(cmd)
+bright_star_data = parse_astr_star_file(star_data_file)
+plot_bright_stars(jpg_file, image, bright_star_data)
