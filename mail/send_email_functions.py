@@ -2,7 +2,7 @@ import sys
 import smtplib
  
 # to: array of @
-def sendEmail(to,subject,message,sent_from='Your AMSCam <noreply@castlecomm.com>'): 
+def sendEmail(to,subject,message,sent_from='Your AMSCam <amsmeteors@gmail.com>'): 
 
     email_text = """From: %s  
 To: %s
@@ -17,7 +17,7 @@ Subject: %s
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.ehlo()
         server.starttls()
-        server.login('noreply@castlecomm.com', '1ancel011ancel01')
+        server.login('amsmeteors@gmail.com', '$p@c31$c00l!')
         server.sendmail(sent_from, to, email_text)
         server.close()
         print ("Message sent")
