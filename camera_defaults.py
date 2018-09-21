@@ -10,6 +10,14 @@ import sys
 import os 
 from amscommon import read_config
 config = {}
+
+
+def set_special(config, field, value):
+   url = "http://" + str(config['cam_ip']) + "/webs/btnSettingEx?flag=1000&paramchannel=0&paramcmd=" + str(field) + "&paramctrl=" + str(value) + "&paramstep=0&paramreserved=0"
+   print (url)
+   r = requests.get(url)
+   print (r.text)
+
 if sys.argv[1] == 'ip':
    config['cam_ip'] = sys.argv[2]
    cam_num = sys.argv[3]
@@ -104,6 +112,14 @@ print (r.text)
 #print (r.text)
 
 
+### SET AGAIN
+set_special(config, "1056", 250)
+
+### SET DGAIN HIGH to SHOCK SYSTEM
+set_special(config, "1086", 220)
+time.sleep(1)
+### SET DGAIN to Value we actually want
+set_special(config, "1086", 158)
 
 #url = "http://" + str(cam_ip) + "/webs/videoLensCfgEx?irtodayh=11&irtonighth=20"
 #print (url)

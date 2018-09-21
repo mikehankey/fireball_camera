@@ -6,7 +6,7 @@ from collections import defaultdict
 from amscommon import read_config, read_sun
 import os
 import requests
-from urllib.request import urlretrieve
+#from urllib.request import urlretrieve
 
 def custom_settings (mode, config):
    file = open("/home/pi/fireball_camera/cam_calib/"+mode, "r")
