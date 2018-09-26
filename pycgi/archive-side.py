@@ -7,7 +7,7 @@ import subprocess
 import cgi
 import cgitb
 import os
-video_dir = "/mnt/ams2/SD/"
+video_dir = "../mnt/ams2/SD/"
 from pathlib import Path
 
 #cgi.enable()
@@ -54,8 +54,8 @@ def make_archive_links():
          #if cn != 1:
          #   html = html + " - "
          rand_num = random.randint(1,10000)
-         #master_stack_file = "/mnt/ams2/SD/proc/" + day + "/" + day + "-cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
-         master_stack_file = "/mnt/ams2/SD/proc/" + day + "/"  + "cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
+         #master_stack_file = "../mnt/ams2/SD/proc/" + day + "/" + day + "-cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
+         master_stack_file = "../mnt/ams2/SD/proc/" + day + "/"  + "cam" + str(cn) + "-master_stack.jpg?" + str(rand_num)
          #master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='bigImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
          master_stack_img = "<img alt='cam" + str(cn) + "' onmouseover='normalImg(this)' onmouseout='normalImg(this)' width=320 height=240 src='" + master_stack_file + "'>"
          html = html + "<a href=archive-side.py?cmd=browse_day&day=" + day + "&cam_num=" + str(cn) + ">" + master_stack_img + "</a>" + "\n"
@@ -89,7 +89,7 @@ def browse_day(day, cam):
       detect_only = 0
    else:
       detect_only = int(detect_only)
-   print("<script src=/pycgi/tag_pic.js></script>")
+   print("<script src=tag_pic.js></script>")
    print ("<h2><a href=archive-side.py>Home</a> -> Browse Day " + str(day) + " Cam " + str(cam) + "</h2>")
    report_file = "/mnt/ams2/SD/proc/" + str(day) + "/" + str(day) + "-cam" + str(cam) + "-report.txt"
    img_dict, od = load_scan_file(day, cam)
@@ -199,7 +199,7 @@ def browse_day(day, cam):
 def main():
    rand_num = random.randint(1,10000)
    print ("<link rel='stylesheet' href='div_table.css?" + str(rand_num) + "'>")
-   print("<script src='/pycgi/big-little-image.js'></script>")
+   print("<script src='big-little-image.js'></script>")
 
    form = cgi.FieldStorage()
    cam_num = form.getvalue('cam_num')

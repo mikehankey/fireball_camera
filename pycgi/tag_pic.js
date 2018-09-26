@@ -4,7 +4,7 @@ function tag_pic(pic, tag, e) {
 
 var target = e.target, 
     status = e.target.classList.contains('active');
-url = "/pycgi/tag.py?file=" + pic + "&status=" + status + "&tag=" + tag
+url = "tag.py?file=" + pic + "&status=" + status + "&tag=" + tag
 e.target.classList.add(status ? 'inactive' : 'active');
 e.target.classList.remove(status ? 'active' : 'inactive');
 
