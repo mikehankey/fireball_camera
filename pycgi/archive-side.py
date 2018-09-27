@@ -7,7 +7,7 @@ import subprocess
 import cgi
 import cgitb
 import os
-video_dir = "../mnt/ams2/SD/"
+video_dir = "/mnt/ams2/SD/"
 from pathlib import Path
 
 #cgi.enable()
