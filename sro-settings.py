@@ -173,10 +173,12 @@ print (sun['status'])
 
 if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
    config = custom_settings("Day", config)
+
    if cam_status != sun['status']:
       print ("Daytime settings are not set but it is daytime!", cam_status, sun['status'])
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
       daytime_settings(config, settings)
+      os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
    else:
       os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
       #print ("Daytime Brightness of " + settings['Brightness'] + " is fine.")

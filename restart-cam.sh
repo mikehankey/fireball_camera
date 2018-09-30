@@ -1,3 +1,1 @@
-#!/bin/sh
-
-curl http://192.168.76.71/cgi-bin/restart_cgi?user=admin&pwd=admin
+curl http://192.168.176.71/webs/btnHitEx?flag=21 
