@@ -16,6 +16,7 @@ print ("Content-type: text/html\n\n")
 
 def get_mac(cam_ip):
    # get the mac address
+   mac = ""
    url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd=admin"
    url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd=xrp23q"
    r = requests.get(url)
@@ -25,11 +26,12 @@ def get_mac(cam_ip):
          line = line.replace("\t", "");
          line = line.replace("<MACAddress>", "");
          line = line.replace("</MACAddress>", "");
-         mac = line
+         mac = line.replace("-", ":")
    return(mac)
 
 def ping_cam(ip):
    cmd = "ping -c 1 " + ip + " > /dev/null"
+   
    #output = subprocess.check_output(cmd, shell=True).decode("utf-8")
    response = os.system(cmd)
    if response == 0:
@@ -41,13 +43,14 @@ def ping_cam(ip):
       mac = get_mac(ip)
       return(1, mac)
    else:
+      print ("Cam NOT found on: " + ip + "<BR>")
       return(0, "")
   
 
 def scan_network():
    cams_found = 0  
    mac = ""
-   ip_range = "192.168.76."
+   ip_range = "192.168.176."
    for i in range(70,85):
       ip = ip_range + str(i)
       status, mac = ping_cam(ip)
@@ -82,19 +85,23 @@ def assign_ips_to_macs():
 
 
    dhcp_text = ""
-   print ("<HR>")
-   for pos in sorted(dhcp_data):
-      mac = dhcp_data[pos]
-      dhcp_text = dhcp_text + "host cam" + str(pos) + "{\n"
-      dhcp_text = dhcp_text + "   hardware ethernet " + mac + ";\n"
-      dhcp_text = dhcp_text + "   fixed-address 192.168.76.7" + str(pos) + ";\n}\n"
+   print ("<HR><pre>yo")
+   #print (dhcp_data)
+   for pos in dhcp_data:
+      if pos is not None:
+         print(pos)
+         mac = dhcp_data[pos]
+         if mac != None:
+            dhcp_text = dhcp_text + "host cam" + str(pos) + "{\n"
+            dhcp_text = dhcp_text + "   hardware ethernet " + mac + ";\n"
+            dhcp_text = dhcp_text + "   fixed-address 192.168.176.7" + str(pos) + ";\n}\n"
 
-   print ("<PRE>")
+   print ("YO<PRE>")
    print (dhcp_text)
    print ("</PRE>")
 #host cam6 {
 #  hardware ethernet 00:b9:7d:7f:17:ac;
-#  fixed-address 192.168.76.76;  
+#  fixed-address 192.168.176.76;  
 #}
 
 
@@ -102,7 +109,7 @@ def main():
    form = cgi.FieldStorage()
    act = form.getvalue('act')
    #act = "scan_network"
-   if act == "":
+   if act == None:
       act = "scan_network"
    print ("<h1>Camera DNS Setup</h1>")
    print ("Functions <UL>")
