@@ -22,12 +22,16 @@ def convert_filename_to_date_cam(file):
      f_datetime = datetime.datetime.strptime(f_date_str, "%Y-%m-%d %H:%M:%S")
    return(f_datetime, f_cam, f_date, f_h, f_m, f_s)
 
-def get_cal_files(cam = ""):
+def get_cal_files(cam = "", date = ""):
    cal_dir = "/mnt/ams2/cal/"
    file_list = []
    #start_datetime = datetime.datetime.strptime(start, "%Y-%m-%d_%H:%M:%S")
    #end_datetime = datetime.datetime.strptime(end, "%Y-%m-%d_%H:%M:%S")
-   for cal_file in sorted((glob.glob(cal_dir + "*.jpg"))):
+   if cam != "":
+      cam_str = "-" + str(cam)
+   else :
+      cam_str = ""
+   for cal_file in sorted((glob.glob(cal_dir + date + "*" + cam_str + "*.jpg"))):
       #(f_datetime, f_cam, f_date, f_h, f_m, f_s) = convert_filename_to_date_cam(tl_file)
       file_list.append(cal_file)
    return(file_list)
@@ -85,11 +89,11 @@ def main():
    print("Content-type: text/html\n\n")
 
    form = cgi.FieldStorage()
+   date_match = form.getvalue('date')
    cam_num = form.getvalue('cam_num')
    act = form.getvalue('act')
-   act="plate_solve"
    if act == None :
-      browse()
+      browse(cam_num, date_match)
    if act == "workon":
       cal_file = form.getvalue('cal_file')
       workon(cal_file)
@@ -98,8 +102,14 @@ def main():
       plate_solve(cal_file)
 
 
-def browse():
-   cal_files = get_cal_files()
+def browse(cam_num, date_match):
+   if date_match is None:
+      date_match = ""
+   if cam_num is None:
+      cam_num = ""
+   cal_files = get_cal_files(cam_num, date_match)
+
+
    for cal_file in cal_files:
       print ("<a href=sro-cal.py?act=workon&cal_file=" + cal_file + "><img src=" + cal_file + " width=320 height=170></a> <BR>")
 
