@@ -11,6 +11,23 @@ from PIL import ImageFont
 
 import math
 
+def line_intersection(line1, line2):
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1]) #Typo was here
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if div == 0:
+       raise Exception('lines do not intersect')
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+    print ("INT X,Y:", x, y)
+    return x, y
+
 def calc_dist(x1,y1,x2,y2):
    dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
    return(dist)
@@ -24,7 +41,7 @@ def calc_angle(pointA, pointB):
      ang = ang + 360
   return(ang)
 
-def dump_fits(filename):
+def dump_fits(filename, image_filename = ""):
    h = fitsio.read_header(filename, ext=1) 
    n_entries = h["NAXIS2"] 
    fits = fitsio.FITS(filename, iter_row_buffer=1000) 
@@ -33,7 +50,7 @@ def dump_fits(filename):
       p = fits[1][i]
       if filename == image_filename:
          mag = p[0][2]
-         if int(mag) > 10:
+         if int(mag) > 6:
             #print ("MAG:", mag)
             x =  p[0][0]
             y =  p[0][1]
@@ -41,28 +58,40 @@ def dump_fits(filename):
       else:
          x =  p[0][0]
          y =  p[0][1]
-         points.append((x,y))
+         # don't add if there is another star close by already on the list
+         skip = 0
+         for tx, ty in points:
+           if tx -20 < x < tx +20 and ty -20 < y < ty + 20:
+              print ("skip star cause it is close to another one already.")
+              skip = 1
+         if skip == 0:
+            points.append((x,y))
    return (points)
 
 
 #catalog_filename = sys.argv[1] 
 #image_filename = sys.argv[2] 
 
-def find_closest_match(cx,cy, img_points, w, h):
+def find_closest_match(cx,cy, img_points, w, h, draw):
    matches = []
    cat_center_dist = int(calc_dist(cx,cy,w/2,h/2))
    cat_center_ang = int(calc_angle((h/2,w/2),(cy,cx)))
    for x,y in img_points:
-      if x -200 < cx < x + 200 and y - 200 < cy < y + 200:
-         img_center_dist = int(calc_dist(x,y,w/2,h/2))
-         img_center_ang = int(calc_angle((h/2,w/2),(y,x)))
-         img_cat_ang = int(calc_angle((cy,cx),(y,x)))
-         if (cat_center_dist > 600) and (img_center_dist < cat_center_dist):
-            draw.ellipse((x-5, y-5, x+5, y+5),  outline ='gray')
+      if cat_center_dist > 600:
+         if x -100 < cx < x + 100 and y - 100 < cy < y + 100:
+            img_center_dist = int(calc_dist(x,y,w/2,h/2))
+            img_center_ang = int(calc_angle((h/2,w/2),(y,x)))
+            img_cat_ang = int(calc_angle((cy,cx),(y,x)))
+            if (cat_center_dist > 400) and (img_center_dist < cat_center_dist):
+               draw.ellipse((x-5, y-5, x+5, y+5),  outline ='gray')
+               matches.append((x,y))
+      elif cat_center_dist <= 600:
+         if x -10 < cx < x + 10 and y - 10 < cy < y + 10:
             matches.append((x,y))
-   return(matches)
+   return(matches, draw)
 
 def find_best_match(cx,cy,matches,w,h,draw):
+   font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
    print ("Looking to match catalog star : ", cx,cy)
    cat_center_dist = int(calc_dist(cx,cy,w/2,h/2))
    draw.ellipse((cx-5, cy-5, cx+5, cy+5),  outline ='green')
@@ -85,74 +114,209 @@ def find_best_match(cx,cy,matches,w,h,draw):
          ang_diff2 = ang_diff2 * -1
       img_cat_dist = int(calc_dist(cx,cy,mx,my))
       print ("   Angles (img->cat), (cnt->img), (cnt->cat): ", img_cat_ang, img_cnt_ang, cat_cnt_ang, ang_diff1, ang_diff2, img_cat_dist)
-      extra_match.append((mx,my,ang_diff1))
+      extra_match.append((mx,my,ang_diff1, img_cat_dist))
 
    if len(extra_match) > 0:
       sorted_extra =  sorted(extra_match,key=lambda x: x[2])
-      bx, by, bd = sorted_extra[0]
+      for bx,by,bd,icd in sorted_extra:
+         if bd < 30:
+            break
+
+
       draw.text((bx+5,by), str(bd), font=font, fill=(255,255,255,128))
       draw.line((cx,cy, bx,by), fill=128)
+      draw.text((cx+5,cy+5), str(icd), font=font, fill=(255,255,255,128))
       #draw.line((cx,cy, w/2,h/2), fill="blue")
-      draw.ellipse((bx-5, by-5, bx+5, by+5),  outline ='red') 
+      draw.ellipse((bx-6, by-6, bx+6, by+6),  outline ='red') 
 
-   return(draw)
+      return(draw,bx,by)
+   else :
+      return(draw, 0, 0)
+
+
+def find_fov_center (cal_file):
+   #cal_file = "/mnt/ams2/cal/20180922105200-6.jpg"
+   #catalog_filename = "/mnt/ams2/cal/20180922105200-6-indx.xyls"
+   catalog_filename = cal_file.replace(".jpg", "-indx.xyls")
+   #image_filename = "/mnt/ams2/cal/20180922105200-6.axy"
+   image_filename = cal_file.replace(".jpg", ".axy")
+   #plot_out_file = "/mnt/ams2/cal/20180922105200-6-mike-plot.jpg"
+   plot_out_file = cal_file.replace(".jpg", "-center_plot.jpg")
+   
+   plot_image = Image.open(cal_file)
+   draw = ImageDraw.Draw(plot_image)
+   font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
+   
+   cat_points = dump_fits(catalog_filename)
+   img_points = dump_fits(image_filename, image_filename)
+   np.asarray(cat_points)
+   np.asarray(img_points)
+   w,h =  plot_image.size
+   pc = 0
+   lines = []
+   for x,y in cat_points:
+      if pc < 100:
+         matches,draw = find_closest_match(x,y, img_points, w, h, draw)
+         draw,sx,sy = find_best_match(x,y,matches,w,h, draw)
+         if sx != 0:
+            lines.append((sx,sy,x,y))
+      pc = pc + 1
+   draw.line((w/2,0, w/2,h), fill="white")
+   draw.line((0,h/2, w,h/2), fill="white")
+   all_med_x = []
+   all_med_y = []
+   for i in range(0, len(lines)-1):
+      all_ixs = []
+      all_iys = []
+      for j in range(i+1, len(lines)-1):
+         A = lines[i][0],lines[i][1]
+         B = lines[i][2],lines[i][3]
+         C = lines[j][0],lines[j][1]
+         D = lines[j][2],lines[j][3]
+         ix,iy = line_intersection((A,B),(C,D)) 
+         print ("IX,IY", ix,iy)
+         all_ixs.append(ix)
+         all_iys.append(iy)
+   
+      ix_median = np.median(all_ixs)
+      iy_median = np.median(all_iys)
+      if ix_median > 0:
+         all_med_x.append(ix_median)
+         all_med_y.append(iy_median)
+      print (all_ixs)
+      print (all_iys)
+      print ("MEDIAN IX: ", ix_median)
+      print ("MEDIAN IY: ", iy_median)
+   
+   print ("ALL MED X:", all_med_x)
+   print ("ALL MED Y:", all_med_y)
+   
+   center_x = np.median(all_med_x)
+   center_y = np.median(all_med_y)
+   
+   print ("CENTER X, CENTER Y:", center_x, center_y)
+   draw.ellipse((center_x-1, center_y-1, center_x+1, center_y+1),  outline ='yellow')
+   
+   for x,y in cat_points:
+      draw.line((x,y, center_x, center_y), fill=128)
+   
+   plot_image.save(plot_out_file)
+   print ("http://localhost" + plot_out_file)
+   return(center_x, center_y, cat_points, img_points)
+
+def find_dist_values(cal_file, center_x, center_y, cat_points, img_points):
+   
+   starlist = load_stars(cal_file)
+   plot_image = Image.open(cal_file)
+   plot_out_file = cal_file.replace(".jpg", "-distplot.png")
+   plot_image = plot_image.convert("RGBA")
+   w,h =  plot_image.size
+   draw = ImageDraw.Draw(plot_image)
+   font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
+   used = []
+   draw.ellipse((center_x-25, center_y-25, center_x+25, center_y+25),  outline =(255,255,255,0))
+   #for fact in range (1,11):
+      #draw.ellipse((center_x-(fact * 100), center_y-(fact*100), center_x+(fact*100), center_y+(fact*100)),  outline =(255,255,255,0))
+   for x,y in cat_points:
+      star_name = find_star_name(x,y,starlist)
+      draw.text((x+5,y+5), star_name, font=font, fill=(255,255,255,255))
+      matches = find_matching_star(x,y,img_points, center_x, center_y, used)
+      matches =  sorted(matches,key=lambda x: x[2])
+      print ("MATCHES: ", matches)
+     
+      if len(matches) >= 1: 
+         used.append(matches[0])
+         mx = matches[0][0]
+         my = matches[0][1]
+         md = matches[0][2]
+         mx = matches[0][0]
+         my = matches[0][1]
+         md = matches[0][2]
+            
+    
+         draw.ellipse((mx-5, my-5, mx+5, my+5),  outline ='red')
+         draw.ellipse((x-5, y-5, x+5, y+5),  outline ='green')
+         draw.line((x,y, mx,my), fill="white")
+   draw.line((center_x,0, center_x,h), fill="white")
+   draw.line((0,center_y, w,center_y), fill="white")
+
+   grid_file = cal_file.replace(".jpg", "-grid.png")
+   grid_image = Image.open(grid_file)
+   grid_image = grid_image.convert("RGBA")
+   alpha_blend = Image.blend(plot_image, grid_image, alpha=.2)
 
 
 
-catalog_filename = "/mnt/ams2/cal/20180922105200-6-indx.xyls"
-image_filename = "/mnt/ams2/cal/20180922105200-6.axy"
+   alpha_blend.save(plot_out_file)
+
+def find_matching_star(cx,cy, img_points, center_x, center_y,used):
+   print ("Working on star : ", cx, cy)
+   matches = []
+   cat_center_dist = int(calc_dist(cx,cy,center_x,center_y))
+   cat_center_ang = int(calc_angle((center_y, center_x),(cy,cx)))
+   for x,y in img_points:
+      if cat_center_dist > 600:
+         if x -100 < cx < x + 100 and y - 100 < cy < y + 100:
+            img_center_dist = int(calc_dist(center_x,center_y,x,y))
+            img_cat_dist = int(calc_dist(cx,cy,x,y))
+            img_center_ang = int(calc_angle((center_y,center_x),(y,x)))
+            img_cat_ang = int(calc_angle((cy,cx),(y,x)))
+            if cat_center_ang == img_center_ang :
+               if img_center_dist < cat_center_dist:
+                  print ("Match found.")
+                  dupe_status = check_dupe(x,y,used)
+                  if dupe_status == 0:
+                     matches.append((x,y,img_cat_dist))
+      elif cat_center_dist < 600:
+         if x -10 < cx < x + 10 and y - 10 < cy < y + 10:
+            img_cat_dist = int(calc_dist(cx,cy,x,y))
+            matches.append((x,y,img_cat_dist))
+
+   
+
+   return(matches)
+
+def check_dupe(x,y,used):
+   dupe_status = 0 
+   for ux,uy,uid in used:
+      if ux == x and uy == y:
+         dupe_status = 1 
+   return(dupe_status)
+
+
+def load_stars(cal_file):
+   star_file = cal_file.replace(".jpg", "-stars.txt")
+   print (star_file)
+   sf = open(star_file, "r") 
+   starlist = []
+   for line in sf:
+      line = line.replace("\n", "")
+      line = line.replace(" Mike Star: ", "")
+      print (line)
+      data = line.split(" ") 
+      print(data)
+      if len(data) == 5:
+         star_name = data[1]
+         star_name = star_name.replace(" at ", "")
+         star_img_x = data[3]
+         star_img_x = star_img_x.replace("(", "")
+         star_img_x = star_img_x.replace(",", "")
+         star_img_y = data[4]
+         star_img_y = star_img_y.replace(")", "")
+         starlist.append((star_name, star_img_x, star_img_y))
+   return(starlist)
+
+def find_star_name(cx,cy,starlist):
+   this_star_name = ""
+   print ("FIND STAR: ", cx, cy)
+   for star_name, x, y in starlist:
+      if float(cx)-1 < float(x) < float(cx) + 1 and float(cy) -1 < float(y) < float(cy) + 1:
+         this_star_name = star_name
+         return(this_star_name)
+   return(this_star_name)
+
+#cal_file = sys.argv[1]
 cal_file = "/mnt/ams2/cal/20180922105200-6.jpg"
-plot_out_file = "/mnt/ams2/cal/20180922105200-6-mike-plot.jpg"
+(center_x, center_y, cat_points, img_points) = find_fov_center(cal_file)
+find_dist_values(cal_file, center_x, center_y, cat_points, img_points)
 
-plot_image = Image.open(cal_file)
-draw = ImageDraw.Draw(plot_image)
-font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 12, encoding="unic" )
-
-cat_points = dump_fits(catalog_filename)
-img_points = dump_fits(image_filename)
-np.asarray(cat_points)
-np.asarray(img_points)
-w,h =  plot_image.size
-pc = 0
-for x,y in cat_points:
-   if pc < 100:
-      matches = find_closest_match(x,y, img_points, w, h)
-      draw = find_best_match(x,y,matches,w,h, draw)
-   pc = pc + 1
-draw.line((w/2,0, w/2,h), fill="white")
-draw.line((0,h/2, w,h/2), fill="white")
-
-plot_image.save(plot_out_file)
-
-
-#   print("CAT:", x,y)
-#   draw.ellipse((x-5, y-5, x+5, y+5),  outline ='green')
-#   matches = find_closest_match(x,y, img_points, w, h)
-#
-#   mc = 0
-#   for mx,my in matches:
-#      draw.ellipse((mx-5, my-5, mx+5, my+5),  outline ='red') 
-#      # image star to catalog star image
-#      img_cat_ang = int(calc_angle((my,mx),(y,x)))
-#
-#      # center to star image
-#      img_cnt_ang = int(calc_angle((h/2,w/2),(my,mx)))
-#
-#      # center to cat star image
-#      cat_cnt_ang = int(calc_angle((h/2,w/2),(y,x)))
-#
-#      if (pc < 1 and mc < 10) :
-#         print (pc, mc, "   Image To Cat Angle: ", img_cat_ang, "=" , my,mx,y,x)
-#         print (pc, mc, "   Center to Image Angle: ", img_cnt_ang, "=" , h/2,w/2,my,mx)
-#         print (pc, mc, "   Center to Cat Angle: ", img_cnt_ang, "=", h/2,w/2,y,x)
-#         draw.text((mx+5,my), str(img_cat_ang) + "/" + str(cat_cnt_ang), font=font, fill=(255,255,255,128))
-#         draw.line((x,y, mx,my), fill=128)
-#         draw.line((x,y, w/2,h/2), fill=128)
-#         draw.line((mx,my, ), fill=128)
-#      mc = mc + 1
-#   pc = pc + 1
-#
-##avg_star_xy = np.average(found_points, axis = 0)
-##draw.text((avg_star_xy[0], avg_star_xy[1]), "X", font = font, fill=(255,255,255))
-##draw.text((avg_star_xy[0]+15, avg_star_xy[1]), "Plate Center X,Y:" + str(int(avg_star_xy[0])) + "," + str(int(avg_star_xy[1])), font = font, fill=(255,255,255))
-#plot_image.save(plot_out_file)
