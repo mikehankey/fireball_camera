@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 import time 
+from pathlib import Path
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -76,6 +77,8 @@ def find_star_by_name(star_name):
 
 jpg_file = sys.argv[1]
 
+
+
 el = jpg_file.split("/")
 if len(el) <= 1:
    jpg_file = "/var/www/html/out/cal/" + jpg_file 
@@ -123,3 +126,19 @@ os.system(cmd)
 
 bright_star_data = parse_astr_star_file(star_data_file)
 plot_bright_stars(jpg_file, image, bright_star_data)
+cmd = "./calibrate_image_step2.py " + jpg_file
+os.system(cmd)
+
+
+
+# cleanup and move all extra files
+el = jpg_file.split("/") 
+temp = el[-1]
+cal_dir = temp.replace(".jpg", "")
+file_exists = Path("/mnt/ams2/cal/solved/" + cal_dir)
+if (file_exists.is_dir() is None):
+   os.mkdir("/mnt/ams2/cal/solved/" + cal_dir)
+
+cmd = "mv /mnt/ams2/cal/" + cal_dir + "* /mnt/ams2/cal/solved/" + cal_dir + "/"
+print (cmd)
+os.system(cmd)
