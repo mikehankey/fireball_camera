@@ -199,7 +199,7 @@ def find_fov_center (cal_file):
    
    plot_image.save(plot_out_file)
    print ("http://localhost" + plot_out_file)
-   return(center_x, center_y, cat_points, img_points)
+   return(center_x, center_y, cat_points, img_points, w, h)
 
 def find_dist_values(cal_file, center_x, center_y, cat_points, img_points):
   
@@ -279,6 +279,7 @@ def find_dist_values(cal_file, center_x, center_y, cat_points, img_points):
    star_dist_data = cal_file.replace(".jpg", "-star-dist-data.txt")
    fp = open(star_dist_data, "w")
    fp.write("star_dist_data=" + str(star_data))
+   print("Star Data YO:", str(star_data))
    fp.close()
 
 def find_matching_star(cx,cy, img_points, center_x, center_y,used):
@@ -375,7 +376,11 @@ def find_star_name(cx,cy,starlist):
    return(this_star_name)
 
 cal_file = sys.argv[1]
+fov_file = cal_file.replace(".jpg", "-fov-center.txt")
 #cal_file = "/mnt/ams2/cal/20180922105200-6.jpg"
-(center_x, center_y, cat_points, img_points) = find_fov_center(cal_file)
+(center_x, center_y, cat_points, img_points,w,h) = find_fov_center(cal_file)
+fov = open(fov_file, "w")
+fov.write(str(center_x - (w/2)) + "," + str(center_y - (h/2)))
+fov.close()
 find_dist_values(cal_file, center_x, center_y, cat_points, img_points)
 
