@@ -47,19 +47,19 @@ def stack_stack(pic1, pic2):
    return(stacked_image)
 
 
-def master_stack(cam_num):
-   glob_dir = "tmp/" + "*cam" + str(cam_num) + ".jpg"
+def master_stack(meteor_dir, cam_num):
+   glob_dir = meteor_dir + "*cam" + str(cam_num) + "-stacked.jpg"
    stacked_image = None
    for filename in (glob.glob(glob_dir)):
       print (filename)
       frame = cv2.imread(filename,0)
       stacked_image = stack_stack(frame, stacked_image)
 
-   out_file = "tmp/" + "cam" + cam_num + "-all.jpg"
+   out_file = meteor_dir + "cam" + cam_num + "-all.jpg"
    stacked_image.save(out_file, "JPEG")
 
-def stack_folder():
-   glob_dir = "tmp/" + "*.mp4"
+def stack_folder(meteor_dir):
+   glob_dir = meteor_dir + "*.mp4"
    for filename in (glob.glob(glob_dir)):
       jpg_file = filename.replace(".mp4", ".jpg")
       file_exists = Path(jpg_file)
@@ -71,7 +71,12 @@ def stack_folder():
          print (cmd)
 
 
-cam_num = sys.argv[1] 
-#stack_folder()
-master_stack(cam_num)
+cmd = sys.argv[1] 
+if cmd == "stack_folder":
+   meteor_dir = sys.argv[2] 
+   stack_folder(meteor_dir)
+if cmd == "master_stack":
+   meteor_dir = sys.argv[2] 
+   cam_num = sys.argv[3] 
+   master_stack(meteor_dir, cam_num)
 
