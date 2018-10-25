@@ -62,6 +62,22 @@ def extract_image_from_video():
          cmd = "ffmpeg -ss 00:00:01 -i " + hd_file + " -vframes 1 -vf scale=640:360 " + tl_file
          os.system(cmd)
 
+def purge_old(): 
+   now_datetime = datetime.datetime.now()
+   file_list = [] 
+   c = 0
+   cmd = ""
+   for tl_file in sorted((glob.glob(tl_dir + "*.*"))):
+      (f_datetime, f_cam, f_date, f_h, f_m, f_s) = convert_filename_to_date_cam(tl_file)
+      tdelta = now_datetime -f_datetime 
+      alpha = float(tdelta.total_seconds()/86400   )
+      if alpha > 4:
+         cmd = "rm " + tl_file
+         os.system(cmd)
+      if c % 1000 == 0:
+         print (cmd)
+      c = c + 1
+
 def make_time_lapse_video(start, end, cam_num): 
   
    file_list = [] 
@@ -82,6 +98,8 @@ act = sys.argv[1]
 
 if act == "extract":
    extract_image_from_video()
+if act == "purge":
+   purge_old()
 
 if act == "tl":
    start_datetime = sys.argv[2]
