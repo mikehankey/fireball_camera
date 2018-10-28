@@ -39,6 +39,9 @@ def convert_filename_to_date_cam(file):
 def find_hd_file(sd_file):
    hd_dir = "/mnt/ams2/HD";
    sd_datetime, sd_cam, sd_date, sd_h, sd_m, sd_s = convert_filename_to_date_cam(sd_file)
+   el = sd_file.split("/")
+   el_f = el[-1]
+   meteor_dir = sd_file.replace(el_f, "")
    print ("SD File", sd_file)
    print ("SD Datetime ", sd_datetime)
    print ("SD Cam", sd_cam)
@@ -71,6 +74,9 @@ def find_hd_file(sd_file):
    hd_outfile = hd_dir + "/" + str(sd_date) + "_" + sd_h + "-" + sd_m + "-" + sd_s + "-" + sd_cam + "-HD-sync.mp4"
    ffmpeg_cat(hd_file1, hd_file2, hd_outfile)    
 
+   cmd = "cp " +hd_outfile + " " + meteor_dir   
+   print(cmd)
+   os.system(cmd)
 
 sd_file = sys.argv[1]
 hd_file = find_hd_file(sd_file)
