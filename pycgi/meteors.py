@@ -122,7 +122,7 @@ def main():
 
    form = cgi.FieldStorage()
    act = form.getvalue('act')
-   act = "clip_time" 
+   #act = "clip_time" 
    if act == None:
       show_days()
    if act == "show_day":
@@ -139,10 +139,10 @@ def main():
       override = form.getvalue('override')
       if override is None:
          override = 0
-      start = 24
-      start_mod = 2
-      meteor = "/mnt/ams2/meteors/2018-04-12/2018-04-12_05-02-52-cam6.mp4"
-      dur = 5
+      #start = 24
+      #start_mod = 2
+      #meteor = "/mnt/ams2/meteors/2018-04-12/2018-04-12_05-02-52-cam6.mp4"
+      #dur = 5
       clip_time(meteor, start, dur, start_mod,override)
 
 def clip_time(meteor, start, dur, start_mod, override):
