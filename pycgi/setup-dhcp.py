@@ -18,10 +18,11 @@ def get_mac(cam_ip):
    # get the mac address
    mac = ""
    url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd=admin"
-   url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd=xrp23q"
+   #url = "http://" + str(cam_ip) + "/cgi-bin/sysparam_cgi?user=admin&pwd=xrp23q"
    r = requests.get(url)
    lines = r.text.split("\n")
    for line in lines:
+      #print(line)
       if "MACAddress" in line:
          line = line.replace("\t", "");
          line = line.replace("<MACAddress>", "");
@@ -50,7 +51,7 @@ def ping_cam(ip):
 def scan_network():
    cams_found = 0  
    mac = ""
-   ip_range = "192.168.176."
+   ip_range = "192.168.76."
    for i in range(70,85):
       ip = ip_range + str(i)
       status, mac = ping_cam(ip)
@@ -83,21 +84,29 @@ def assign_ips_to_macs():
    dhcp_data[form.getvalue('assign_4')] = form.getvalue('found_4')
    dhcp_data[form.getvalue('assign_5')] = form.getvalue('found_5')
 
+#http://192.168.1.14/pycgi/setup-dhcp.py?act=assign_ips_to_macs&found_0=&assign_0=1&found_1=&assign_1=3&found_2=&assign_2=5&found_3=&assign_3=4&found_4=&assign_4=2&found_5=&assign_5=6&save=Reassign+DHCP+Camera+Assignments
 
-   dhcp_text = ""
+   dhcp_text = {}
    print ("<HR><pre>yo")
-   #print (dhcp_data)
+   print (dhcp_data)
    for pos in dhcp_data:
       if pos is not None:
-         print(pos)
          mac = dhcp_data[pos]
          if mac != None:
-            dhcp_text = dhcp_text + "host cam" + str(pos) + "{\n"
-            dhcp_text = dhcp_text + "   hardware ethernet " + mac + ";\n"
-            dhcp_text = dhcp_text + "   fixed-address 192.168.176.7" + str(pos) + ";\n}\n"
+            id = pos
+            dhcp_text[id] = "host cam" + str(pos) + "{\n"
+            dhcp_text[id] = dhcp_text[id] + "   hardware ethernet " + mac + ";\n"
+            dhcp_text[id] = dhcp_text[id] + "   fixed-address 192.168.76.7" + str(pos) + ";\n}\n"
 
    print ("YO<PRE>")
-   print (dhcp_text)
+   #print (dhcp_text)
+   print (dhcp_text['1'])
+   print (dhcp_text['2'])
+   print (dhcp_text['3'])
+   print (dhcp_text['4'])
+   print (dhcp_text['5'])
+   print (dhcp_text['6'])
+   print ("YO")
    print ("</PRE>")
 #host cam6 {
 #  hardware ethernet 00:b9:7d:7f:17:ac;
