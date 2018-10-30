@@ -6,8 +6,8 @@ config = {}
 file = "chessboard.avi"
 x_points = []
 #cap = cv2.VideoCapture(file)
-config['cam_ip'] = "192.168.1.91"
-cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av1_1&user=admin&password=admin")
+config['cam_ip'] = "192.168.76.73"
+cap = cv2.VideoCapture("rtsp://" + config['cam_ip'] + "/av0_1&user=admin&password=admin")
 list = glob.glob("jpgs/dump*")
 count = len(list) - 1
 if count < 0:
@@ -24,14 +24,14 @@ while True:
       print ("NO FRAME!")
       exit()
 
-   if count % 1 == 0:   
+   if count % 10 == 0:   
       gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 
-
-      ret,corners= cv2.findCirclesGrid(gray, (6,3))
+      ret, corners = cv2.findChessboardCorners(gray, (4,3))
+      #ret,corners= cv2.findCirclesGrid(gray, (4,3))
 
       if ret == True:
-        cv2.drawChessboardCorners(gray, (6,3), corners,ret)
+        cv2.drawChessboardCorners(gray, (4,3), corners,ret)
 
         #mx = corners.max(axis=0)
         #mn = corners.min(axis=0)
@@ -64,8 +64,9 @@ while True:
             #exit()
       else:
         print ("No board.")
-        cv2.imshow('pepe', frame)
-        k = cv2.waitKey(5)
+        if count % 10 == 0:
+           cv2.imshow('pepe', gray)
+           k = cv2.waitKey(5)
 
    count = count + 1
 

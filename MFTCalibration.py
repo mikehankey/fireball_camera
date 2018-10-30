@@ -80,6 +80,19 @@ class MFTCalibration:
       self.cal_time = None
       self.location = None
 
+   def find_best_thresh(self, image, thresh_limit):
+      go = 1
+      while go == 1:
+         _, thresh = cv2.threshold(image, thresh_limit, 255, cv2.THRESH_BINARY)
+         (_, cnts, xx) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+         if len(cnts) > 50:
+            thresh_limit = thresh_limit + 2
+         else:
+            go = 0
+         print ("BEST THRESH:", thresh_limit)
+      return(thresh_limit)
+
+
    def save_solution(self):
       #image, new_image, marked_image, star_drawing, annotated_image 
       solution_file = self.path.replace(".jpg", "-solution.txt")
@@ -645,6 +658,8 @@ class MFTCalibration:
       lower_thresh = ax_pixel - 10
 
       lower_thresh = avg_px * int(self.star_thresh) 
+  
+      lower_thresh = self.find_best_thresh(np_new_image, 7)
 
       #np_new_image = cv2.GaussianBlur(np_new_image, (1, 1), 0)
       _, nice_threshold = cv2.threshold(np_new_image, lower_thresh, 255, cv2.THRESH_BINARY)

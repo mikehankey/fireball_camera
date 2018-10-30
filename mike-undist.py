@@ -91,8 +91,8 @@ def undistort(file):
    print ("SHAPE1: ", img_cv_new.shape)
    print ("SHAPE2: ", plate_base.shape)
    blend = cv2.addWeighted(img_cv_new, .7, plate_base, .3,0)
-   cv2.imwrite(out_file, blend) 
-   #cv2.imwrite(out_file, img_cv_new) 
+   #cv2.imwrite(out_file, blend) 
+   cv2.imwrite(out_file, img_cv_new) 
 
 file = sys.argv[1]
 undistort(file)

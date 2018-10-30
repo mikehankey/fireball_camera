@@ -17,6 +17,7 @@ mybsd = bsd.brightstardata()
 bright_stars = mybsd.bright_stars
 
 def find_star_by_name(star_name):
+   #(status, bname, cons, ra,dec,mag) = find_star_by_name(star_name)
    for bname, cons, ra, dec, mag in bright_stars:
       cons = cons.decode("utf-8")
       name = bname.decode("utf-8")

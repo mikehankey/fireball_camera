@@ -545,8 +545,12 @@ class calibration_page:
 
       if len(self.image_path) > 0:
          self.image_np = cv2.imread(self.image_path)
+         ow = self.image_np.shape[1]
+         if ow == 1920:
+            self.image_np = cv2.resize(self.image_np, (640, 360))
          self.image = Image.fromarray(self.image_np)
          self.new_image = self.image
+
 
          ow = self.image_np.shape[1]
          oh = self.image_np.shape[0]

@@ -9,8 +9,7 @@ k2_val = sys.argv[3]
 k3_val = sys.argv[4]
 k4_val = sys.argv[5]
 
-outfile = file.replace(".jpg", "-und.jpg")
-
+outfile = file.replace(".jpg", "-undimg.jpg")
 #cmd = "convert " + file + " -distort barrel '1.0 " + str(-.001) + " 1.0' " + outfile
 
 cmd = "convert " + file + " -distort barrel '" + str(k_val) + " " + str(k2_val) + " " + str(k3_val) + " " + str(k4_val) + "' " + outfile
