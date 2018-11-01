@@ -6,6 +6,9 @@ import subprocess
 from pathlib import Path
 import os
 from amscommon import read_config
+import datetime
+from time import mktime
+from pytz import utc
 
 video_dir = "/mnt/ams2/SD/"
 hd_video_dir = "/mnt/ams2/HD/"
@@ -128,16 +131,22 @@ def purge_SD_proc_dir():
 
    for file in files:
       st = os.stat(file)
-      cur_time = int(time.time())
-      mtime = st.st_mtime
-      tdiff = cur_time - mtime
-      tdiff = tdiff / 60 / 60 / 24
-      print (file, tdiff)
-      if tdiff >= 25 and file != 'daytime':
-         print ("We should delete this dir in the archive. it is this many days old:", tdiff) 
-         cmd = "rm -rf " + file
-         os.system(cmd)
-         print(cmd)
+      el = file.split("/") 
+      date_file = el[-1]
+      if date_file != 'daytime':
+         dir_date = datetime.datetime.strptime(date_file, "%Y-%m-%d") 
+         print ("DIR DATE: ", dir_date)
+         cur_time = int(time.time())
+         mtime = mktime(utc.localize(dir_date).utctimetuple())
+
+         tdiff = cur_time - mtime
+         tdiff = tdiff / 60 / 60 / 24
+         print (file, tdiff)
+         if tdiff >= 25 and file != 'daytime':
+            print ("We should delete this dir in the archive. it is this many days old:", tdiff) 
+            cmd = "rm -rf " + file
+            os.system(cmd)
+            print(cmd)
 
 
 def move_processed_SD_files():
