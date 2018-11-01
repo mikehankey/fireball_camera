@@ -8,6 +8,35 @@ import time
 import sendgrid
 from sendgrid.helpers.mail import *
 from amscommon import read_config
+import psutil
+
+def clean_zombies():
+   kill_zombies("sro-settings.py", 10)
+   kill_zombies("examine-still.py", 60)
+   kill_zombies("stack-runner.py", 60)
+   kill_zombies("PV.py", 600)
+   kill_zombies("fast_frames5.py", 600)
+   kill_zombies("/usr/bin/python3", 60)
+
+def kill_zombies(process_name, tlimit):
+   for p in filter_by_name(process_name):
+      diff = time.time() - p.create_time()
+      min = int(diff/60)
+      #print ("found", p.cmdline(), p.pid, min, " minutes")
+      if min > tlimit:
+         print("Killing:", p.pid, p.name())
+         #os.system("kill -9 " + str(p.pid))
+      
+
+def filter_by_name(process_name):
+    for process in psutil.process_iter():
+        try:
+            #print(process.name)
+            if process_name in str(process.cmdline()) :
+                yield process
+        except psutil.NoSuchProcess:
+            pass
+
 
 def sendmail(tom, frm, subject, msg):
    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('SENDGRID_API_KEY'))
@@ -75,6 +104,8 @@ errors = []
 config = read_config()
 obs_name = config['obs_name']
 print (obs_name)
+
+clean_zombies()
 
 # Check disk space 
 derrs = check_disk_space()
