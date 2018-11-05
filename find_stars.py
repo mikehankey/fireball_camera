@@ -226,7 +226,7 @@ def find_stars(cal_file, show=0, extra_thresh = 0):
    lower_thresh = avg_px * int(star_thresh)
 
    best_thresh = find_best_thresh(cal_image_cv_gray, 10, 0)
-   best_thresh = best_thresh + extra_thresh 
+   #best_thresh = best_thresh + extra_thresh 
 
    _, nice_threshold = cv2.threshold(cal_image_cv_gray, best_thresh, 255, cv2.THRESH_BINARY)
    (_, cnts, xx) = cv2.findContours(nice_threshold.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

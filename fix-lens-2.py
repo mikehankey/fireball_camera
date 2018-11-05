@@ -42,7 +42,7 @@ if __name__ == '__main__':
         os.mkdir(debug_dir)
     square_size = float(args.get('--square_size'))
 
-    pattern_size = (6, 3)
+    pattern_size = (4, 3)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
     pattern_points *= square_size
@@ -59,8 +59,8 @@ if __name__ == '__main__':
             continue
 
         h, w = img.shape[:2]
-        #found, corners = cv2.findChessboardCorners(img, pattern_size)
-        found,corners= cv2.findCirclesGrid(img, pattern_size)
+        found, corners = cv2.findChessboardCorners(img, pattern_size)
+        #found,corners= cv2.findCirclesGrid(img, pattern_size)
 
         if found:
             term = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_COUNT, 30, 0.1)
@@ -85,7 +85,15 @@ if __name__ == '__main__':
         print('ok')
 
     # calculate camera distortion
+    print(img_points)
+    print(obj_points)
+
     print ("Calibrate Camera...")
+    print ("IMG: ", img_points)
+    print ("OBJ: ", obj_points)
+    print ("IMG SHAPE: ", img_points[0].shape)
+    print ("OBJ SHAPE: ", obj_points[0].shape)
+    print(type(obj_points))
     rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(obj_points, img_points, (w, h), None, None)
 
     print("\nRMS:", rms)
