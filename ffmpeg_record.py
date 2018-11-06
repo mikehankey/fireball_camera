@@ -25,6 +25,7 @@ def start_capture(cam_num):
       print(cmd)
    
       os.system(cmd)
+      time.sleep(2)
    else: 
       print ("ffmpeg already running for cam:", cam_num)
 
@@ -33,6 +34,7 @@ def start_capture(cam_num):
       cmd = "/usr/bin/ffmpeg -i rtsp://192.168.76.7" + cam_num + "/av0_1 -c copy -map 0 -f segment -strftime 1 -segment_time 60 -segment_format mp4 \"" + video_dir + "/SD/" + "%Y-%m-%d_%H-%M-%S-cam" + cam_num + ".mp4\" 2>&1 > /dev/null & "
       print(cmd)
       os.system(cmd)
+      time.sleep(2)
    else: 
       print ("ffmpeg already running for cam:", cam_num)
 
