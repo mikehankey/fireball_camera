@@ -100,7 +100,7 @@ if arg == 'batch':
       # Remove bad file if they exist 
       if size <= 50000:
          skip = 1
-         cmd = "rm " + wild_card
+         cmd = "mv " + wild_card + " /mnt/ams2/SD/proc/bad/"
          os.system(cmd)
          print(cmd)
 
