@@ -133,7 +133,7 @@ def purge_SD_proc_dir():
       st = os.stat(file)
       el = file.split("/") 
       date_file = el[-1]
-      if date_file != 'daytime':
+      if date_file != 'daytime' and date_file != 'bad':
          dir_date = datetime.datetime.strptime(date_file, "%Y-%m-%d") 
          print ("DIR DATE: ", dir_date)
          cur_time = int(time.time())
