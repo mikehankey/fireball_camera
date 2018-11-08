@@ -1,6 +1,6 @@
-sudo umount /dev/sda1
-sudo mkfs -t ext4 /dev/sda1
-sudo mount /dev/sda1
+#sudo umount /dev/sda1
+#sudo mkfs -t ext4 /dev/sda1
+#sudo mount /dev/sda1
 sudo chown -R ams:ams /mnt/ams2
 mkdir /mnt/ams2/SD
 mkdir /mnt/ams2/SD/proc
