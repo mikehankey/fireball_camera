@@ -16,7 +16,6 @@ def clean_zombies():
    kill_zombies("stack-runner.py", 60)
    kill_zombies("PV.py", 600)
    kill_zombies("fast_frames5.py", 600)
-   kill_zombies("/usr/bin/python3", 60)
 
 def kill_zombies(process_name, tlimit):
    for p in filter_by_name(process_name):

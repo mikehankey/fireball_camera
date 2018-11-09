@@ -98,12 +98,11 @@ if arg == 'batch':
       skip = 0
      
       # Remove bad file if they exist 
-      print ("SIZE:", size)
-      #if size <= 50000:
-      #   skip = 1
-      #   cmd = "mv " + wild_card + " /mnt/ams2/SD/proc/bad/"
-      ##   os.system(cmd)
-      #   print(cmd)
+      if size <= 50000:
+         skip = 1
+         cmd = "rm " + wild_card
+         os.system(cmd)
+         print(cmd)
 
       if (file_exists.is_file()):
          skip = 1
@@ -131,6 +130,10 @@ if arg == 'batch':
             if cc % 1 == 0:
                cmd = "./fast_frames5.py " + file 
                os.system(cmd)
+               stack_file = file.replace(".mp4", "-stackedt.jpg")
+               #cmd = "./falcon-upload.py " + stack_file
+               #print(cmd)
+               #os.system(cmd)
                #time.sleep(15)
             #else:
             #   time.sleep(10)
