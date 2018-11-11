@@ -75,7 +75,7 @@ def get_files_for_day_cam(day, cam):
    return(sorted(files))
 
 def get_cal_files(day, cam):
-   glob_dir = "/mnt/ams2/cal/*.jpg"
+   glob_dir = "/mnt/ams2/cal/" + day + "*" + cam + ".jpg"
    files = glob.glob(glob_dir)
    return(sorted(files))
    
