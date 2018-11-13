@@ -213,10 +213,13 @@ def get_calibration_frames(config_file, cam_num):
       _ , frame = cap.read()
       #frame = cv2.resize(frame, (0,0), fx=1, fy=.75)
       if i % 15 != 0 or i == 0 :
-         med_arr.append(frame)
-         print ("Getting frame.")
+         if frame is not None:
+            med_arr.append(frame)
+            print ("Getting frame.")
       else:
-         median_image = np.median(np.array(med_arr), axis=0)
+         print("LEN MED", len(med_arr))
+         med_arr_np = np.array(med_arr)
+         median_image = np.median(med_arr_np, axis=0)
          median = np.uint8(median_image)
 
          frame_img = Image.fromarray(median)
@@ -274,7 +277,7 @@ if cmd == 'focus':
 
 if cmd == 'read_noise':
    read_noise(config_file, cam_num)
-
+#sun_info['dark'] = 1
 if cmd == 'sense_up':
    if int(sun_info['dark']) != 1:
       print ("It must be dark to sense up.")

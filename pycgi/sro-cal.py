@@ -67,12 +67,13 @@ def plate_solve(cal_file):
    # check to see if the calibration is currently running
    running = check_running()
    solved, astr_files = check_if_solved(cal_file)
-   print(solved, astr_files)
+   print(solved, running)
    if running == 0 and solved == 0:
       print ("<HR>")
       cmd = "cd /home/ams/fireball_camera; ./calibrate_image.py " + cal_file + " &"
       print(cmd)
-      #os.system(cmd)
+      os.system(cmd)
+      print("Starting plate solve...")
    elif running > 0:
       print ("This is already running.")
    elif solved == 1:

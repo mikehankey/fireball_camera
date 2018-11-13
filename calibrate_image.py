@@ -115,7 +115,7 @@ start_y = 0
 
 print("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=" + str(width) + " --height=" + str(height) + " --scale-low 10 --scale-high 80 > " + astr_out)
 os.system("/usr/local/astrometry/bin/solve-field " + jpg_file + " --verbose --no-delete-temp --overwrite --width=" + str(width) + " --height=" + str(height) + " --scale-low 10 --scale-high 80 ")
-os.system("grep Mike " + astr_out + " >" +star_data_file)
+os.system("grep Mike " + astr_out + " >" +star_data_file + " 2>&1" )
 
 cmd = "/usr/bin/jpegtopnm " + jpg_file + "|/usr/local/astrometry/bin/plot-constellations -w " + wcs_file + " -o " + grid_file + " -i - -N -C -G 600"
 print (cmd)
