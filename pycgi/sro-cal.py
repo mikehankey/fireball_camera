@@ -70,7 +70,7 @@ def plate_solve(cal_file):
    print(solved, running)
    if running == 0 and solved == 0:
       print ("<HR>")
-      cmd = "cd /home/ams/fireball_camera; ./calibrate_image.py " + cal_file + " &"
+      cmd = "cd /home/ams/fireball_camera; ./calibrate_image.py " + cal_file + " & > /dev/null 2>&1"
       print(cmd)
       os.system(cmd)
       print("Starting plate solve...")
