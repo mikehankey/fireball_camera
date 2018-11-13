@@ -17,6 +17,7 @@ def clean_zombies():
    kill_zombies("PV.py", 600)
    kill_zombies("fast_frames5.py", 600)
    kill_zombies("auto-brightness.py", 600)
+   exit()
 
 def kill_zombies(process_name, tlimit):
    for p in filter_by_name(process_name):
@@ -25,7 +26,7 @@ def kill_zombies(process_name, tlimit):
       #print ("found", p.cmdline(), p.pid, min, " minutes")
       if min > tlimit:
          print("Killing:", p.pid, p.name())
-         #os.system("kill -9 " + str(p.pid))
+         os.system("kill -9 " + str(p.pid))
       
 
 def filter_by_name(process_name):
