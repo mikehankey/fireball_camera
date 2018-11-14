@@ -26,6 +26,7 @@ rpt_file = dir + "/cam" + str(cam_num) + ".txt"
 sfp = open(rpt_file, "w")
 count = 0
 for file in stack_files:
+   
    c= count
    print(file)
    median_array = []

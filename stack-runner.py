@@ -49,7 +49,6 @@ def count_images(check_dir):
          job = "./examine-still.py " + "/mnt/ams2/SD/proc/" + proc_date + "/ " + str(i)
          jobs.append(job)
 
-  
    return(jobs) 
 
 def main():

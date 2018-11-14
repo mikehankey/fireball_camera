@@ -240,6 +240,7 @@ def find_best_thresh(img, tval):
 def examine_still(filename, img, last_cnts, past_clusters):
    obj_file = filename.replace("-stacked.jpg", "-objects.jpg")
    txt_file = filename.replace("-stacked.jpg", "-objects.txt")
+   fp = open(txt_file, "w")
    #img = cv2.imread(filename,0)
    orig_img = cv2.imread(filename,0)
 
@@ -424,7 +425,6 @@ def examine_still(filename, img, last_cnts, past_clusters):
 
    #cv2.imshow('pepe', img)
    cv2.imwrite(obj_file, img)
-   fp = open(txt_file, "w")
    fp.write("cnts=" + str(cnts))
    fp.write("clusters=" + str(clusters))
    fp.write("status_desc=" + str(status_desc))
@@ -459,8 +459,10 @@ def preload_images(stack_files):
    new_stack_files = []
    for filename in stack_files:
       img = cv2.imread(filename,0)
-
-      av = np.average(img)
+      if img is not None:
+         av = np.average(img)
+      else:
+         av = 100
       if av < 50:
          images.append(img)
          new_stack_files.append(filename)
