@@ -26,6 +26,16 @@ def nighttime_settings( config, settings):
    time.sleep(1)
    print ("fix ir")
    fix_ir(config)
+   set_special(config, "1004", "255")
+
+   ### Set gains to manual ###
+   set_special(config, "1084", "1")
+   set_special(config, "1087", "1")
+   set_special(config, "1085", "1")
+
+   ### BW/COLOR 
+   print ("set BW")
+   set_special(config, "1036", "2")
    ### BLC
    print ("set BLC")
    set_special(config, "1017", config['BLC'])
@@ -55,7 +65,15 @@ def nighttime_settings( config, settings):
    os.system("./allsky6-calibrate.py read_noise " + cam_num)
 
 def daytime_settings(config, settings):
-   ###
+   ### saturation
+   set_special(config, "1004", "128")
+   ### Set gains to auto ###
+   set_special(config, "1084", "0")
+   set_special(config, "1087", "0")
+   set_special(config, "1085", "0")
+   ### BW/COLOR 
+   print ("set BW")
+   set_special(config, "1036", "0")
    WDR(config, 1)
    time.sleep(2)
    WDR(config, 0)

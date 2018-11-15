@@ -22,7 +22,7 @@ def kill_zombies(process_name, tlimit):
    for p in filter_by_name(process_name):
       diff = time.time() - p.create_time()
       min = int(diff/60)
-      #print ("found", p.cmdline(), p.pid, min, " minutes")
+      print ("found", p.cmdline(), p.pid, min, " minutes")
       if min > tlimit:
          print("Killing:", p.pid, p.name())
          os.system("kill -9 " + str(p.pid))

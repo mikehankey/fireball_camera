@@ -57,7 +57,7 @@ def main():
       print("Already running. Abort.", running)
       exit()
    all_jobs = []
-   for filename in (glob.glob(proc_dir)):
+   for filename in (sorted(glob.glob(proc_dir), reverse=True)):
       print(filename)
       jobs = count_images(filename)
       all_jobs.append((jobs))
