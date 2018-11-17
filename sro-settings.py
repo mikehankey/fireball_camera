@@ -29,8 +29,8 @@ def nighttime_settings( config, settings):
    set_special(config, "1004", "255")
 
    ### Set gains to manual ###
-   set_special(config, "1084", "1")
-   set_special(config, "1087", "1")
+   set_special(config, "1084", "0")
+   set_special(config, "1087", "0")
    set_special(config, "1085", "1")
 
    ### BW/COLOR 
@@ -205,4 +205,4 @@ else:
    nighttime_settings(config, settings)
    if cam_status != sun['status']:
       print ("Nighttime settings are not set but it is nighttime!", cam_status, sun['status'])
-      nighttime_settings(config)
+      nighttime_settings(config, settings)
