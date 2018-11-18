@@ -31,7 +31,7 @@ def nighttime_settings( config, settings):
    ### Set gains to manual ###
    set_special(config, "1084", "0")
    set_special(config, "1087", "0")
-   set_special(config, "1085", "1")
+   set_special(config, "1085", "0")
 
    ### BW/COLOR 
    print ("set BW")
@@ -40,7 +40,7 @@ def nighttime_settings( config, settings):
    print ("set BLC")
    set_special(config, "1017", config['BLC'])
    ### SET AGAIN
-   set_special(config, "1056", 250)
+   set_special(config, "1056", 200)
 
    ### SET AGAIN
    set_special(config, "1056", 250)
