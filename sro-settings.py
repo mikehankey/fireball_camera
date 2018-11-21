@@ -28,28 +28,28 @@ def nighttime_settings( config, settings):
    fix_ir(config)
    set_special(config, "1004", "255")
 
-   ### Set gains to manual ###
+   ### Set gains to auto ###
    set_special(config, "1084", "0")
    set_special(config, "1087", "0")
    set_special(config, "1085", "0")
 
    ### BW/COLOR 
-   print ("set BW")
-   set_special(config, "1036", "2")
+   print ("set BW to color=0 BW=2")
+   set_special(config, "1036", "0")
    ### BLC
    print ("set BLC")
    set_special(config, "1017", config['BLC'])
    ### SET AGAIN
-   set_special(config, "1056", 200)
+   set_special(config, "1056", 176)
 
    ### SET AGAIN
-   set_special(config, "1056", 250)
+   set_special(config, "1056", 176)
 
    ### SET DGAIN HIGH to SHOCK SYSTEM 
-   set_special(config, "1086", 220)
+   set_special(config, "1086", 0)
    time.sleep(1)
    ### SET DGAIN to Value we actually want
-   set_special(config, "1086", 158)
+   set_special(config, "1086", 41)
 
    print ("set BRIGHTNESS")
    set_setting(config, "Brightness", config['Brightness'])
@@ -196,9 +196,11 @@ if sun['status'] == 'day' or sun['status'] == 'dusk' or sun['status'] == 'dawn':
       print ("Daytime settings are not set but it is daytime!", cam_status, sun['status'])
       #os.system("python /home/pi/fireball_camera/cam/auto_set_parameters.py")
       daytime_settings(config, settings)
-      os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
+      #os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
    else:
-      os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
+      print ("nothing to do...")
+      #daytime_settings(config, settings)
+      #os.system("python /home/pi/fireball_camera/camera-settings.py " + cam_num)
       #print ("Daytime Brightness of " + settings['Brightness'] + " is fine.")
 else:
    config = custom_settings("Night", config)
