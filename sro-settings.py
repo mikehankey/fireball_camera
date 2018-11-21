@@ -40,7 +40,7 @@ def nighttime_settings( config, settings):
    print ("set BLC")
    set_special(config, "1017", config['BLC'])
    ### SET AGAIN
-   set_special(config, "1056", 176)
+   set_special(config, "1056", 180)
 
    ### SET AGAIN
    set_special(config, "1056", 176)
