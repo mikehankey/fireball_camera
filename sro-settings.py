@@ -62,7 +62,7 @@ def nighttime_settings( config, settings):
    file = open("/home/pi/fireball_camera/status" + cam_num + ".txt", "w")
    file.write("dark")
    file.close()
-   os.system("./allsky6-calibrate.py read_noise " + cam_num)
+   #os.system("./allsky6-calibrate.py read_noise " + cam_num)
 
 def daytime_settings(config, settings):
    ### saturation
