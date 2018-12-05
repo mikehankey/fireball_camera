@@ -14,13 +14,15 @@ video_dir = "/mnt/ams2/SD/"
 hd_video_dir = "/mnt/ams2/HD/"
 
 def parse_date (this_file):
-
+   print("FILE: ", this_file)
    el = this_file.split("/")
    file_name = el[-1]
    file_name = file_name.replace("_", "-")
    file_name = file_name.replace(".", "-")
    fnel = file_name.split("-")
    #print("FILE:", file_name, len(fnel))
+   if len(fnel) == 12:
+      xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,fst,xext,trash = fnel
    if len(fnel) == 11:
       xyear, xmonth, xday, xhour, xmin, xsec, xcam_num, ftype,fnum,fst,xext = fnel
    if len(fnel) == 10:
