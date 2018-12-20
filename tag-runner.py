@@ -106,6 +106,11 @@ def process_tag_file(tag_file):
             print ("Check : ", rpt_file)
             wild_card = file.replace(".mp4", "*.*")
             meteor_dir = "/mnt/ams2/meteors/" + xyear + "-" + xmonth + "-" + xday + "/"
+
+            file_exists = Path(meteor_dir)
+            if (file_exists.is_dir() is False):
+               os.system("mkdir " + meteor_dir)
+
             cmd2 = "cp " + wild_card + " " + meteor_dir
             print (cmd2) 
 
@@ -116,7 +121,7 @@ def process_tag_file(tag_file):
             else:
                print (act, tag, file, cam_num, date_str)
                print(cmd)
-               os.system(cmd)
+               #os.system(cmd)
                print (cmd2)
                os.system(cmd2)
          stack_file = file.replace(".mp4", "-stacked.jpg")
